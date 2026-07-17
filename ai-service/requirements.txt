@@ -1,0 +1,6 @@
+# Dépendances du service IA (FastAPI). Versions épinglées pour un build
+# reproductible. On reste minimal : pas encore de libs IA (elles viendront
+# avec les modules llm/ rag/ moderation/).
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic-settings==2.6.1

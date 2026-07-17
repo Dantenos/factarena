@@ -1,0 +1,29 @@
+-- ============================================================
+-- Activation de l'extension pgvector (pour le RAG du service IA).
+--
+-- Le piège que j'ai découvert : l'image pgvector/pgvector FOURNIT bien
+-- l'extension, mais elle ne l'ACTIVE pas. Sans un « CREATE EXTENSION »
+-- quelque part, le type « vector » n'existe pas et le RAG ne peut rien stocker.
+--
+-- POURQUOI ICI, et pas dans le service IA (FastAPI) :
+--   - le service IA n'a aujourd'hui aucun driver SQL (juste fastapi + uvicorn).
+--     Il aurait fallu lui ajouter psycopg juste pour lancer une seule ligne :
+--     c'est une dépendance qu'on ne saurait pas justifier en soutenance ;
+--   - Postgres sait le faire tout seul : il exécute les .sql de ce dossier au
+--     premier démarrage. Donc c'est joué AVANT que le backend ou le service IA
+--     ne se connectent — aucun risque de course entre les services ;
+--   - et surtout c'est automatique. Le sujet impose de tout lancer en UNE
+--     commande : si un humain doit taper CREATE EXTENSION à la main, c'est mort.
+--
+-- À SAVOIR (ça m'est arrivé) : ce dossier n'est lu QU'À LA CRÉATION d'une
+-- base vide. Si vous avez déjà un volume postgres_data d'un ancien test, ce
+-- fichier est ignoré et l'extension sera absente. Deux solutions :
+--   - repartir propre : docker compose down -v (attention, ça efface la base) ;
+--   - ou la jouer une fois à la main :
+--     docker compose exec postgres psql -U transcendence -d transcendence \
+--       -c "CREATE EXTENSION IF NOT EXISTS vector;"
+-- Sur un clone tout neuf, vous n'avez rien à faire : ça marche direct.
+--
+-- IF NOT EXISTS : pour que le script reste rejouable sans planter.
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS vector;

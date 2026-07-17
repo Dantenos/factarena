@@ -1,0 +1,12 @@
+# Ne JAMAIS embarquer ces éléments dans l'image (taille + sécurité).
+__pycache__
+*.pyc
+.venv
+venv
+.env
+*.env
+!.env.example
+.git
+.gitignore
+Dockerfile
+.dockerignore

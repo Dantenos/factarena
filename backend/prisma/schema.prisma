@@ -1,0 +1,40 @@
+// ============================================================
+// FactArena — schéma de données (Prisma / PostgreSQL)
+// Possédé par le back-core (NestJS). POURQUOI ici : Prisma est l'ORM imposé ;
+// ce fichier est la source unique du modèle relationnel et des migrations.
+//
+// ATTENTION : SCHÉMA MINIMAL (initialisation). On démarre volontairement avec
+// la SEULE table User. Le modèle complet cible (Room, Round, Claim, Prediction,
+// Transaction, ClaimVerdict, Stat...) est décrit dans docs/ARCHITECTURE.md et
+// sera ajouté au fur et à mesure. Chacun ajoute SES tables ici quand il code
+// sa feature.
+//
+// Rappel (docs/ARCHITECTURE.md §5.2) : la table des embeddings (pgvector) N'EST
+// PAS gérée par Prisma mais par le service back-ai (FastAPI), dans la même base.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Statut de présence de l'utilisateur (affiché aux amis).
+enum UserStatus {
+  ONLINE
+  OFFLINE
+  IN_GAME
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique // identifiant de connexion (auth email + mot de passe)
+  passwordHash String            // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
+  avatarUrl    String?           // avatar optionnel (un défaut est fourni côté app)
+  status       UserStatus @default(OFFLINE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}

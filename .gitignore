@@ -1,0 +1,28 @@
+# --- Secrets : ne JAMAIS commit (exigence du sujet) ---
+.env
+*.env
+!.env.example
+
+# --- Node ---
+node_modules/
+dist/
+build/
+*.log
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- Docker / certs de dev ---
+nginx/certs/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+
+.claude/
+CLAUDE.md
+config-claude-code-ft-transcendence.md

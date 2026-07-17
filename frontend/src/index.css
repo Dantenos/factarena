@@ -1,0 +1,5 @@
+/* Directives Tailwind : injectent les styles de base, les composants et les
+   utilitaires générés à partir des classes utilisées dans le code. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
