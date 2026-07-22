@@ -2,11 +2,20 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
+import { RoomsModule } from './rooms/rooms.module';
+import { RoundsModule } from './rounds/rounds.module';
+import { PredictionsModule } from './predictions/predictions.module';
+import { LedgerModule } from './ledger/ledger.module';
 
-// Module racine : il assemble les modules de fonctionnalités.
-// Vos futurs modules (users, rooms, rounds, predictions, stats...) s'ajoutent
-// dans ce tableau `imports`.
 @Module({
-  imports: [PrismaModule, HealthModule, AuthModule],
+  imports: [
+    PrismaModule,
+    HealthModule,
+    AuthModule,
+    RoomsModule,
+    RoundsModule,
+    PredictionsModule,
+    LedgerModule,
+  ],
 })
 export class AppModule {}
