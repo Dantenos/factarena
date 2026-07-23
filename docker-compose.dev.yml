@@ -37,7 +37,7 @@ services:
     volumes:
       # Le dossier du projet est branché en direct dans le conteneur : c'est
       # tout l'intérêt du mode dev, votre éditeur écrit, Vite voit le changement.
-      - ./frontend:/app
+      - ./frontend:/app:Z
       # Cette ligne bizarre est indispensable. La ligne du dessus recouvre TOUT
       # /app avec votre dossier local — y compris node_modules, qui n'existe pas
       # chez vous (il est installé dans l'image). Sans ça, Vite disparaît et le
