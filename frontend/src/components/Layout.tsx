@@ -6,7 +6,7 @@ import Footer from './Footer';
 export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-[#09495C] p-4 border-b">
+      <header className="bg-bleu-krystal p-4 border-b">
         <nav className="font-bold text-[#FFFFFF] flex gap-4">
           <Link to="/">Accueil</Link>
           <Link to="/login">Connexion</Link>

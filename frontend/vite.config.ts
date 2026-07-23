@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-
+import tailwindcss from '@tailwindcss/vite'
 // Config Vite. En conteneur, on sert le BUILD de production via `vite preview`
 // (pas de HMR -> pas de WebSocket de dev -> console propre derrière nginx).
 // host:true => écoute 0.0.0.0 pour être joignable par nginx.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   preview: {
     host: true,
     port: 4173,
