@@ -6,15 +6,15 @@ import Footer from './Footer';
 export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-bleu-krystal p-4 border-b">
-        <nav className="font-bold text-[#FFFFFF] flex gap-4">
+      <header className="bg-noir-krystal p-4 border-b">
+        <nav className="flex justify-around font-bold text-[#FFFFFF] flex gap-4">
           <Link to="/">Accueil</Link>
-          <Link to="/login">Connexion</Link>
           <Link to="/profile">Profil</Link>
-          <Link to="/room">Salon</Link>
+          <Link to="/play">Jouer</Link>
+          <Link to="/login">Connexion</Link>
         </nav>
       </header>
-      <main className="flex-1">
+      <main className="flex-1 flex">
         <Outlet />
       </main>
       <Footer />
