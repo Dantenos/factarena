@@ -19,7 +19,13 @@ export class RoomsService {
   async findOne(id: string) {
     const room = await this.prisma.room.findUnique({
       where: { id },
-      include: { host: { select: { id: true, email: true, avatarUrl: true, status: true } }, rounds: { orderBy: { createdAt: 'desc' } } },
+      include: {
+        host: { select: { id: true, email: true, avatarUrl: true, status: true } },
+        rounds: {
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, roomId: true, status: true, opensAt: true, locksAt: true, revealedAt: true, createdAt: true, updatedAt: true },
+        },
+      },
     });
     if (!room) throw new NotFoundException(`Room ${id} not found`);
     return room;

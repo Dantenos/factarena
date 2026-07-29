@@ -6,6 +6,7 @@ import { RoomsModule } from './rooms/rooms.module';
 import { RoundsModule } from './rounds/rounds.module';
 import { PredictionsModule } from './predictions/predictions.module';
 import { LedgerModule } from './ledger/ledger.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LedgerModule } from './ledger/ledger.module';
     RoundsModule,
     PredictionsModule,
     LedgerModule,
+    RealtimeModule,
   ],
 })
 export class AppModule {}
