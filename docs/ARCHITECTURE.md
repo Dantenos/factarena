@@ -170,10 +170,17 @@ Le navigateur ne parle **qu'à nginx**.
 
 ### 5.2 Schéma de base (géré par Prisma, sauf vecteurs)
 
-> **[À VALIDER] Partage de PostgreSQL.** Prisma gère mal le type `vector`. On sépare :
-> tables **relationnelles** → Prisma (NestJS) ; tables **vectorielles** (corpus +
-> embeddings) → FastAPI (SQLAlchemy/psycopg + `CREATE EXTENSION vector`), même base.
-> Frontière logique par `id`, pas de jointure Prisma↔vecteur.
+> **Partage de PostgreSQL.** Prisma gère mal le type `vector`. On sépare :
+> tables **relationnelles** → Prisma (NestJS), dans le schéma `public` ; tables
+> **vectorielles** (corpus + embeddings) → FastAPI (psycopg + `CREATE EXTENSION
+> vector`), dans un schéma **dédié `rag`**, même base. Frontière logique par `id`,
+> pas de jointure Prisma↔vecteur.
+>
+> ⚠️ **Pourquoi un schéma `rag` séparé (et pas `public`) :** le `prisma db push`
+> du backend gère `public` et veut SUPPRIMER toute table qu'il n'y connaît pas —
+> dont `documents`. En isolant les tables IA dans `rag`, Prisma ne les voit plus
+> et ne peut pas les détruire. Le service IA se connecte avec `search_path =
+> rag,public` (voir `ai-service/app/db.py`).
 
 Entités relationnelles (Prisma) :
 
