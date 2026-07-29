@@ -11,7 +11,7 @@ affirmation chiffrée avec un chiffre officiel et sa source.
 
 Réactualisable : relancer le script récupère les dernières valeurs publiées.
 
-Étendre le magasin = ajouter une ligne à INDICATEURS. ⚠️ Vérifier d'abord que les
+Étendre le magasin = ajouter une ligne à INDICATEURS.  Vérifier d'abord que les
 filtres donnent le bon découpage (bon âge, bonne unité, corrigé des variations
 saisonnières...) : un mauvais filtre = un mauvais chiffre.
 """
