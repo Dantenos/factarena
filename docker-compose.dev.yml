@@ -66,3 +66,20 @@ services:
     # Je garde le « prisma db push » du Dockerfile : le schéma doit être en place
     # avant que l'API réponde à quoi que ce soit, qu'on soit en dev ou en prod.
     command: ["sh", "-c", "npx prisma db push --skip-generate && npm run start:dev"]
+
+  # ----------------------------------------------------------
+  # Le service IA : uvicorn en mode --reload (redémarre à chaque sauvegarde).
+  # C'est le territoire du Tech IA (RAG, LLM, modération) : sans ça, chaque
+  # modif d'un .py imposerait un « docker compose build ai-service » de plusieurs
+  # minutes.
+  # ----------------------------------------------------------
+  ai-service:
+    volumes:
+      # On branche le dossier local dans le conteneur, comme pour le front/back.
+      # Pas de volume anonyme ici (contrairement à Node) : les dépendances Python
+      # sont installées dans site-packages, pas dans /app — le montage ne les
+      # masque donc pas. uvicorn reste trouvable.
+      - ./ai-service:/app
+    # --reload : uvicorn surveille les fichiers et relance l'app à chaque
+    # sauvegarde (le watcher vient de uvicorn[standard], déjà dans requirements).
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
