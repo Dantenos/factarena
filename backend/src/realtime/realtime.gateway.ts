@@ -152,10 +152,20 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return round;
   }
 
-  private async roomState(roomId: string) {
+  /** Used by the server game loop to publish transitions that were not caused by a client event. */
+  async publishRoundState(roomId: string, event: string, roundId?: string) {
+    const state = await this.roomState(roomId, roundId);
+    this.server.to(this.roomChannel(roomId)).emit(event, state);
+    this.server.to(this.roomChannel(roomId)).emit('round:state', state);
+    return state;
+  }
+
+  private async roomState(roomId: string, requestedRoundId?: string) {
     const room = await this.roomsService.findOne(roomId);
-    const activeRound = room.rounds.find((round) => round.status === 'OPEN' || round.status === 'LOCKED');
-    const round = activeRound ? await this.roundsService.findOne(activeRound.id) : null;
+    const activeRound = room.rounds.find((candidate) => ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'].includes(candidate.status));
+    const round = requestedRoundId
+      ? await this.roundsService.findOne(requestedRoundId)
+      : activeRound ? await this.roundsService.findOne(activeRound.id) : null;
     const predictions = round ? await this.predictionsService.findByRound(round.id) : [];
     return {
       room: { id: room.id, name: room.name, status: room.status, createdBy: room.createdBy },

@@ -11,7 +11,15 @@ export class PredictionsService {
       return await this.prisma.$transaction(async (tx) => {
         const round = await tx.round.findUnique({ where: { id: data.roundId }, include: { roundClaims: true } });
         if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
-        if (round.status !== 'OPEN' || round.locksAt <= new Date()) throw new BadRequestException('Predictions are closed for this round');
+        const now = new Date();
+        const openRound = await tx.round.updateMany({
+          where: { id: data.roundId, status: 'OPEN', locksAt: { gt: now } },
+          // This conditional update takes the round row lock. It prevents a
+          // prediction transaction that started before the deadline from
+          // committing after the game loop has locked the round.
+          data: { updatedAt: now },
+        });
+        if (openRound.count !== 1) throw new BadRequestException('Predictions are closed for this round');
         if (data.predictedFakeCount > round.roundClaims.length) throw new BadRequestException('Predicted fake count exceeds the number of claims');
         await this.ledger.debitForBet(tx, userId, data.stake);
         return tx.prediction.create({ data: { roundId: data.roundId, userId, predictedFakeCount: data.predictedFakeCount, stake: data.stake } });

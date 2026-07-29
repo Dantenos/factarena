@@ -14,12 +14,13 @@ export class RoundsService {
       if (!room) throw new NotFoundException(`Room ${data.roomId} not found`);
       if (room.createdBy !== createdById) throw new ForbiddenException('Only the room host may create rounds');
       if (room.status === 'FINISHED') throw new BadRequestException('Cannot add rounds to a finished room');
-      const activeRound = await tx.round.findFirst({ where: { roomId: data.roomId, status: { in: ['OPEN', 'LOCKED'] } } });
+      const activeRound = await tx.round.findFirst({ where: { roomId: data.roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] as any } } });
       if (activeRound) throw new ConflictException('This room already has an active round');
       const claims = await tx.claim.findMany({ where: { id: { in: distinctClaimIds } }, select: { id: true, truthLabel: true } });
       if (claims.length !== distinctClaimIds.length) throw new BadRequestException('One or more claims do not exist');
-      const locksAt = new Date(Date.now() + data.durationSeconds * 1000);
-      const round = await tx.round.create({ data: { roomId: data.roomId, status: 'OPEN', locksAt, trueFakeCount: claims.filter((claim) => claim.truthLabel === 'FALSE').length } });
+      const opensAt = new Date(Date.now() + 3_000);
+      const locksAt = new Date(opensAt.getTime() + data.durationSeconds * 1000);
+      const round = await tx.round.create({ data: { roomId: data.roomId, status: 'COUNTDOWN' as any, opensAt, locksAt, trueFakeCount: claims.filter((claim) => claim.truthLabel === 'FALSE').length } });
       await tx.roundClaim.createMany({ data: distinctClaimIds.map((claimId, orderIndex) => ({ roundId: round.id, claimId, orderIndex })) });
       await tx.room.update({ where: { id: data.roomId }, data: { status: 'IN_PROGRESS' } });
       return tx.round.findUniqueOrThrow({
@@ -47,26 +48,57 @@ export class RoundsService {
     });
     if (!round) throw new NotFoundException(`Round ${id} not found`);
     const { trueFakeCount, ...safeRound } = round;
-    return round.status === 'REVEALED' ? { ...safeRound, trueFakeCount } : safeRound;
+    return round.status === 'REVEALED' || String(round.status) === 'FINISHED' ? { ...safeRound, trueFakeCount } : safeRound;
   }
 
   async lock(id: string, userId: string) {
-    const round = await this.prisma.round.findUnique({ where: { id }, include: { room: true } });
+    const round = await this.prisma.round.findUnique({ where: { id }, select: { room: { select: { createdBy: true } } } });
     if (!round) throw new NotFoundException(`Round ${id} not found`);
     if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may lock a round');
-    if (round.status !== 'OPEN') throw new BadRequestException('Only an open round can be locked');
-    return this.prisma.round.update({
-      where: { id },
-      data: { status: 'LOCKED' },
-      select: { id: true, roomId: true, status: true, opensAt: true, locksAt: true, revealedAt: true, createdAt: true, updatedAt: true },
-    });
+    const locked = await this.lockIfDueOrOpen(id, false);
+    if (!locked) throw new BadRequestException('Only an open round can be locked');
+    return locked;
   }
 
   async reveal(id: string, userId: string) {
+    const round = await this.prisma.round.findUnique({ where: { id }, include: { room: true } });
+    if (!round) throw new NotFoundException(`Round ${id} not found`);
+    if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may reveal a round');
+    return this.revealAndSettle(id);
+  }
+
+  /** Atomically transitions an expired OPEN round to LOCKED. */
+  async openIfDue(id: string) {
+    const claimed = await this.prisma.round.updateMany({
+      where: { id, status: 'COUNTDOWN' as any, opensAt: { lte: new Date() } },
+      data: { status: 'OPEN' },
+    });
+    return claimed.count === 1 ? this.findOne(id) : null;
+  }
+
+  /** Atomically transitions an expired OPEN round to LOCKED. */
+  async lockIfDue(id: string) {
+    return this.lockIfDueOrOpen(id, true);
+  }
+
+  private async lockIfDueOrOpen(id: string, dueOnly: boolean) {
+    const now = new Date();
+    const claimed = await this.prisma.round.updateMany({
+      where: {
+        id,
+        status: 'OPEN',
+        ...(dueOnly ? { locksAt: { lte: now } } : {}),
+      },
+      data: { status: 'LOCKED' },
+    });
+    return claimed.count === 1 ? this.findOne(id) : null;
+  }
+
+  /** Resolves a locked round without requiring a connected host. */
+  async revealAndSettle(id: string) {
     return this.prisma.$transaction(async (tx) => {
       const round = await tx.round.findUnique({ where: { id }, include: { room: true, predictions: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } } });
       if (!round) throw new NotFoundException(`Round ${id} not found`);
-      if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may reveal a round');
       if (round.status !== 'LOCKED') throw new BadRequestException('Only a locked round can be revealed');
       const claimed = await tx.round.updateMany({ where: { id, status: 'LOCKED' }, data: { status: 'REVEALED', revealedAt: new Date() } });
       if (claimed.count !== 1) throw new BadRequestException('Round has already been resolved');
@@ -85,5 +117,17 @@ export class RoundsService {
       }
       return tx.round.findUniqueOrThrow({ where: { id }, include: { predictions: true } });
     });
+  }
+
+  /** Marks a revealed round as finished and reopens its room for the next one. */
+  async finish(id: string) {
+    const finished = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.round.updateMany({ where: { id, status: 'REVEALED' }, data: { status: 'FINISHED' as any } });
+      if (updated.count !== 1) return null;
+      const round = await tx.round.findUniqueOrThrow({ where: { id }, select: { roomId: true } });
+      await tx.room.updateMany({ where: { id: round.roomId, status: 'IN_PROGRESS' }, data: { status: 'WAITING' } });
+      return tx.round.findUniqueOrThrow({ where: { id }, include: { predictions: true } });
+    });
+    return finished;
   }
 }

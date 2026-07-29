@@ -36,9 +36,11 @@ enum RoomStatus {
 }
 
 enum RoundStatus {
+  COUNTDOWN
   OPEN
   LOCKED
   REVEALED
+  FINISHED
 }
 
 enum ClaimTruthLabel {
