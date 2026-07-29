@@ -10,9 +10,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # Base de données partagée (pgvector) — utilisée plus tard par le RAG.
     database_url: str = ""
-    # Fournisseur LLM : clé + modèle (renseignés dans .env).
+
+    # --- Mistral (fournisseur LLM choisi par l'équipe) ---
+    # La clé d'API : PAS de valeur par défaut, elle DOIT venir du .env (secret).
     llm_api_key: str = ""
-    llm_model: str = ""
+    # URL de base de l'API Mistral. En variable pour rester configurable (et
+    # pour pouvoir la pointer vers un mock en test), mais avec une valeur par
+    # défaut car elle n'a rien de secret.
+    mistral_api_base: str = "https://api.mistral.ai/v1"
+    # Noms des modèles. Valeurs par défaut fournies (ce ne sont pas des secrets)
+    # pour que le service marche « clé en poche » sans avoir à tout remplir.
+    # Chacun reste surchargeable depuis le .env.
+    llm_model: str = "mistral-small-latest"        # génération de texte (RAG + chat libre)
+    embedding_model: str = "mistral-embed"          # vectorisation du corpus (1024 dimensions)
+    moderation_model: str = "mistral-moderation-latest"  # modération du chat
 
     # extra="ignore" : on n'échoue pas si l'env contient d'autres variables
     # (POSTGRES_*, JWT_SECRET...) qui ne concernent pas ce service.
