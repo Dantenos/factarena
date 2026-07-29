@@ -1,0 +1,233 @@
+# AI.md — feuille de route Tech IA (FastAPI + Mistral)
+
+Doc de travail du service IA. Il couvre **mes trois modules** (RAG, interface LLM, modération),
+l'ordre dans lequel je les construis, et les décisions techniques prises avant de coder.
+
+La source de vérité reste `docs/subject.pdf`. L'archi d'ensemble est dans
+`docs/ARCHITECTURE.md` (voir surtout §3 « les trois pièges à points » et §5.2 la frontière
+Prisma / vecteurs). Ici je descends au niveau de MA partie.
+
+Choix d'équipe acté : **le fournisseur LLM est Mistral** (API La Plateforme). Raison : ils
+couvrent mes trois besoins avec une seule clé — embeddings, chat en streaming, et une API de
+modération à base de modèle (pas une wordlist, ce que le sujet exige).
+
+---
+
+## 1. Ce que je dois livrer
+
+Trois modules, 5 points, définis au chapitre IV.4 du sujet :
+
+| Module | Type | Pts | Exigence exacte (sujet IV.4) |
+|---|---|---|---|
+| RAG complet | Major | 2 | « large dataset », l'utilisateur pose des questions, récupération de contexte + génération de réponse |
+| Interface LLM (streaming) | Major | 2 | génération à partir d'une saisie utilisateur, **streaming**, gestion d'erreurs **ET rate limiting** |
+| Modération IA | Minor | 1 | auto-modération / auto-suppression / auto-warning |
+
+### Les trois pièges à points (à ne jamais oublier)
+
+1. **RAG et LLM doivent être PROUVÉS distincts.** 4 points en jeu. Si un évaluateur les voit
+   comme « la même chose », il fusionne deux majors en un. Il me faut deux surfaces
+   visiblement différentes (voir §4, étapes 2 et 3).
+2. **Le RAG doit ingérer un large dataset** — des milliers de documents, pas vingt. Ne jamais
+   présenter le corpus comme « petit ».
+3. **La modération doit agir par modèle**, pas par liste de mots interdits. Une wordlist = 0
+   point. L'API Mistral règle ça.
+
+### Le principe qui protège tout le reste
+
+Le RAG **explique** un verdict déjà connu (le `truthLabel` éditorial stocké en base), il ne
+**décide jamais** qui gagne au jeu. Mon `ClaimVerdict` est **display only**. Je ne laisse
+jamais l'IA trancher le score : c'est la décision d'archi n°1 de `ARCHITECTURE.md`, et c'est
+elle qui neutralise l'attaque « ton IA peut halluciner le résultat ».
+
+---
+
+## 2. Ce que Mistral apporte, module par module
+
+Deux points vérifiés sur la doc Mistral (à re-checker au moment de coder, ça peut bouger) :
+
+- **Embeddings** : le modèle `mistral-embed` sort des vecteurs de **1024 dimensions**.
+  Conséquence directe : ma colonne pgvector est `vector(1024)`. Ce chiffre doit correspondre
+  EXACTEMENT au modèle, sinon l'insertion échoue.
+- **Modération** : Mistral a une **API de modération dédiée** (modèle Ministral 8B), qui
+  classe le texte en 9 catégories et sait juger le dernier message dans son contexte
+  conversationnel. C'est exactement « auto-modération par modèle » — pas une wordlist.
+
+| Mon besoin | L'API Mistral utilisée |
+|---|---|
+| RAG — vectoriser le corpus et les questions | Embeddings (`mistral-embed`, 1024 dim) |
+| RAG + LLM — générer la réponse | Chat Completions en streaming (SSE) |
+| LLM — prouver le rate limit / les erreurs | Le 429 renvoyé par l'API quand je tape trop vite |
+| Modération — chat du salon | Moderation API (endpoint conversationnel) |
+
+---
+
+## 3. Décisions techniques prises AVANT de coder
+
+**Le driver base de données devient justifié.** Au stade infra, on avait activé pgvector via
+un script SQL (`postgres/init/01-pgvector.sql`) pour éviter d'ajouter un driver Python juste
+pour une ligne. Maintenant que je vais **écrire et lire des vecteurs**, ce driver est
+légitime : j'ajoute `psycopg` (ou SQLAlchemy) à `requirements.txt`, avec un commentaire qui
+explique pourquoi (règle du projet : pas de dépendance non justifiée).
+
+**La table `Document` m'appartient.** Elle est gérée par FastAPI, PAS par Prisma (frontière
+de `ARCHITECTURE.md` §5.2 : Prisma gère mal le type `vector`). Schéma cible :
+
+```
+Document
+  id           serial primary key
+  title        text
+  url          text          -- sert de citation/source dans les réponses RAG
+  content      text          -- le chunk de texte
+  chunk_index  int           -- position du chunk dans le document d'origine
+  embedding    vector(1024)  -- le vecteur mistral-embed
+```
+
+Index de similarité à créer une fois le corpus chargé (sinon la recherche scanne tout) :
+```sql
+CREATE INDEX ON documents USING ivfflat (embedding vector_cosine_ops);
+```
+
+**Le corpus « large ».** Dataset fact-check public : LIAR, FEVER, ou un sous-ensemble
+Wikipédia. À m'assigner tôt — `ARCHITECTURE.md` prévient que la tâche « contenu » est
+sous-estimée. Objectif chiffré : `SELECT count(*) FROM documents` doit afficher des milliers
+de lignes.
+
+**Deux niveaux de rate limiting.** Le sujet exige que J'implémente un rate limit, pas
+seulement que je subisse celui de Mistral. Donc :
+- un limiteur côté FastAPI sur mon endpoint LLM (ex. `slowapi`, ou un compteur en mémoire) ;
+- **plus** la gestion propre du 429 renvoyé par Mistral.
+Je montre les deux à l'évaluation.
+
+**Les secrets dans `.env`.** `LLM_API_KEY` et `LLM_MODEL` existent déjà. À ajouter
+probablement : `EMBEDDING_MODEL=mistral-embed`. Je ne commite jamais la vraie clé
+(`.env` est gitignoré, `.env.example` porte les clés vides).
+
+**La règle d'or réseau.** Le front ne me parle JAMAIS directement. C'est le back NestJS qui
+appelle mes endpoints sur `http://ai-service:8000` (réseau Docker interne). J'expose une API
+interne propre, il fait le relais et gère l'auth.
+
+---
+
+## 4. Ordre de construction
+
+> Avancement : TOUTES les étapes du service IA sont FAITES et testées.
+> - Étape 0 : client Mistral (embed / chat_stream / moderate) + retry.
+> - Étape 1 : corpus — 142K passages généralistes (dump) + ingestion politique
+>   ciblée (API Wikipédia, texte à jour, source `wikipedia_fr_politique`).
+> - Étape 2 : endpoint `POST /rag/ask` — réponse sourcée en streaming (SSE).
+> - Étape 3 : endpoint `POST /llm/chat` — chat libre en streaming SANS retrieval
+>   (distinction RAG/LLM), + rate limiting (429) + validation.
+> - Étape 4 : endpoint `POST /moderation/check` — décision allow/warn/delete par
+>   modèle Mistral (pas de wordlist).
+>
+> Les 3 modules IA (RAG major, LLM major, modération minor = 5 pts) sont couverts
+> côté service.
+>
+> Durcissement fait : sonde /ready (base + corpus), rate limit aussi sur /rag/ask,
+> avertissement au boot si la clé manque, suite pytest (8 tests : logique pure +
+> validation des endpoints) lançable via `docker compose exec ai-service python -m pytest`.
+> Script de démo : `python -m app.rag.demo_factcheck`.
+>
+> Reste le branchement depuis le back NestJS (relais vers ces endpoints) et le
+> pipeline X-Fact -> table Claim (avec le Back Core).
+
+### Étape 0 — le socle (~0,5 j)
+Ajouter le driver DB + le client Mistral à `requirements.txt`. Écrire `app/mistral_client.py`
+qui lit la clé depuis `config.py` et expose trois fonctions : `embed(texts)`,
+`chat_stream(messages)`, `moderate(messages)`. Tester chacune au `curl` avant d'aller plus
+loin. Rien d'autre ne démarre tant que ces trois briques ne répondent pas.
+
+### Étape 1 — ingestion du corpus (RAG, partie 1)
+Un script qui : charge le dataset → découpe en chunks → appelle `embed()` → insère dans
+`Document`. C'est le « large dataset ». Vérif finale : `SELECT count(*)` = des milliers.
+Vit dans `app/rag/`.
+
+### Étape 2 — recherche + génération (RAG, partie 2)
+Endpoint `POST /rag/ask` :
+```
+question -> embed(question) -> recherche pgvector (ORDER BY embedding <-> $1 LIMIT k)
+         -> injecter les k chunks comme contexte -> chat_stream()
+         -> réponse sourcée (les url des chunks = citations)
+```
+C'est **ma surface Q&A autonome**, celle que je démontre en direct. Vit dans `app/rag/`.
+
+### Étape 3 — interface LLM en streaming (2e major, DISTINCT)
+Endpoint `POST /llm/chat` : saisie libre → `chat_stream()` **sans aucune récupération**.
+C'est ici que je prouve la distinction avec le RAG : même modèle, mais retrieval **désactivé**.
+J'ajoute le rate limit + la gestion d'erreurs, et je sais déclencher un vrai 429 en live.
+Vit dans `app/llm/`.
+
+### Étape 4 — modération (le minor)
+Endpoint `POST /moderation/check` : prend un message de chat → appelle la Moderation API de
+Mistral → renvoie une décision (OK / warn / delete). Le back l'appelle pour chaque message du
+salon. Dépend du chat (module 3, côté Back Core) : à coordonner avec lui. Vit dans
+`app/moderation/`.
+
+### Étape 5 — branchement au back
+Le back NestJS appelle mes endpoints sur `http://ai-service:8000`. J'expose une API interne
+propre ; lui fait le relais vers le front et gère l'authentification. Aucun appel direct
+front -> IA.
+
+---
+
+## 5. Où va mon code (rappel de l'arbo)
+
+```
+ai-service/
+├── app/
+│   ├── main.py            # app FastAPI + route /health (déjà là)
+│   ├── config.py          # lecture des variables d'env (déjà là)
+│   ├── mistral_client.py  # (à créer) embed / chat_stream / moderate
+│   ├── rag/               # ingestion du corpus + endpoint /rag/ask
+│   ├── llm/               # endpoint /llm/chat (streaming, rate limit)
+│   └── moderation/        # endpoint /moderation/check
+├── requirements.txt       # + driver DB + client Mistral (à justifier)
+└── Dockerfile             # déjà prêt (uvicorn, user non-root)
+```
+
+Les trois dossiers `rag/`, `llm/`, `moderation/` existent déjà en squelette (un `__init__.py`
+vide + un README d'une ligne). C'est là que je code.
+
+---
+
+## 6. Check-list de démonstration (jour de l'éval)
+
+Ce qui transforme « j'ai codé » en « je marque les points » :
+
+- [ ] `SELECT count(*)` sur le corpus -> des **milliers** de documents.
+- [ ] Q&A RAG en direct : une question -> une réponse **avec ses sources**.
+- [ ] Interface LLM : saisie libre -> réponse **qui s'affiche token par token**.
+- [ ] Preuve de distinction RAG/LLM : montrer le LLM qui tourne **retrieval coupé**.
+- [ ] Déclencher un **vrai 429** en live (spammer l'endpoint) -> gestion propre, pas un crash.
+- [ ] Modération : envoyer un message toxique -> **auto-action** visible, et expliquer que
+      c'est un modèle qui décide, pas une liste de mots.
+- [ ] Savoir **expliquer** chaque brique (exigence du chapitre I : je livre ce que je
+      comprends et j'assume).
+
+---
+
+## 7. Décisions actées
+
+- **Corpus RAG = Wikipédia FR (sous-ensemble)**. Couvre science / histoire / sciences
+  humaines / politique, en français. On en ingère ~2000 articles (réglable), vectorisés
+  avec mistral-embed. Ingestion : `app/rag/ingest.py`.
+- **X-Fact FR = claims du JEU, pas du RAG.** Les fact-checks politiques réels alimenteront la
+  table `Claim` de Prisma (clé de réponse `truthLabel`), côté Back Core. Tâche SÉPARÉE, à
+  faire après que le RAG marche, **en coordination avec le Back Core**.
+- **Table `documents`** (mienne, FastAPI) : `source, title, url, content, chunk_index,
+  embedding vector(1024)`. Index HNSW cosinus. Voir `app/db.py`.
+
+## 8. Points ouverts / à valider
+
+- Nom exact du modèle de chat Mistral et format de la réponse en streaming : vérifiés à
+  l'étape 0 (chat/completions, SSE `data: [DONE]`) — OK.
+- Volume final du corpus (2000 articles par défaut : à monter si on veut « plus large »).
+- Le pipeline X-Fact -> table `Claim` : format d'export, qui code quoi (moi la préparation
+  des données, le Back Core la table). À caler en réunion.
+
+---
+
+*Sources Mistral : docs.mistral.ai/capabilities/embeddings (dimension 1024) et
+mistral.ai/news/mistral-moderation (API de modération par modèle). Document vivant : je le
+mets à jour à chaque décision.*
