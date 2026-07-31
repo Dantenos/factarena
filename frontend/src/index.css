@@ -6,8 +6,10 @@
 	--color-noir-krystal: #221f22;
 	--color-gris-krystal: #2d2a2e;
 	--color-grisclair-krystal: #403e41;
-	--color-bleu-krystal: #6cc0cb;
-	--font-montserrat: Montserrat, sans-serif;
+	--color-bleu-d: #2563EB;
+	--color-bleu-l: #5C8AF0;
+	--color-red-d: #7D1811;
+	--color-red-l: #ED8179;
 }
 
 @layer base {
@@ -21,9 +23,18 @@
 }
 
 @layer components {
-  .button-krystal {
-    @apply inline-flex items-center justify-center rounded-xl bg-grisclair-krystal text-white font-semibold transition-colors hover:bg-bleu-krystal hover:text-noir-krystal;
-  }
+	.button-blue-d {
+		@apply inline-flex items-center justify-center rounded-xl bg-gris-krystal border-3 border-bleu-d text-white font-semibold transition-colors hover:bg-bleu-d hover:text-white;
+	}
+	.button-red-d {
+		@apply inline-flex items-center justify-center rounded-xl bg-gris-krystal border-3 border-red-d text-white font-semibold transition-colors hover:bg-red-d hover:text-white;
+	}
+	.button-blue-l {
+		@apply inline-flex items-center justify-center rounded-xl bg-white border-3 border-bleu-l text-noir-krystal font-semibold transition-colors hover:bg-bleu-l hover:text-white;
+	}
+	.button-red-l {
+		@apply inline-flex items-center justify-center rounded-xl bg-white border-3 border-red-l text-noir-krystal font-semibold transition-colors hover:bg-red-l hover:text-white;
+	}
 }
 
 html,
