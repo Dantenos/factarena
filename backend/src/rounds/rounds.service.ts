@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RoundsService {
@@ -9,7 +10,7 @@ export class RoundsService {
   async create(data: { roomId: string; claimIds: string[]; durationSeconds: number }, createdById: string) {
     const distinctClaimIds = [...new Set(data.claimIds)];
     if (distinctClaimIds.length !== data.claimIds.length) throw new BadRequestException('A claim may appear only once in a round');
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const room = await tx.room.findUnique({ where: { id: data.roomId } });
       if (!room) throw new NotFoundException(`Room ${data.roomId} not found`);
       if (room.createdBy !== createdById) throw new ForbiddenException('Only the room host may create rounds');
@@ -20,7 +21,7 @@ export class RoundsService {
       if (claims.length !== distinctClaimIds.length) throw new BadRequestException('One or more claims do not exist');
       const opensAt = new Date(Date.now() + 3_000);
       const locksAt = new Date(opensAt.getTime() + data.durationSeconds * 1000);
-      const round = await tx.round.create({ data: { roomId: data.roomId, status: 'COUNTDOWN' as any, opensAt, locksAt, trueFakeCount: claims.filter((claim) => claim.truthLabel === 'FALSE').length } });
+      const round = await tx.round.create({ data: { roomId: data.roomId, status: 'COUNTDOWN' as any, opensAt, locksAt, trueFakeCount: claims.filter((claim: { truthLabel: string }) => claim.truthLabel === 'FALSE').length } });
       await tx.roundClaim.createMany({ data: distinctClaimIds.map((claimId, orderIndex) => ({ roundId: round.id, claimId, orderIndex })) });
       await tx.room.update({ where: { id: data.roomId }, data: { status: 'IN_PROGRESS' } });
       return tx.round.findUniqueOrThrow({
@@ -96,7 +97,7 @@ export class RoundsService {
 
   /** Resolves a locked round without requiring a connected host. */
   async revealAndSettle(id: string) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const round = await tx.round.findUnique({ where: { id }, include: { room: true, predictions: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } } });
       if (!round) throw new NotFoundException(`Round ${id} not found`);
       if (round.status !== 'LOCKED') throw new BadRequestException('Only a locked round can be revealed');
@@ -104,13 +105,13 @@ export class RoundsService {
       if (claimed.count !== 1) throw new BadRequestException('Round has already been resolved');
       if (round.predictions.length === 0) return tx.round.findUniqueOrThrow({ where: { id } });
       const trueFakeCount = round.trueFakeCount!;
-      const closestDistance = Math.min(...round.predictions.map((prediction) => Math.abs(prediction.predictedFakeCount - trueFakeCount)));
-      const winners = round.predictions.filter((prediction) => Math.abs(prediction.predictedFakeCount - trueFakeCount) === closestDistance);
-      const pot = round.predictions.reduce((total, prediction) => total + prediction.stake, 0);
+      const closestDistance = Math.min(...round.predictions.map((prediction: { predictedFakeCount: number }) => Math.abs(prediction.predictedFakeCount - trueFakeCount)));
+      const winners = round.predictions.filter((prediction: { predictedFakeCount: number }) => Math.abs(prediction.predictedFakeCount - trueFakeCount) === closestDistance);
+      const pot = round.predictions.reduce((total: number, prediction: { stake: number }) => total + prediction.stake, 0);
       const basePayout = Math.floor(pot / winners.length);
       const remainder = pot % winners.length;
       for (const prediction of round.predictions) {
-        const winnerIndex = winners.findIndex((winner) => winner.id === prediction.id);
+        const winnerIndex = winners.findIndex((winner: { id: string }) => winner.id === prediction.id);
         const payout = winnerIndex === -1 ? 0 : basePayout + (winnerIndex < remainder ? 1 : 0);
         await tx.prediction.update({ where: { id: prediction.id }, data: { result: winnerIndex === -1 ? 'LOSS' : 'WIN', payout } });
         if (payout > 0) await this.ledger.creditPayout(tx, prediction.userId, payout);
@@ -121,7 +122,7 @@ export class RoundsService {
 
   /** Marks a revealed round as finished and reopens its room for the next one. */
   async finish(id: string) {
-    const finished = await this.prisma.$transaction(async (tx) => {
+    const finished = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.round.updateMany({ where: { id, status: 'REVEALED' }, data: { status: 'FINISHED' as any } });
       if (updated.count !== 1) return null;
       const round = await tx.round.findUniqueOrThrow({ where: { id }, select: { roomId: true } });

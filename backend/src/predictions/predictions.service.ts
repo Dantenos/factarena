@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PredictionsService {
@@ -8,7 +9,7 @@ export class PredictionsService {
 
   async create(data: { roundId: string; predictedFakeCount: number; stake: number }, userId: string) {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const round = await tx.round.findUnique({ where: { id: data.roundId }, include: { roundClaims: true } });
         if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
         const now = new Date();

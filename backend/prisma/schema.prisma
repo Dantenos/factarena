@@ -73,6 +73,37 @@ model User {
   rooms        Room[]        @relation("RoomHost")
   predictions  Prediction[]
   transactions Transaction[]
+  friends      Friend[]      @relation("Friendships")
+  friendOf     Friend[]      @relation("FriendTargets")
+  messages     Message[]
+}
+
+model Friend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("Friendships", fields: [userId], references: [id])
+  friend User @relation("FriendTargets", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([roomId])
+  @@index([userId])
 }
 
 model Room {
@@ -83,8 +114,9 @@ model Room {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  host   User     @relation("RoomHost", fields: [createdBy], references: [id])
-  rounds Round[]
+  host     User     @relation("RoomHost", fields: [createdBy], references: [id])
+  rounds   Round[]
+  messages Message[]
 }
 
 model Round {

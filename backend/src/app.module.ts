@@ -6,6 +6,9 @@ import { RoomsModule } from './rooms/rooms.module';
 import { RoundsModule } from './rounds/rounds.module';
 import { PredictionsModule } from './predictions/predictions.module';
 import { LedgerModule } from './ledger/ledger.module';
+import { UsersModule } from './users/users.module';
+import { FriendsModule } from './friends/friends.module';
+import { ChatModule } from './chat/chat.module';
 import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
@@ -17,6 +20,9 @@ import { RealtimeModule } from './realtime/realtime.module';
     RoundsModule,
     PredictionsModule,
     LedgerModule,
+    UsersModule,
+    FriendsModule,
+    ChatModule,
     RealtimeModule,
   ],
 })

@@ -13,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PredictionsService } from '../predictions/predictions.service';
 import { RoomsService } from '../rooms/rooms.service';
 import { RoundsService } from '../rounds/rounds.service';
+import { ChatService } from '../chat/chat.service';
 import { Server, Socket } from 'socket.io';
 
 type AuthenticatedSocket = Socket & { data: { userId: string; email?: string; roomId?: string } };
@@ -22,6 +23,9 @@ interface PredictionPayload extends RoomPayload {
   roundId: string;
   predictedFakeCount: number;
   stake: number;
+}
+interface ChatPayload extends RoomPayload {
+  content: string;
 }
 
 @WebSocketGateway({
@@ -43,6 +47,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     private readonly roomsService: RoomsService,
     private readonly roundsService: RoundsService,
     private readonly predictionsService: PredictionsService,
+    private readonly chatService: ChatService,
   ) {}
 
   async handleConnection(rawSocket: Socket) {
@@ -152,6 +157,14 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return round;
   }
 
+  @SubscribeMessage('chat:send')
+  async sendChatMessage(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: ChatPayload) {
+    await this.assertInRoom(socket, body.roomId);
+    const message = await this.chatService.sendMessage(socket.data.userId, body.roomId, body.content);
+    this.server.to(this.roomChannel(body.roomId)).emit('chat:message', message);
+    return message;
+  }
+
   /** Used by the server game loop to publish transitions that were not caused by a client event. */
   async publishRoundState(roomId: string, event: string, roundId?: string) {
     const state = await this.roomState(roomId, roundId);
@@ -162,7 +175,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   private async roomState(roomId: string, requestedRoundId?: string) {
     const room = await this.roomsService.findOne(roomId);
-    const activeRound = room.rounds.find((candidate) => ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'].includes(candidate.status));
+    const activeRound = room.rounds.find((candidate: { status: string }) => ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'].includes(candidate.status));
     const round = requestedRoundId
       ? await this.roundsService.findOne(requestedRoundId)
       : activeRound ? await this.roundsService.findOne(activeRound.id) : null;
