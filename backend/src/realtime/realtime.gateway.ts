@@ -180,23 +180,18 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       ? await this.roundsService.findOne(requestedRoundId)
       : activeRound ? await this.roundsService.findOne(activeRound.id) : null;
     const predictions = round ? await this.predictionsService.findByRound(round.id) : [];
+    const stats = this.predictionsService.calculateRoundStats(predictions);
     return {
       room: { id: room.id, name: room.name, status: room.status, createdBy: room.createdBy },
       round,
-      ...this.liveStats({ round, predictions }),
+      ...stats,
       serverTime: new Date().toISOString(),
     };
   }
 
   private liveStats(state: { round?: { id: string } | null; predictions?: Array<{ stake: number; predictedFakeCount: number }> }) {
     const predictions = state.predictions || [];
-    const pot = predictions.reduce((total, prediction) => total + prediction.stake, 0);
-    const distribution = predictions.reduce<Record<string, number>>((result, prediction) => {
-      const key = String(prediction.predictedFakeCount);
-      result[key] = (result[key] || 0) + 1;
-      return result;
-    }, {});
-    return { pot, predictionCount: predictions.length, distribution };
+    return this.predictionsService.calculateRoundStats(predictions);
   }
 
   private async assertInRoom(socket: AuthenticatedSocket, roomId: string) {

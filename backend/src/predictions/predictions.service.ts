@@ -3,6 +3,17 @@ import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
+type PredictionDatum = { stake: number; predictedFakeCount: number };
+
+type PredictionDistributionEntry = { count: number; stake: number };
+
+export type RoundPredictionStats = {
+  pot: number;
+  predictionCount: number;
+  distribution: Record<string, PredictionDistributionEntry>;
+  odds: Record<string, number>;
+};
+
 @Injectable()
 export class PredictionsService {
   constructor(private readonly prisma: PrismaService, private readonly ledger: LedgerService) {}
@@ -33,5 +44,29 @@ export class PredictionsService {
 
   async findByRound(roundId: string) {
     return this.prisma.prediction.findMany({ where: { roundId }, select: { id: true, userId: true, predictedFakeCount: true, stake: true, payout: true, result: true, createdAt: true } });
+  }
+
+  async findRoundStats(roundId: string) {
+    const predictions = await this.prisma.prediction.findMany({ where: { roundId }, select: { stake: true, predictedFakeCount: true } });
+    return this.calculateRoundStats(predictions);
+  }
+
+  calculateRoundStats(predictions: PredictionDatum[]): RoundPredictionStats {
+    const pot = predictions.reduce((total, prediction) => total + prediction.stake, 0);
+    const distribution = predictions.reduce<Record<string, PredictionDistributionEntry>>((acc, prediction) => {
+      const key = String(prediction.predictedFakeCount);
+      const current = acc[key] || { count: 0, stake: 0 };
+      current.count += 1;
+      current.stake += prediction.stake;
+      acc[key] = current;
+      return acc;
+    }, {});
+
+    const odds = Object.entries(distribution).reduce<Record<string, number>>((acc, [key, aggregation]) => {
+      acc[key] = aggregation.stake > 0 ? Number((pot / aggregation.stake).toFixed(2)) : 0;
+      return acc;
+    }, {});
+
+    return { pot, predictionCount: predictions.length, distribution, odds };
   }
 }

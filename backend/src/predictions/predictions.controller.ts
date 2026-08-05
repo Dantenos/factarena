@@ -13,4 +13,7 @@ export class PredictionsController {
 
   @Get('round/:roundId')
   findByRound(@Param('roundId') roundId: string) { return this.predictionsService.findByRound(roundId); }
+
+  @Get('round/:roundId/stats')
+  findRoundStats(@Param('roundId') roundId: string) { return this.predictionsService.findRoundStats(roundId); }
 }
