@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../../common/env';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -23,12 +24,13 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
-      const payload = jwt.verify(token, secret) as { sub?: string; email?: string };
+      const secret = getJwtSecret();
+      const payload = jwt.verify(token, secret) as { sub?: string; email?: string; role?: string };
 
-      (request as Request & { user: { userId?: string; email?: string } }).user = {
+      (request as Request & { user: { userId?: string; email?: string; role?: string } }).user = {
         userId: payload.sub,
         email: payload.email,
+        role: payload.role,
       } as any;
 
       return true;

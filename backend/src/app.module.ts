@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { FriendsModule } from './friends/friends.module';
 import { ChatModule } from './chat/chat.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { ClaimsModule } from './claims/claims.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RealtimeModule } from './realtime/realtime.module';
     FriendsModule,
     ChatModule,
     RealtimeModule,
+    ClaimsModule,
   ],
 })
 export class AppModule {}

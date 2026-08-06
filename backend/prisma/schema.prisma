@@ -62,13 +62,17 @@ enum TransactionType {
 
 model User {
   id           String        @id @default(cuid())
-  email        String        @unique // identifiant de connexion (auth email + mot de passe)
-  passwordHash String        // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
-  avatarUrl    String?       // avatar optionnel (un défaut est fourni côté app)
-  status       UserStatus    @default(OFFLINE)
-  virtualBalance Int         @default(1000)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  email          String        @unique // identifiant de connexion (auth email + mot de passe)
+  displayName    String?       // nom affiché dans l'application
+  role           String        @default("USER")
+  passwordHash   String?       // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
+  oauthProvider  String?       // fournisseur OAuth lié (ex. 42)
+  oauthProviderId String?      // identifiant du compte OAuth
+  avatarUrl      String?       // avatar optionnel (un défaut est fourni côté app)
+  status         UserStatus    @default(OFFLINE)
+  virtualBalance Int           @default(1000)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   rooms        Room[]        @relation("RoomHost")
   predictions  Prediction[]
@@ -76,6 +80,8 @@ model User {
   friends      Friend[]      @relation("Friendships")
   friendOf     Friend[]      @relation("FriendTargets")
   messages     Message[]
+
+  @@unique([oauthProvider, oauthProviderId])
 }
 
 model Friend {

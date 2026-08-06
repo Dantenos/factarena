@@ -1,8 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { FortyTwoStrategy } from './strategies/fortytwo.strategy';
+import { getJwtSecret, isFortyTwoEnabled } from '../common/env';
+
+const authProviders: Provider[] = [AuthService];
+if (isFortyTwoEnabled()) {
+  authProviders.push(FortyTwoStrategy);
+}
 
 // Module d'authentification : il expose les routes /api/auth/* et fournit les
 // services nécessaires pour stocker les utilisateurs, hasher les mots de passe
@@ -10,13 +18,14 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [
     PrismaModule,
+    PassportModule.register({ session: false }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'dev-secret-change-me',
+      secret: getJwtSecret(),
       signOptions: { expiresIn: '1h' },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: authProviders,
   exports: [JwtModule],
 })
 export class AuthModule {}
