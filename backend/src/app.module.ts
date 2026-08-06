@@ -11,6 +11,7 @@ import { FriendsModule } from './friends/friends.module';
 import { ChatModule } from './chat/chat.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { ClaimsModule } from './claims/claims.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ClaimsModule } from './claims/claims.module';
     ChatModule,
     RealtimeModule,
     ClaimsModule,
+    AiModule,
   ],
 })
 export class AppModule {}
