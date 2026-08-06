@@ -1,0 +1,55 @@
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Lint with ESLint
+      run: npx eslint . --ext .ts
+
+    - name: Build
+      run: npm run build
+
+    - name: Test
+      run: npm test
+
+    - name: Build Docker Image
+      run: |
+        docker build -t transcendence-app .
+        docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+
+    - name: Push Docker Image
+      run: docker push transcendence-app
+
+# - **What it does**:
+#   This file defines the **GitHub Actions workflow** that runs automatically when code is pushed to the `main`
+# branch or a pull request is opened.
+#   - **Linting**: Checks for code style and formatting issues.
+#   - **Building**: Compiles the app or runs tests.
+#   - **Testing**: Runs unit/integration tests to ensure code works as expected.
+#   - **Deployment**: Builds and pushes Docker images to a registry (if configured).
+
+# - **Security Note**:
+#   This file **does not contain secrets**. Any sensitive data (like Docker credentials) are stored in **GitHub
+# Secrets**, not in the code.
+#   - Example: `secrets.DOCKER_REGISTRY_PASSWORD` is used in the workflow to push Docker images.
+#   - **Never commit GitHub Secrets to the repo** — they are stored securely in GitHub itself.
