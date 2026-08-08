@@ -4,3 +4,27 @@
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
 pydantic-settings==2.6.1
+# httpx : client HTTP pour appeler l'API REST de Mistral (embeddings, chat en
+# streaming, modération). On appelle l'API en direct plutôt que via le SDK
+# mistralai : c'est transparent (on voit chaque requête, explicable en
+# soutenance) et ça ne dépend pas d'une version de SDK. httpx gère l'async,
+# indispensable pour ne pas bloquer la boucle FastAPI (multi-utilisateur).
+httpx==0.28.1
+# psycopg : driver PostgreSQL. Justifié à partir de l'étape RAG : le service IA
+# écrit et lit lui-même la table des vecteurs (le corpus), que Prisma ne gère
+# pas (frontière décidée dans docs/ARCHITECTURE.md §5.2). L'extra [binary]
+# embarque libpq -> pas besoin de compiler quoi que ce soit dans l'image slim.
+# On reste en SQL direct (pas d'ORM) : une table, quelques requêtes, tout
+# s'explique en soutenance ligne par ligne.
+psycopg[binary]==3.2.3
+# datasets (HuggingFace) : utilisé UNIQUEMENT par le script d'ingestion RAG
+# (app/rag/ingest.py) pour lire Wikipédia FR en streaming. C'est la voie
+# standard pour charger un dataset public ; pas d'alternative plus simple pour
+# récupérer des milliers d'articles FR proprement. NB : cette lib est lourde
+# (elle tire pyarrow) -> elle grossit l'image du service IA. Acceptable pour un
+# outil d'ingestion one-shot ; à isoler plus tard si l'image devient un souci.
+datasets==3.2.0
+# pytest : suite de tests du service IA (voir tests/). On la garde dans l'image
+# pour pouvoir lancer les tests dans le conteneur (docker compose exec ... pytest).
+# Léger à côté de datasets ; le confort d'avoir des tests reproductibles le vaut.
+pytest==8.3.4
