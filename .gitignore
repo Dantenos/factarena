@@ -31,4 +31,3 @@ config-claude-code-ft-transcendence.md
 .env*
 k8s/*.yaml
 docker-compose.prod.yml
-en.subject.pdf # à retirer après

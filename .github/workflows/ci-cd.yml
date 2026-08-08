@@ -106,3 +106,15 @@ jobs:
         run: |
           docker compose config
           docker compose -f docker-compose.yml -f docker-compose.dev.yml config
+
+# - **What it does**:
+#   This file defines the **GitHub Actions workflow** that runs automatically when code is pushed to the `main` branch or a pull request is opened.
+#   - **Linting**: Checks for code style and formatting issues.
+#   - **Building**: Compiles the app or runs tests.
+#   - **Testing**: Runs unit/integration tests to ensure code works as expected.
+#   - **Deployment**: Builds and pushes Docker images to a registry (if configured).
+
+# - **Security Note**:
+#   This file **does not contain secrets**. Any sensitive data (like Docker credentials) are stored in **GitHub Secrets**, not in the code.
+#   - Example: `secrets.DOCKER_REGISTRY_PASSWORD` is used in the workflow to push Docker images.
+#   - **Never commit GitHub Secrets to the repo** — they are stored securely in GitHub itself.

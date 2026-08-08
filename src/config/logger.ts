@@ -30,7 +30,3 @@ export default logger;
 //     - `error.log`: Only logs errors (e.g., failed database connections).
 //     - `combined.log`: Logs all events (e.g., user login, API calls).
 //   - Logs are in **JSON format** for easier parsing by monitoring tools (like ELK Stack or Grafana).
-
-// - **Security Note**:
-//   This file has **no sensitive data** — it’s just a logging configuration.
-//   - Ensure that logs are stored securely and not exposed publicly.
