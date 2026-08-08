@@ -37,6 +37,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
@@ -75,6 +80,11 @@ services:
       timeout: 5s
       retries: 12
       start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
@@ -100,6 +110,11 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
@@ -127,6 +142,11 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
@@ -153,6 +173,11 @@ services:
       timeout: 5s
       retries: 6
       start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
