@@ -80,6 +80,7 @@ model User {
   friends      Friend[]      @relation("Friendships")
   friendOf     Friend[]      @relation("FriendTargets")
   messages     Message[]
+  createdClaims Claim[]    @relation("ClaimCreator")
 
   @@unique([oauthProvider, oauthProviderId])
 }
@@ -110,6 +111,16 @@ model Message {
 
   @@index([roomId])
   @@index([userId])
+}
+
+model RoomPresence {
+  socketId    String   @id
+  userId      String
+  roomId      String
+  lastSeenAt  DateTime @default(now())
+
+  @@index([roomId, lastSeenAt])
+  @@index([userId, lastSeenAt])
 }
 
 model Room {
@@ -143,6 +154,7 @@ model Round {
 
 model Claim {
   id         String          @id @default(cuid())
+  createdBy  String?
   text       String
   mediaRef   String?
   truthLabel ClaimTruthLabel
@@ -152,6 +164,9 @@ model Claim {
 
   roundClaims RoundClaim[]
   verdicts    ClaimVerdict[]
+  creator    User?           @relation("ClaimCreator", fields: [createdBy], references: [id])
+
+  @@index([createdBy])
 }
 
 model RoundClaim {

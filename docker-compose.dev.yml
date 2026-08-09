@@ -54,6 +54,7 @@ services:
   backend:
     volumes:
       - ./backend:/app
+      - backend_uploads:/app/uploads
       # Même histoire que pour le front, et ici c'est encore plus critique :
       # le node_modules de l'image contient le client Prisma généré au build,
       # qu'on n'a pas en local. Sans cette ligne, plus de Prisma du tout.

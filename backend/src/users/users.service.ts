@@ -8,6 +8,9 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { createReadStream, existsSync, unlink } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { StreamableFile } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -91,5 +94,32 @@ export class UsersService {
     });
 
     return { success: true };
+  }
+
+  async setAvatar(userId: string, filename: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const avatarUrl = `/api/users/avatars/${filename}`;
+    const previous = user.avatarUrl?.match(/^\/api\/users\/avatars\/([a-zA-Z0-9._-]+)$/)?.[1];
+    await this.prisma.user.update({ where: { id: userId }, data: { avatarUrl }, select: { id: true } });
+    if (previous) {
+      const previousPath = join(this.avatarDirectory(), previous);
+      if (existsSync(previousPath)) unlink(previousPath, () => undefined);
+    }
+    return this.findById(userId);
+  }
+
+  getAvatar(filename: string) {
+    if (!/^[a-zA-Z0-9_-]+\.(png|jpe?g|gif|webp)$/i.test(filename)) {
+      throw new NotFoundException('Avatar not found');
+    }
+    const filePath = join(this.avatarDirectory(), filename);
+    if (!existsSync(filePath)) throw new NotFoundException('Avatar not found');
+    return new StreamableFile(createReadStream(filePath));
+  }
+
+  avatarDirectory() {
+    return resolve(process.env.UPLOAD_DIR || join(process.cwd(), 'uploads', 'avatars'));
   }
 }

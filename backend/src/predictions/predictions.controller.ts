@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CuidParamPipe } from '../common/pipes/cuid-param.pipe';
 import { CreatePredictionDto } from './dto/create-prediction.dto';
 import { PredictionsService } from './predictions.service';
 
@@ -12,8 +13,8 @@ export class PredictionsController {
   create(@Body() body: CreatePredictionDto, @Request() req: { user: { userId: string } }) { return this.predictionsService.create(body, req.user.userId); }
 
   @Get('round/:roundId')
-  findByRound(@Param('roundId') roundId: string) { return this.predictionsService.findByRound(roundId); }
+  findByRound(@Param('roundId', CuidParamPipe) roundId: string, @Request() req: { user: { userId: string } }) { return this.predictionsService.findByRound(roundId, req.user.userId); }
 
   @Get('round/:roundId/stats')
-  findRoundStats(@Param('roundId') roundId: string) { return this.predictionsService.findRoundStats(roundId); }
+  findRoundStats(@Param('roundId', CuidParamPipe) roundId: string) { return this.predictionsService.findRoundStats(roundId); }
 }

@@ -1,10 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RoomPresenceService } from '../rooms/room-presence.service';
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly roomPresence: RoomPresenceService,
+  ) {}
 
   async list(userId: string) {
     const friendships = await this.prisma.friend.findMany({
@@ -17,6 +21,14 @@ export class FriendsService {
       orderBy: { createdAt: 'desc' },
     });
     return friendships.map((entry: { friend: { id: string; email: string; avatarUrl: string | null; status: string; createdAt: Date; updatedAt: Date } }) => entry.friend);
+  }
+
+  async presence(userId: string) {
+    const friends = await this.list(userId);
+    return Promise.all(friends.map(async (friend) => ({
+      ...friend,
+      currentRoomId: await this.roomPresence.getCurrentRoomId(friend.id),
+    })));
   }
 
   async add(userId: string, friendId: string) {

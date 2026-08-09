@@ -1,0 +1,43 @@
+CREATE TYPE "UserStatus" AS ENUM ('ONLINE', 'OFFLINE', 'IN_GAME');
+CREATE TYPE "RoomStatus" AS ENUM ('WAITING', 'IN_PROGRESS', 'FINISHED');
+CREATE TYPE "RoundStatus" AS ENUM ('COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED', 'FINISHED');
+CREATE TYPE "ClaimTruthLabel" AS ENUM ('TRUE', 'FALSE');
+CREATE TYPE "PredictionResult" AS ENUM ('WIN', 'LOSS');
+CREATE TYPE "TransactionType" AS ENUM ('BET', 'PAYOUT', 'BONUS', 'REFUND');
+
+CREATE TABLE "User" ("id" TEXT NOT NULL, "email" TEXT NOT NULL, "displayName" TEXT, "role" TEXT NOT NULL DEFAULT 'USER', "passwordHash" TEXT, "oauthProvider" TEXT, "oauthProviderId" TEXT, "avatarUrl" TEXT, "status" "UserStatus" NOT NULL DEFAULT 'OFFLINE', "virtualBalance" INTEGER NOT NULL DEFAULT 1000, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "User_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Friend" ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "friendId" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Friend_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Message" ("id" TEXT NOT NULL, "roomId" TEXT NOT NULL, "userId" TEXT NOT NULL, "content" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Message_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Room" ("id" TEXT NOT NULL, "name" TEXT NOT NULL, "status" "RoomStatus" NOT NULL DEFAULT 'WAITING', "createdBy" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "Room_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Round" ("id" TEXT NOT NULL, "roomId" TEXT NOT NULL, "status" "RoundStatus" NOT NULL DEFAULT 'OPEN', "opensAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "locksAt" TIMESTAMP(3) NOT NULL, "revealedAt" TIMESTAMP(3), "trueFakeCount" INTEGER, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "Round_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Claim" ("id" TEXT NOT NULL, "text" TEXT NOT NULL, "mediaRef" TEXT, "truthLabel" "ClaimTruthLabel" NOT NULL, "category" TEXT, "sourceUrl" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Claim_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "RoundClaim" ("id" TEXT NOT NULL, "roundId" TEXT NOT NULL, "claimId" TEXT NOT NULL, "orderIndex" INTEGER NOT NULL, CONSTRAINT "RoundClaim_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ClaimVerdict" ("id" TEXT NOT NULL, "claimId" TEXT NOT NULL, "verdictText" TEXT NOT NULL, "confidence" DOUBLE PRECISION, "citations" JSONB, CONSTRAINT "ClaimVerdict_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Prediction" ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "roundId" TEXT NOT NULL, "predictedFakeCount" INTEGER NOT NULL, "stake" INTEGER NOT NULL, "payout" INTEGER, "result" "PredictionResult", "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Prediction_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Transaction" ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "type" "TransactionType" NOT NULL, "amount" INTEGER NOT NULL, "balanceAfter" INTEGER NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id"));
+
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "User_oauthProvider_oauthProviderId_key" ON "User"("oauthProvider", "oauthProviderId");
+CREATE INDEX "Friend_userId_idx" ON "Friend"("userId");
+CREATE INDEX "Friend_friendId_idx" ON "Friend"("friendId");
+CREATE UNIQUE INDEX "Friend_userId_friendId_key" ON "Friend"("userId", "friendId");
+CREATE INDEX "Message_roomId_idx" ON "Message"("roomId");
+CREATE INDEX "Message_userId_idx" ON "Message"("userId");
+CREATE UNIQUE INDEX "RoundClaim_roundId_orderIndex_key" ON "RoundClaim"("roundId", "orderIndex");
+CREATE UNIQUE INDEX "ClaimVerdict_claimId_key" ON "ClaimVerdict"("claimId");
+CREATE INDEX "Prediction_roundId_idx" ON "Prediction"("roundId");
+CREATE UNIQUE INDEX "Prediction_userId_roundId_key" ON "Prediction"("userId", "roundId");
+CREATE INDEX "Transaction_userId_createdAt_idx" ON "Transaction"("userId", "createdAt");
+
+ALTER TABLE "Friend" ADD CONSTRAINT "Friend_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Friend" ADD CONSTRAINT "Friend_friendId_fkey" FOREIGN KEY ("friendId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Room" ADD CONSTRAINT "Room_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Round" ADD CONSTRAINT "Round_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "RoundClaim" ADD CONSTRAINT "RoundClaim_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "Round"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "RoundClaim" ADD CONSTRAINT "RoundClaim_claimId_fkey" FOREIGN KEY ("claimId") REFERENCES "Claim"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ClaimVerdict" ADD CONSTRAINT "ClaimVerdict_claimId_fkey" FOREIGN KEY ("claimId") REFERENCES "Claim"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Prediction" ADD CONSTRAINT "Prediction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Prediction" ADD CONSTRAINT "Prediction_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "Round"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

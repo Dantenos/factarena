@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CuidParamPipe } from '../common/pipes/cuid-param.pipe';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ClaimsService } from './claims.service';
@@ -17,12 +18,12 @@ export class ClaimsController {
   }
 
   @Get('round/:roundId')
-  getByRound(@Param('roundId') roundId: string) {
+  getByRound(@Param('roundId', CuidParamPipe) roundId: string) {
     return this.claimsService.findByRound(roundId);
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
+  getById(@Param('id', CuidParamPipe) id: string) {
     return this.claimsService.findById(id);
   }
 
@@ -34,13 +35,13 @@ export class ClaimsController {
 
   @Patch(':id')
   @Roles('ADMIN', 'SEED')
-  update(@Param('id') id: string, @Body() dto: UpdateClaimDto) {
+  update(@Param('id', CuidParamPipe) id: string, @Body() dto: UpdateClaimDto) {
     return this.claimsService.update(id, dto);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SEED')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', CuidParamPipe) id: string) {
     return this.claimsService.remove(id);
   }
 }

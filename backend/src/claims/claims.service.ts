@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateClaimDto } from './dto/create-claim.dto';
@@ -11,11 +11,12 @@ export class ClaimsService {
   async findAll() {
     return this.prisma.claim.findMany({
       orderBy: { createdAt: 'desc' },
+      select: this.publicClaimSelect(),
     });
   }
 
   async findById(id: string) {
-    const claim = await this.prisma.claim.findUnique({ where: { id } });
+    const claim = await this.prisma.claim.findUnique({ where: { id }, select: this.publicClaimSelect() });
     if (!claim) {
       throw new NotFoundException(`Claim ${id} not found`);
     }
@@ -25,13 +26,14 @@ export class ClaimsService {
   async findByRound(roundId: string) {
     const round = await this.prisma.round.findUnique({
       where: { id: roundId },
-      include: { roundClaims: { include: { claim: true } } },
+      include: { roundClaims: { include: { claim: true }, orderBy: { orderIndex: 'asc' } } },
     });
     if (!round) {
       throw new NotFoundException(`Round ${roundId} not found`);
     }
+    const revealed = round.status === 'REVEALED' || round.status === 'FINISHED';
     return round.roundClaims.map((roundClaim) => ({
-      ...roundClaim.claim,
+      ...(revealed ? roundClaim.claim : this.hideTruthLabel(roundClaim.claim)),
       orderIndex: roundClaim.orderIndex,
     }));
   }
@@ -40,14 +42,18 @@ export class ClaimsService {
     return this.prisma.claim.create({
       data: {
         ...dto,
+        createdBy: creatorId,
       },
     });
   }
 
   async update(id: string, dto: UpdateClaimDto) {
-    const claim = await this.prisma.claim.findUnique({ where: { id } });
+    const claim = await this.prisma.claim.findUnique({ where: { id }, include: { roundClaims: true } });
     if (!claim) {
       throw new NotFoundException(`Claim ${id} not found`);
+    }
+    if (claim.roundClaims.length > 0) {
+      throw new ConflictException('A claim used by a round cannot be modified');
     }
     return this.prisma.claim.update({
       where: { id },
@@ -58,11 +64,29 @@ export class ClaimsService {
   }
 
   async remove(id: string) {
-    const claim = await this.prisma.claim.findUnique({ where: { id } });
+    const claim = await this.prisma.claim.findUnique({ where: { id }, include: { roundClaims: true } });
     if (!claim) {
       throw new NotFoundException(`Claim ${id} not found`);
     }
-    await this.prisma.roundClaim.deleteMany({ where: { claimId: id } });
+    if (claim.roundClaims.length > 0) {
+      throw new ConflictException('A claim used by a round cannot be deleted');
+    }
     return this.prisma.claim.delete({ where: { id } });
+  }
+
+  private publicClaimSelect() {
+    return {
+      id: true,
+      text: true,
+      mediaRef: true,
+      category: true,
+      sourceUrl: true,
+      createdAt: true,
+    } as const;
+  }
+
+  private hideTruthLabel<T extends { truthLabel: unknown }>(claim: T) {
+    const { truthLabel: _truthLabel, ...safeClaim } = claim;
+    return safeClaim;
   }
 }

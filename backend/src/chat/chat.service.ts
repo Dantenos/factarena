@@ -1,21 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { RoomPresenceService } from '../rooms/room-presence.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
+    @Inject(forwardRef(() => RoomPresenceService))
+    private readonly roomPresence: RoomPresenceService,
   ) {}
 
   async sendMessage(userId: string, roomId: string, content: string) {
     const room = await this.prisma.room.findUnique({ where: { id: roomId } });
     if (!room) throw new NotFoundException(`Room ${roomId} not found`);
+    this.assertMember(userId, roomId);
 
     const history = await this.prisma.message.findMany({
       where: { roomId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 5,
       select: { content: true },
     });
@@ -23,7 +27,9 @@ export class ChatService {
     const moderation = await this.aiService.moderate(content, history.map((entry) => entry.content));
     const moderationData = moderation.data ?? {};
 
-    if (moderationData.decision === 'delete') {
+    const action = moderationData.action;
+
+    if (action === 'delete') {
       return {
         action: 'delete',
         moderation,
@@ -44,13 +50,14 @@ export class ChatService {
     });
 
     return {
-      action: moderationData.decision === 'warn' ? 'warn' : 'allow',
+      action: action === 'warn' ? 'warn' : 'allow',
       moderation: moderationData,
       message,
     };
   }
 
-  async findByRoom(roomId: string) {
+  async findByRoom(roomId: string, userId?: string) {
+    if (userId) this.assertMember(userId, roomId);
     return this.prisma.message.findMany({
       where: { roomId },
       orderBy: { createdAt: 'asc' },
@@ -60,5 +67,11 @@ export class ChatService {
         },
       },
     });
+  }
+
+  private assertMember(userId: string, roomId: string) {
+    if (!this.roomPresence.isMember(userId, roomId)) {
+      throw new ForbiddenException('Join the room before accessing its chat');
+    }
   }
 }

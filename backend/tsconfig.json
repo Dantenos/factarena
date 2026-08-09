@@ -15,5 +15,6 @@
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "typeRoots": ["./node_modules/@types", "./src/types"]
-  }
+  },
+  "exclude": ["test", "dist", "node_modules", "**/*.spec.ts"]
 }

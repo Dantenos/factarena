@@ -1,12 +1,13 @@
-import { ArrayMinSize, IsArray, IsInt, IsString, Max, Min } from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, Matches, Max, Min } from 'class-validator';
+import { CUID_PATTERN } from '../../common/pipes/cuid-param.pipe';
 
 export class CreateRoundDto {
-  @IsString()
+  @Matches(CUID_PATTERN)
   roomId!: string;
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsString({ each: true })
+  @Matches(CUID_PATTERN, { each: true })
   claimIds!: string[];
 
   @IsInt()

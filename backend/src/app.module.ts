@@ -12,6 +12,7 @@ import { ChatModule } from './chat/chat.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { ClaimsModule } from './claims/claims.module';
 import { AiModule } from './ai/ai.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AiModule } from './ai/ai.module';
     RealtimeModule,
     ClaimsModule,
     AiModule,
+    StatsModule,
   ],
 })
 export class AppModule {}

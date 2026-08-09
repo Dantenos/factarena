@@ -60,6 +60,8 @@ services:
         condition: service_healthy
     expose:
       - "3000" # seul nginx y accède
+    volumes:
+      - backend_uploads:/app/uploads
     # Healthcheck sur /api/health.
     # ATTENTION : j'écris 127.0.0.1 et surtout PAS localhost. Dans un conteneur,
     # « localhost » a deux adresses possibles : ::1 (IPv6) et 127.0.0.1 (IPv4),
@@ -170,3 +172,4 @@ networks:
 # ------------------------------------------------------------
 volumes:
   postgres_data:
+  backend_uploads:

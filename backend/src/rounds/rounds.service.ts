@@ -48,8 +48,9 @@ export class RoundsService {
       include: { roundClaims: { include: { claim: { select: { id: true, text: true, mediaRef: true, category: true, sourceUrl: true } } } }, predictions: { select: { id: true, userId: true, predictedFakeCount: true, stake: true, payout: true, result: true, createdAt: true } } },
     });
     if (!round) throw new NotFoundException(`Round ${id} not found`);
-    const { trueFakeCount, ...safeRound } = round;
-    return round.status === 'REVEALED' || String(round.status) === 'FINISHED' ? { ...safeRound, trueFakeCount } : safeRound;
+    const { trueFakeCount, predictions, ...safeRound } = round;
+    const revealed = round.status === 'REVEALED' || String(round.status) === 'FINISHED';
+    return revealed ? { ...safeRound, trueFakeCount, predictions } : safeRound;
   }
 
   async lock(id: string, userId: string) {

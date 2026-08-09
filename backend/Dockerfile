@@ -45,10 +45,11 @@ COPY package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+RUN mkdir -p /app/uploads/avatars && chown -R node:node /app/uploads
 # Utilisateur non-root (sécurité).
 USER node
 EXPOSE 3000
 # Au démarrage : `prisma db push` crée/synchronise la table users depuis le
 # schéma (pas encore de migrations versionnées au stade squelette), PUIS on
 # lance l'API. --skip-generate : le client est déjà généré à l'étape build.
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"]

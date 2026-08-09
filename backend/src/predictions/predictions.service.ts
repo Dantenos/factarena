@@ -1,7 +1,8 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RoomPresenceService } from '../rooms/room-presence.service';
 
 type PredictionDatum = { stake: number; predictedFakeCount: number };
 
@@ -16,13 +17,20 @@ export type RoundPredictionStats = {
 
 @Injectable()
 export class PredictionsService {
-  constructor(private readonly prisma: PrismaService, private readonly ledger: LedgerService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: LedgerService,
+    private readonly roomPresence: RoomPresenceService,
+  ) {}
 
   async create(data: { roundId: string; predictedFakeCount: number; stake: number }, userId: string) {
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const round = await tx.round.findUnique({ where: { id: data.roundId }, include: { roundClaims: true } });
         if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
+        if (!(await this.roomPresence.isMember(userId, round.roomId))) {
+          throw new ForbiddenException('Join the room before submitting a prediction');
+        }
         const now = new Date();
         const openRound = await tx.round.updateMany({
           where: { id: data.roundId, status: 'OPEN', locksAt: { gt: now } },
@@ -42,8 +50,15 @@ export class PredictionsService {
     }
   }
 
-  async findByRound(roundId: string) {
-    return this.prisma.prediction.findMany({ where: { roundId }, select: { id: true, userId: true, predictedFakeCount: true, stake: true, payout: true, result: true, createdAt: true } });
+  async findByRound(roundId: string, userId: string) {
+    const round = await this.prisma.round.findUnique({ where: { id: roundId }, select: { status: true } });
+    if (!round) throw new NotFoundException(`Round ${roundId} not found`);
+
+    const revealed = round.status === 'REVEALED' || round.status === 'FINISHED';
+    return this.prisma.prediction.findMany({
+      where: revealed ? { roundId } : { roundId, userId },
+      select: { id: true, userId: true, predictedFakeCount: true, stake: true, payout: true, result: true, createdAt: true },
+    });
   }
 
   async findRoundStats(roundId: string) {
