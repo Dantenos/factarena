@@ -1,0 +1,11 @@
+{
+  "index_patterns": [
+    "factarena-logs-*"
+  ],
+  "template": {
+    "settings": {
+      "index.lifecycle.name": "factarena-logs-30d"
+    }
+  },
+  "priority": 100
+}

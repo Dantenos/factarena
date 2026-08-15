@@ -10,64 +10,89 @@
 services:
   # ----------------------------------------------------------
   # Base de données : PostgreSQL + pgvector.
+  # Image pgvector (Postgres + extension vectorielle) car le service IA en aura
+  # besoin plus tard pour le RAG
   # ----------------------------------------------------------
   postgres:
     image: pgvector/pgvector:pg16
+    # Les variables ${...} sont référencées depuis .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_DB: ${POSTGRES_DB:-factarena}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data # persistance des données
+      # Postgres joue tout seul les scripts .sql qu'il trouve dans ce dossier,
+      # mais UNIQUEMENT quand il crée une base vide. C'est comme ça que
+      # j'active pgvector sans que personne ait à taper quoi que ce soit à la
+      # main (le sujet exige un démarrage en une seule commande).
+      # :ro = lecture seule, Postgres n'a aucune raison d'écrire dans nos scripts.
+      # Détails dans postgres/init/01-pgvector.sql.
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    # les autres services attendent que la base réponde vraiment car deux services sont interdépendents.
+    # PostgreSQL doit être prêt avant que Node.js ne démarre. Node.js doit être prêt avant que Python) ne tente d'appeler l'API
+    # c'est pourquoi il y a autant de healthcheck (un par service)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-factarena}"]
       interval: 5s
       timeout: 5s
       retries: 10
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    # logging:
+    #   driver: "gelf"
+    #   options:
+    #     gelf-address: "tcp://127.0.0.1:12201"
+    #     tag: "factarena/postgres"
     networks:
       - factarena
     restart: unless-stopped
 
   # ----------------------------------------------------------
   # Backend cœur : NestJS (auth, salons, jeu, WebSocket, API).
+  # Écoute sur 3000. Applique les migrations Prisma au démarrage.
   # ----------------------------------------------------------
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: ${DATABASE_URL} # Prisma (hôte = « postgres », nom du service)
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
       FT_CLIENT_ID: ${FT_CLIENT_ID}
       FT_CLIENT_SECRET: ${FT_CLIENT_SECRET}
       FT_CALLBACK_URL: ${FT_CALLBACK_URL}
-      AI_SERVICE_URL: ${AI_SERVICE_URL}
+      AI_SERVICE_URL: ${AI_SERVICE_URL} # adresse interne du service IA
     depends_on:
       postgres:
         condition: service_healthy
+      logstash:
+        condition: service_healthy
     expose:
-      - "3000"
+      - "3000" # seul nginx y accède
+    # Healthcheck sur /api/health.
+    # ATTENTION : j'écris 127.0.0.1 et surtout PAS localhost. Dans un conteneur,
+    # « localhost » a deux adresses possibles : ::1 (IPv6) et 127.0.0.1 (IPv4),
+    # et wget essaie l'IPv6 en premier. Or Nest écoute sur 0.0.0.0, qui ne couvre
+    # QUE l'IPv4 : wget frappe donc à une porte qui n'existe pas et se prend un
+    # « Connection refused ». Le service passe unhealthy, et comme nginx l'attend
+    # (depends_on plus bas), il ne démarre jamais. Je me suis fait avoir pendant
+    # un moment, d'où le pavé : ne remettez pas « localhost » ici.
+    # Le http:// est volontaire : on est À L'INTÉRIEUR du conteneur, et le sujet
+    # n'impose le chiffrement que pour le trafic qui vient du navigateur.
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 40s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    # logging:
+    #   driver: "gelf"
+    #   options:
+    #     gelf-address: "tcp://127.0.0.1:12201"
+    #     tag: "factarena/backend"
     networks:
       - factarena
     restart: unless-stopped
 
   # ----------------------------------------------------------
-  # Backend IA : FastAPI RAG/LLM
+  # Backend IA : FastAPI RAG/LLM/
   # ----------------------------------------------------------
   ai-service:
     build: ./ai-service
@@ -78,25 +103,30 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      logstash:
+        condition: service_healthy
     expose:
       - "8000"
+    # pour python:slim on sonde /health via urllib.
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 20s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
 
   # ----------------------------------------------------------
   # CONFIGURATION FRONTEND (React)
+  # --------------------------------------------------------------------------
+  # J'utilise « vite preview » pour servir le frontend sur le port 4173.
+  # Quand Nginx frappe à la porte 4173, c'est le concierge Vite preview qui répond et qui donne les pages de ton site aux visiteurs.
+  #  Nginx :
+  # Il sert de pont. Il reçoit toutes les requêtes :
+  # - Si ça demande "/" : il envoie vers le front.
+  # - Si ça demande "/api" : il renvoie vers le backend.
   # ----------------------------------------------------------
   frontend:
     build: ./frontend
@@ -108,63 +138,154 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
     networks:
       - factarena
     restart: unless-stopped
 
+
+  # ==========================================================
+  # ELK STACK
+  # ==========================================================
+
   # ----------------------------------------------------------
-  # ELK STACK: Elasticsearch (Stockage & Indexation)
+  # Elasticsearch
+  # Stockage et indexation des logs
   # ----------------------------------------------------------
+
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      path.repo: '["/snapshots"]'
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+      - elasticsearch_snapshots:/snapshots
+    expose:
+      - "9200"
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'status' || exit 1"]
+      test:
+        ["CMD-SHELL", "curl -fs -u elastic:$${ELASTIC_PASSWORD} http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 40s
     networks:
-      - factarena
+      - elk
     restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Elasticsearch initialization
+  #
+  # This service automatically configures the kibana_system password before
+  # Kibana starts. It runs once and exits successfully.
+  # --------------------------------------------------------------------------
+
+  elasticsearch-init:
+    image: curlimages/curl:8.15.0
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
+      KIBANA_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+
+        echo "Waiting for Elasticsearch..."
+
+        until curl -fsS \
+          -u "elastic:$${ELASTIC_PASSWORD}" \
+          http://elasticsearch:9200/_cluster/health \
+          >/dev/null; do
+          sleep 2
+        done
+
+        echo "Configuring kibana_system password..."
+
+        curl -fsS \
+          -u "elastic:$${ELASTIC_PASSWORD}" \
+          -X POST \
+          http://elasticsearch:9200/_security/user/kibana_system/_password \
+          -H "Content-Type: application/json" \
+          -d "{\"password\":\"$${KIBANA_PASSWORD}\"}"
+
+        echo "Elasticsearch initialization completed."
+
+  # --------------------------------------------------------------------------
+  # Elasticsearch admin utility
+  # --------------------------------------------------------------------------
+
+  elasticsearch-admin:
+    image: curlimages/curl:8.15.0
+    profiles:
+      - admin
+    networks:
+      - elk
 
   # ----------------------------------------------------------
   # ELK STACK: Logstash (Collecte & Transformation)
   # ----------------------------------------------------------
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.1
+    image: docker.elastic.co/logstash/logstash:9.5.1
+    environment:
+      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+      LOGSTASH_ENV: ${LOGSTASH_ENV}
+      LOGSTASH_USER: ${LOGSTASH_USER}
+      LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD}
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./devops/elk/logstash:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000"
+    # expose:
+    # - "5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9600/_node/pipelines >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
     depends_on:
       elasticsearch:
         condition: service_healthy
     networks:
       - factarena
+      - elk
     restart: unless-stopped
 
   # ----------------------------------------------------------
   # ELK STACK: Kibana (Visualisation & Dashboards)
   # ----------------------------------------------------------
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.1
+    image: docker.elastic.co/kibana/kibana:9.5.1
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: ${KIBANA_USER}
+      ELASTICSEARCH_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
+      SERVER_BASEPATH: /kibana
+      SERVER_REWRITEBASEPATH: "true"
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      elasticsearch-init:
+        condition: service_completed_successfully
     expose:
       - "5601"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -fs http://127.0.0.1:5601/kibana/api/status >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
     networks:
       - factarena
+      - elk
     restart: unless-stopped
 
   # ----------------------------------------------------------
@@ -173,13 +294,20 @@ services:
   prometheus:
     image: prom/prometheus:v2.48.0
     volumes:
-      - ./prometheus:/etc/prometheus:ro
+      - ./devops/monitoring/prometheus:/etc/prometheus:ro
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     expose:
       - "9090"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - factarena
     restart: unless-stopped
@@ -190,19 +318,28 @@ services:
   grafana:
     image: grafana/grafana:10.2.2
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin_secure_password}
-      - GF_USERS_ALLOW_SIGN_UP=false
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     volumes:
       - grafana_data:/var/lib/grafana
     expose:
       - "3000"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - factarena
     restart: unless-stopped
 
   # ----------------------------------------------------------
-  # SAUVEGARDES AUTOMATIQUES (Disaster Recovery)
+  # PostgreSQL backup
   # ----------------------------------------------------------
   backup:
     image: postgres:16-alpine
@@ -218,6 +355,8 @@ services:
     entrypoint: ["sh", "-c", "while true; do /scripts/backup.sh; sleep $$BACKUP_INTERVAL_SECONDS; done"]
     depends_on:
       postgres:
+        condition: service_healthy
+      logstash:
         condition: service_healthy
     networks:
       - factarena
@@ -237,32 +376,44 @@ services:
         condition: service_healthy
       grafana:
         condition: service_healthy
+      logstash:
+        condition: service_healthy
     ports:
       - "443:443"
+    # Idem : nginx aussi écoute en 0.0.0.0:80, donc IPv4. On sonde 127.0.0.1.
+    # C'est la sonde /healthz du bloc « server » sur le port 80 (voir nginx.conf) :
+    # elle répond en clair, sans redirection, uniquement pour Docker.
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6
       start_period: 10s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    # logging:
+    #   driver: "gelf"
+    #   options:
+    #     gelf-address: "tcp://127.0.0.1:12201"
+    #     tag: "factarena/nginx"
     networks:
       - factarena
     restart: unless-stopped
 
 # ------------------------------------------------------------
-# Réseaux & Volumes
+# Réseaux privé
 # ------------------------------------------------------------
 networks:
   factarena:
     driver: bridge
+  elk:
+    driver: bridge
+    internal: true
 
+# ------------------------------------------------------------
+# Volumes persistants
+# ------------------------------------------------------------
 volumes:
   postgres_data:
   elasticsearch_data:
+  elasticsearch_snapshots:
   prometheus_data:
   grafana_data:

@@ -1,5 +1,32 @@
 # ============================================================
 # SURCOUCHE DE DÉVELOPPEMENT — le rechargement à chaud, pour bosser au quotidien.
+#
+# ---- Le problème que ça règle ----
+# Sans ce fichier, le code est figé dans l'image Docker. Donc à CHAQUE ligne que
+# vous changez, il faut refaire « docker compose up --build » et attendre des
+# minutes. Personne ne peut travailler comme ça. Ici, le code est monté depuis
+# votre disque : vous sauvegardez, le navigateur se recharge tout seul.
+#
+# ---- POURQUOI CE FICHIER S'APPELLE « .dev.yml » ET PAS « .override.yml » ----
+# C'est le point le plus important du fichier, ne le renommez JAMAIS.
+# Docker charge AUTOMATIQUEMENT tout fichier appelé docker-compose.override.yml,
+# sans qu'on lui demande. Si on l'appelait comme ça, l'évaluateur qui tape
+# « docker compose up » lancerait notre mode DEV sans le savoir. Et là on
+# se prend deux contraintes éliminatoires dans la figure :
+#   - le sujet veut qu'une seule commande lance la VRAIE appli ;
+#   - le serveur de dev cause plus dans la console, et le sujet exige zéro erreur.
+# Avec le nom « .dev.yml », Docker l'ignore par défaut : « docker compose up »
+# reste la production, et le dev devient un choix explicite. J'ai vérifié les
+# deux cas avant de pousser.
+#
+# ---- Comment on s'en sert ----
+#   Prod (et c'est ce que l'évaluateur tapera) :
+#       docker compose up --build
+#   Dev (rechargement à chaud, ce que vous utiliserez tous les jours) :
+#       docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Dans les deux cas le site reste sur https://localhost : même URL, même nginx,
+# même certificat. Ce que vous testez en dev est ce qui tournera en prod.
 # ============================================================
 
 services:
@@ -8,8 +35,17 @@ services:
   # ----------------------------------------------------------
   frontend:
     volumes:
+      # Le dossier du projet est branché en direct dans le conteneur : c'est
+      # tout l'intérêt du mode dev, votre éditeur écrit, Vite voit le changement.
       - ./frontend:/app:Z
+      # Cette ligne bizarre est indispensable. La ligne du dessus recouvre TOUT
+      # /app avec votre dossier local — y compris node_modules, qui n'existe pas
+      # chez vous (il est installé dans l'image). Sans ça, Vite disparaît et le
+      # conteneur meurt sur « vite: not found ». Ce volume anonyme protège le
+      # node_modules de l'image.
       - /app/node_modules
+    # --host 0.0.0.0 pour que nginx puisse le joindre depuis le réseau Docker.
+    # Le port et le HMR sont déjà réglés dans vite.config.ts, rien à répéter ici.
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
   # ----------------------------------------------------------
@@ -18,15 +54,32 @@ services:
   backend:
     volumes:
       - ./backend:/app
+      # Même histoire que pour le front, et ici c'est encore plus critique :
+      # le node_modules de l'image contient le client Prisma généré au build,
+      # qu'on n'a pas en local. Sans cette ligne, plus de Prisma du tout.
       - /app/node_modules
     environment:
+      # Le Dockerfile fixe NODE_ENV=production, ce qui fait sauter les
+      # devDependencies... dont le CLI de Nest, qui est justement ce qui fait
+      # tourner le mode watch. On repasse donc en development ici.
       NODE_ENV: development
+    # Je garde le « prisma db push » du Dockerfile : le schéma doit être en place
+    # avant que l'API réponde à quoi que ce soit, qu'on soit en dev ou en prod.
     command: ["sh", "-c", "npx prisma db push --skip-generate && npm run start:dev"]
 
   # ----------------------------------------------------------
-  # Le service IA : uvicorn en mode --reload
+  # Le service IA : uvicorn en mode --reload (redémarre à chaque sauvegarde).
+  # C'est le territoire du Tech IA (RAG, LLM, modération) : sans ça, chaque
+  # modif d'un .py imposerait un « docker compose build ai-service » de plusieurs
+  # minutes.
   # ----------------------------------------------------------
   ai-service:
     volumes:
+      # On branche le dossier local dans le conteneur, comme pour le front/back.
+      # Pas de volume anonyme ici (contrairement à Node) : les dépendances Python
+      # sont installées dans site-packages, pas dans /app — le montage ne les
+      # masque donc pas. uvicorn reste trouvable.
       - ./ai-service:/app
+    # --reload : uvicorn surveille les fichiers et relance l'app à chaque
+    # sauvegarde (le watcher vient de uvicorn[standard], déjà dans requirements).
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

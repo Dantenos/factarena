@@ -1,0 +1,19 @@
+{
+  "cluster": [
+    "monitor",
+    "manage_ilm"
+  ],
+  "indices": [
+    {
+      "names": [
+        "factarena-logs-*"
+      ],
+      "privileges": [
+        "create",
+        "create_index",
+        "write",
+        "manage"
+      ]
+    }
+  ]
+}
