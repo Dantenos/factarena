@@ -1,13 +1,10 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { PredictionsController } from './predictions.controller';
-import { PredictionsService } from './predictions.service';
-import { LedgerModule } from '../ledger/ledger.module';
-import { RoomsModule } from '../rooms/rooms.module';
+import { Module } from '@nestjs/common';
+import { BetsModule } from '../bets/bets.module';
 
 @Module({
-  imports: [LedgerModule, forwardRef(() => RoomsModule)],
-  controllers: [PredictionsController],
-  providers: [PredictionsService],
-  exports: [PredictionsService],
+  imports: [BetsModule],
+  controllers: [],
+  providers: [],
+  exports: [BetsModule],
 })
 export class PredictionsModule {}

@@ -16,10 +16,16 @@ crée aussi automatiquement un environnement de démonstration idempotent :
 - les transactions de mise et de payout ;
 - une relation d’amitié et un message de chat.
 
-Identifiants locaux par défaut :
+En développement, le compte administrateur doit être configuré explicitement
+avec `SEED_ADMIN_EMAIL` et `SEED_ADMIN_PASSWORD`. Aucun mot de passe admin par
+défaut n'est fourni. L'ancien mot de passe de démonstration a été compromis et
+est définitivement révoqué.
+
+Exemple de configuration locale :
 
 ```text
-admin@factarena.local / FactArenaAdmin!123
+SEED_ADMIN_EMAIL=admin@factarena.local
+SEED_ADMIN_PASSWORD=<mot-de-passe-local-unique>
 host@factarena.local / FactArenaDemo!123
 player@factarena.local / FactArenaDemo!123
 viewer@factarena.local / FactArenaDemo!123
@@ -111,7 +117,8 @@ npm run start:dev
 - `users` : profils, mots de passe et avatars valides par contenu binaire.
 - `rooms` : rooms, membres presents et etat courant.
 - `rounds` : machine `COUNTDOWN -> OPEN -> LOCKED -> REVEALED -> FINISHED`.
-- `predictions` : mise unique par utilisateur et manche.
+- `bets` : mise unique par utilisateur et manche ; le pot est redistribue selon la precision.
+- `clip-votes` : un vote `good news`/`fake news` par utilisateur et par clip.
 - `ledger` : solde virtuel, mises, payouts et remboursements idempotents.
 - `claims` : corpus editorial et claims associes aux manches.
 - `chat` : messages autorises uniquement aux membres de la room.
@@ -146,9 +153,11 @@ contraire, elles necessitent `Authorization: Bearer <JWT>`.
 | GET | `/rounds/:id` | JWT | Lire une manche |
 | POST | `/rounds/:id/lock` | JWT, hote | Verrouiller apres deadline |
 | POST | `/rounds/:id/reveal` | JWT, hote | Reveler et regler |
-| POST | `/predictions` | JWT | Placer une mise |
-| GET | `/predictions/round/:roundId` | JWT | Predictions visibles selon l'etat |
-| GET | `/predictions/round/:roundId/stats` | JWT | Pot et statistiques |
+| POST | `/bets` | JWT, membre | Placer la mise de la manche |
+| GET | `/bets/round/:roundId` | JWT | Mises visibles selon l'etat |
+| GET | `/bets/round/:roundId/stats` | JWT | Pot et nombre de mises |
+| POST | `/clip-votes` | JWT, membre | Voter `isFake` pour un clip |
+| GET | `/clip-votes/round/:roundId` | JWT, membre | Lire ses votes, ou tous apres revelation |
 | GET | `/chat/room/:roomId` | JWT, membre | Lire le chat |
 | POST | `/chat/send` | JWT, membre | Envoyer un message |
 | GET/POST/DELETE | `/friends...` | JWT | Amis et presence |
@@ -180,14 +189,17 @@ Commandes client :
 | `room:join` | `{ roomId }` |
 | `room:leave` | `{ roomId }` optionnel |
 | `room:state` | `{ roomId }` |
-| `prediction:submit` | `{ roomId, roundId, predictedFakeCount, stake }` |
+| `bet:place` | `{ roomId, roundId, stake }` |
+| `clip-vote:submit` | `{ roomId, roundId, claimId, isFake }` |
 | `round:lock` | `{ roomId, roundId }` |
 | `round:reveal` | `{ roomId, roundId }` |
 | `chat:send` | `{ roomId, content }` |
-| `ai:chat` | `{ prompt }` |
+| `ai:chat` | `{ roomId, prompt }` |
+| `chat:send` avec `@bot` ou `/ask` | `{ roomId, content }` |
 
 Evenements serveur : `connection:ready`, `room:joined`, `room:reconnected`,
-`room:state`, `room:member_joined`, `room:member_left`, `prediction:updated`,
+`room:state`, `room:member_joined`, `room:member_left`, `bet:updated`,
+`clip-vote:updated`,
 `round:open`, `round:locked`, `round:revealed`, `round:finished`,
 `round:verdicts`, `chat:message`, `presence:update`, `ai:sources`,
 `ai:token`, `ai:done` et `ai:error`.
@@ -238,10 +250,11 @@ Migrations presentes :
 1. `0001_init` : schema initial ;
 2. `0002_presence_and_claim_creator` : presence et createur de claim ;
 3. `0003_claim_editorial_key` : cle stable du corpus editorial ;
-4. `0004_ledger_reference_id` : idempotence du ledger.
+4. `0004_ledger_reference_id` : idempotence du ledger ;
+5. `0005_bets_and_clip_votes` : remplacement de `Prediction`, votes par clip et `Claim.videoEndS`.
 
 Le seed cree toujours les claims editoriaux. Avec `SEED_DEMO_DATA=true`, il
-cree aussi les comptes, rooms, manche historique, predictions, transactions,
+cree aussi les comptes, rooms, manche historique, bets, clip votes, transactions,
 amis et message de demonstration. Il utilise des `upsert` et peut etre relance.
 
 Import editorial :
@@ -259,7 +272,7 @@ proteges contre la modification lorsqu'ils sont deja utilises par une manche.
 Avec `SEED_DEMO_DATA=true` :
 
 ```text
-admin@factarena.local  / FactArenaAdmin!123
+admin@factarena.local  / valeur de SEED_ADMIN_PASSWORD
 host@factarena.local   / FactArenaDemo!123
 player@factarena.local / FactArenaDemo!123
 viewer@factarena.local / FactArenaDemo!123
@@ -317,3 +330,20 @@ remboursement idempotent, double payout et conservation du pot.
 Politiques detaillees : [GAME_STATE_POLICY.md](GAME_STATE_POLICY.md),
 [LEDGER_POLICY.md](LEDGER_POLICY.md), [AVATAR_UPLOAD_POLICY.md](AVATAR_UPLOAD_POLICY.md)
 et [MODERATION_POLICY.md](MODERATION_POLICY.md).
+
+## Regles du jeu video
+
+Une manche contient une serie de clips editoriaux. Le serveur synchronise les
+fenetres de vote avec `opensAt` et `locksAt`; le lecteur video n'est pas la
+source de la synchronisation.
+
+- `Bet` contient la mise unique de chaque joueur pour la manche.
+- `ClipVote` contient un vote `isFake` par joueur et par clip.
+- Le score est le nombre de votes corrects. La verite vient exclusivement de
+  `Claim.truthLabel`, jamais de l'IA.
+- Les joueurs les plus precis se partagent le pot de la manche.
+- `Claim.videoEndS` indique la fin editoriale du clip en secondes.
+
+Le bot de chat est disponible avec `@bot` ou `/ask`. Les reponses IA sont
+streamees avec `ai:sources`, `ai:token` et `ai:done`. Toute question est
+refusee pendant une manche active pour eviter les spoilers.

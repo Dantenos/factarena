@@ -1,14 +1,15 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { PredictionsModule } from '../predictions/predictions.module';
+import { BetsModule } from '../bets/bets.module';
+import { RoomPresenceModule } from './room-presence.module';
 import { ChatModule } from '../chat/chat.module';
 import { RoomsController } from './rooms.controller';
 import { RoomPresenceService } from './room-presence.service';
 import { RoomsService } from './rooms.service';
 
 @Module({
-  imports: [forwardRef(() => PredictionsModule), forwardRef(() => ChatModule)],
+  imports: [forwardRef(() => BetsModule), forwardRef(() => ChatModule), RoomPresenceModule],
   controllers: [RoomsController],
-  providers: [RoomsService, RoomPresenceService],
-  exports: [RoomsService, RoomPresenceService],
+  providers: [RoomsService],
+  exports: [RoomsService, RoomPresenceModule],
 })
 export class RoomsModule {}

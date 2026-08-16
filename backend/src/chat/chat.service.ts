@@ -69,6 +69,13 @@ export class ChatService {
     });
   }
 
+  async *streamBot(userId: string, roomId: string, prompt: string) {
+    await this.assertMember(userId, roomId);
+    const active = await this.prisma.round.findFirst({ where: { roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] } }, select: { id: true } });
+    if (active) throw new ForbiddenException('The bot cannot comment on clips from the current round');
+    yield* this.aiService.streamChat(prompt, userId);
+  }
+
   private async assertMember(userId: string, roomId: string): Promise<void> {
     const isMember = await this.roomPresence.isMember(userId, roomId);
     if (!isMember) {

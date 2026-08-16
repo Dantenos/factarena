@@ -73,7 +73,8 @@ model User {
   updatedAt      DateTime      @updatedAt
 
   rooms        Room[]        @relation("RoomHost")
-  predictions  Prediction[]
+  bets         Bet[]
+  clipVotes    ClipVote[]
   transactions Transaction[]
   friends      Friend[]      @relation("Friendships")
   friendOf     Friend[]      @relation("FriendTargets")
@@ -141,12 +142,12 @@ model Round {
   opensAt       DateTime    @default(now())
   locksAt       DateTime
   revealedAt    DateTime?
-  trueFakeCount Int?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   room        Room          @relation(fields: [roomId], references: [id])
-  predictions Prediction[]
+  bets        Bet[]
+  clipVotes   ClipVote[]
   roundClaims RoundClaim[]
 }
 
@@ -156,12 +157,14 @@ model Claim {
   createdBy  String?
   text       String
   mediaRef   String?
+  videoEndS  Int?
   truthLabel ClaimTruthLabel
   category   String?
   sourceUrl  String?
   createdAt  DateTime        @default(now())
 
   roundClaims RoundClaim[]
+  clipVotes   ClipVote[]
   verdicts    ClaimVerdict[]
   creator    User?           @relation("ClaimCreator", fields: [createdBy], references: [id])
 
@@ -190,21 +193,37 @@ model ClaimVerdict {
   claim Claim @relation(fields: [claimId], references: [id])
 }
 
-model Prediction {
-  id                  String           @id @default(cuid())
-  userId              String
-  roundId             String
-  predictedFakeCount  Int
-  stake               Int
-  payout              Int?
-  result              PredictionResult?
-  createdAt           DateTime         @default(now())
+model Bet {
+  id        String         @id @default(cuid())
+  userId    String
+  roundId   String
+  stake     Int
+  payout    Int?
+  result    PredictionResult?
+  createdAt DateTime       @default(now())
 
   user  User  @relation(fields: [userId], references: [id])
   round Round @relation(fields: [roundId], references: [id])
 
   @@unique([userId, roundId])
   @@index([roundId])
+}
+
+model ClipVote {
+  id        String   @id @default(cuid())
+  userId    String
+  roundId   String
+  claimId   String
+  isFake    Boolean
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  round Round @relation(fields: [roundId], references: [id])
+  claim Claim @relation(fields: [claimId], references: [id])
+
+  @@unique([userId, roundId, claimId])
+  @@index([roundId])
+  @@index([claimId])
 }
 
 model Transaction {

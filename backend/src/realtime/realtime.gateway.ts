@@ -11,7 +11,8 @@ import { BadRequestException, Injectable, Logger, UnauthorizedException } from '
 import { JwtService } from '@nestjs/jwt';
 import { CUID_PATTERN } from '../common/pipes/cuid-param.pipe';
 import { PrismaService } from '../prisma/prisma.service';
-import { PredictionsService } from '../predictions/predictions.service';
+import { BetsService } from '../bets/bets.service';
+import { ClipVotesService } from '../clip-votes/clip-votes.service';
 import { RoomPresenceService } from '../rooms/room-presence.service';
 import { RoomsService } from '../rooms/rooms.service';
 import { RoundsService } from '../rounds/rounds.service';
@@ -22,11 +23,11 @@ import { Server, Socket } from 'socket.io';
 type AuthenticatedSocket = Socket & { data: { userId: string; email?: string; roomId?: string } };
 
 interface RoomPayload { roomId: string }
-interface PredictionPayload extends RoomPayload {
+interface BetPayload extends RoomPayload {
   roundId: string;
-  predictedFakeCount: number;
   stake: number;
 }
+interface ClipVotePayload extends RoomPayload { roundId: string; claimId: string; isFake: boolean }
 interface ChatPayload extends RoomPayload {
   content: string;
 }
@@ -50,7 +51,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     private readonly roomPresence: RoomPresenceService,
     private readonly roomsService: RoomsService,
     private readonly roundsService: RoundsService,
-    private readonly predictionsService: PredictionsService,
+    private readonly betsService: BetsService,
+    private readonly clipVotesService: ClipVotesService,
     private readonly chatService: ChatService,
     private readonly aiService: AiService,
   ) {}
@@ -149,22 +151,29 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return this.roomsService.getState(body?.roomId);
   }
 
-  @SubscribeMessage('prediction:submit')
-  async submitPrediction(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: PredictionPayload) {
+  @SubscribeMessage('bet:place')
+  async placeBet(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: BetPayload) {
     this.assertCuid(body?.roomId, 'roomId');
     this.assertCuid(body?.roundId, 'roundId');
-    this.assertNonNegativeInteger(body?.predictedFakeCount, 'predictedFakeCount');
     this.assertPositiveInteger(body?.stake, 'stake');
     await this.assertInRoom(socket, body.roomId);
     await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
-    const prediction = await this.predictionsService.create({
+    const bet = await this.betsService.create({
       roundId: body.roundId,
-      predictedFakeCount: body.predictedFakeCount,
       stake: body.stake,
     }, socket.data.userId);
     const state = await this.roomsService.getState(body.roomId);
-    this.server.to(this.roomChannel(body.roomId)).emit('prediction:updated', { prediction, ...this.liveStats(state) });
-    return prediction;
+    this.server.to(this.roomChannel(body.roomId)).emit('bet:updated', { bet, ...this.liveStats(state) });
+    return bet;
+  }
+
+  @SubscribeMessage('clip-vote:submit')
+  async submitClipVote(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: ClipVotePayload) {
+    this.assertCuid(body?.roomId, 'roomId'); this.assertCuid(body?.roundId, 'roundId'); this.assertCuid(body?.claimId, 'claimId');
+    if (typeof body?.isFake !== 'boolean') throw new BadRequestException('Invalid isFake');
+    await this.assertInRoom(socket, body.roomId); await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
+    const vote = await this.clipVotesService.create({ roundId: body.roundId, claimId: body.claimId, isFake: body.isFake }, socket.data.userId);
+    this.server.to(this.roomChannel(body.roomId)).emit('clip-vote:updated', vote); return vote;
   }
 
   @SubscribeMessage('round:lock')
@@ -200,15 +209,30 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       throw new BadRequestException('Invalid content');
     }
     await this.assertInRoom(socket, body.roomId);
+    const botPrompt = body.content.replace(/^\s*(?:@bot|\/ask)\s*/i, '').trim();
+    if (botPrompt !== body.content.trim() && botPrompt.length > 0) {
+      try {
+        for await (const event of this.chatService.streamBot(socket.data.userId, body.roomId, botPrompt)) socket.emit(`ai:${event.type}`, event.data);
+        return { action: 'bot' };
+      } catch (error) {
+        socket.emit('ai:error', { message: error instanceof Error ? error.message : 'Bot request failed' });
+        throw error;
+      }
+    }
     const message = await this.chatService.sendMessage(socket.data.userId, body.roomId, body.content);
     this.server.to(this.roomChannel(body.roomId)).emit('chat:message', message);
     return message;
   }
 
   @SubscribeMessage('ai:chat')
-  async streamAiChat(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: { prompt?: string }) {
+  async streamAiChat(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: { prompt?: string; roomId?: string }) {
     if (typeof body?.prompt !== 'string' || body.prompt.trim().length === 0 || body.prompt.length > 4000) {
       throw new BadRequestException('Invalid prompt');
+    }
+    if (body.roomId) await this.assertInRoom(socket, body.roomId);
+    const activeRound = body.roomId ? (await this.roomsService.getState(body.roomId)).round : null;
+    if (activeRound && ['COUNTDOWN', 'OPEN', 'LOCKED'].includes(String(activeRound.status))) {
+      throw new BadRequestException('The bot cannot comment on clips from the current round');
     }
     try {
       for await (const event of this.aiService.streamChat(body.prompt, socket.data.userId)) {
@@ -233,12 +257,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.server.to(this.roomChannel(roomId)).emit('round:verdicts', { roundId, verdicts });
   }
 
-  private liveStats(state: { pot: number; predictionCount: number; distribution: Record<string, unknown>; odds: Record<string, number> }) {
+  private liveStats(state: { pot: number; betCount: number }) {
     return {
       pot: state.pot,
-      predictionCount: state.predictionCount,
-      distribution: state.distribution,
-      odds: state.odds,
+      betCount: state.betCount,
     };
   }
 

@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, Min } from 'class-validator';
 
 export enum ClaimTruthLabel {
   TRUE = 'TRUE',
@@ -15,6 +15,11 @@ export class CreateClaimDto {
   @IsString()
   @MaxLength(2048)
   mediaRef?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  videoEndS?: number;
 
   @IsEnum(ClaimTruthLabel)
   truthLabel!: ClaimTruthLabel;

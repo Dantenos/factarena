@@ -1,4 +1,5 @@
 const { PrismaClient, ClaimTruthLabel } = require('@prisma/client');
+const crypto = require('node:crypto');
 
 const prisma = new PrismaClient();
 
@@ -34,6 +35,14 @@ const legacyDemoClaims = [
 // The versioned editorial source is the single source of truth for seeded
 // claims. The legacy array above is kept temporarily for migration readability.
 const demoClaims = require('./data/editorial-claims.json');
+// SHA-256 fingerprint of the historical admin password. The plaintext is
+// intentionally not kept in the source anymore, but the compromised value is
+// still rejected if someone tries to provide it through the environment.
+const REVOKED_ADMIN_PASSWORD_SHA256 = '2deb3b2684e86ef37f8954afe4d6c2f53205e5b885e7ebc1f6cd720c387a076b';
+
+function isRevokedAdminPassword(password) {
+  return crypto.createHash('sha256').update(password, 'utf8').digest('hex') === REVOKED_ADMIN_PASSWORD_SHA256;
+}
 
 function demoDataEnabled() {
   if (process.env.SEED_DEMO_DATA !== undefined) {
@@ -52,17 +61,40 @@ async function upsertUser({ id, email, displayName, role = 'USER', password }) {
 }
 
 async function seedAdmin() {
+  const nodeEnv = (process.env.NODE_ENV || 'development').trim().toLowerCase();
+  const isProduction = nodeEnv === 'production';
   const configuredEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
-  const configuredPassword = process.env.SEED_ADMIN_PASSWORD;
+  const configuredPassword = process.env.SEED_ADMIN_PASSWORD?.trim();
 
-  if (!configuredEmail && !demoDataEnabled()) return null;
+  if (!configuredEmail && !demoDataEnabled()) {
+    if (isProduction && configuredPassword) {
+      throw new Error('SEED_ADMIN_EMAIL is required when SEED_ADMIN_PASSWORD is set in production');
+    }
+    return null;
+  }
+
+  if (!configuredPassword) {
+    throw new Error(
+      isProduction
+        ? 'SEED_ADMIN_PASSWORD is required to seed an administrator in production'
+        : 'SEED_ADMIN_PASSWORD is required to seed an administrator; the historical demo password has been revoked',
+    );
+  }
+
+  if (isRevokedAdminPassword(configuredPassword)) {
+    throw new Error('SEED_ADMIN_PASSWORD is a revoked compromised password');
+  }
+
+  if (isProduction && !configuredEmail) {
+    throw new Error('SEED_ADMIN_EMAIL is required to seed an administrator in production');
+  }
 
   return upsertUser({
     id: ids.admin,
     email: configuredEmail || 'admin@factarena.local',
     displayName: 'FactArena Admin',
     role: 'ADMIN',
-    password: configuredPassword || 'FactArenaAdmin!123',
+    password: configuredPassword,
   });
 }
 
@@ -117,7 +149,6 @@ async function seedDemoData(admin) {
       opensAt: new Date('2025-01-01T12:00:00.000Z'),
       locksAt: new Date('2025-01-01T12:05:00.000Z'),
       revealedAt: new Date('2025-01-01T12:06:00.000Z'),
-      trueFakeCount: 2,
     },
     create: {
       id: ids.historyRound,
@@ -126,7 +157,6 @@ async function seedDemoData(admin) {
       opensAt: new Date('2025-01-01T12:00:00.000Z'),
       locksAt: new Date('2025-01-01T12:05:00.000Z'),
       revealedAt: new Date('2025-01-01T12:06:00.000Z'),
-      trueFakeCount: 2,
     },
   });
 
@@ -152,32 +182,43 @@ async function seedDemoData(admin) {
     });
   }
 
-  await prisma.prediction.upsert({
+  await prisma.bet.upsert({
     where: { userId_roundId: { userId: host.id, roundId: ids.historyRound } },
-    update: { predictedFakeCount: 2, stake: 100, payout: 200, result: 'WIN' },
+    update: { stake: 100, payout: 200, result: 'WIN' },
     create: {
       id: ids.predictionHost,
       userId: host.id,
       roundId: ids.historyRound,
-      predictedFakeCount: 2,
       stake: 100,
       payout: 200,
       result: 'WIN',
     },
   });
-  await prisma.prediction.upsert({
+  await prisma.bet.upsert({
     where: { userId_roundId: { userId: player.id, roundId: ids.historyRound } },
-    update: { predictedFakeCount: 0, stake: 100, payout: 0, result: 'LOSS' },
+    update: { stake: 100, payout: 0, result: 'LOSS' },
     create: {
       id: ids.predictionPlayer,
       userId: player.id,
       roundId: ids.historyRound,
-      predictedFakeCount: 0,
       stake: 100,
       payout: 0,
       result: 'LOSS',
     },
   });
+
+  for (const claim of selectedClaims) {
+    await prisma.clipVote.upsert({
+      where: { userId_roundId_claimId: { userId: host.id, roundId: ids.historyRound, claimId: claim.id } },
+      update: { isFake: claim.truthLabel === 'FALSE' },
+      create: { userId: host.id, roundId: ids.historyRound, claimId: claim.id, isFake: claim.truthLabel === 'FALSE' },
+    });
+    await prisma.clipVote.upsert({
+      where: { userId_roundId_claimId: { userId: player.id, roundId: ids.historyRound, claimId: claim.id } },
+      update: { isFake: claim.truthLabel !== 'FALSE' },
+      create: { userId: player.id, roundId: ids.historyRound, claimId: claim.id, isFake: claim.truthLabel !== 'FALSE' },
+    });
+  }
 
   const transactions = [
     { id: ids.transactionHostBet, userId: host.id, type: 'BET', amount: -100, balanceAfter: 900 },

@@ -1,5 +1,14 @@
 # Politique des transitions de jeu
 
+## Manche video et votes
+
+La manche est une succession de clips. Le serveur est l'autorite unique pour
+`opensAt`, `locksAt` et les evenements Socket.IO de transition. Chaque joueur
+peut creer un `Bet` unique et un `ClipVote` unique par clip pendant `OPEN`.
+La verite est toujours lue dans `Claim.truthLabel`; l'IA ne participe jamais
+au calcul du score. Les joueurs ayant le plus de votes corrects se partagent
+le pot.
+
 - Une manche ne peut être ouverte qu'une seule fois (`COUNTDOWN -> OPEN`).
 - Une manche ne peut être verrouillée qu'une seule fois (`OPEN -> LOCKED`) et
   uniquement lorsque `locksAt` est atteint, y compris lors d'un appel manuel.

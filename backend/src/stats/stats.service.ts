@@ -35,7 +35,7 @@ export class StatsService {
       select: {
         ...this.userSelect(),
         virtualBalance: true,
-        predictions: {
+        bets: {
           where: { result: { not: null } },
           select: { stake: true, payout: true, result: true },
         },
@@ -44,12 +44,12 @@ export class StatsService {
 
     return users
       .map((user) => {
-        const { predictions, virtualBalance, ...profile } = user;
+        const { bets, virtualBalance, ...profile } = user;
         return {
           rank: 0,
           user: profile,
           virtualBalance,
-          ...this.computeStats(predictions),
+          ...this.computeStats(bets),
         };
       })
       .sort((left, right) =>
@@ -68,7 +68,7 @@ export class StatsService {
       select: {
         ...this.userSelect(),
         virtualBalance: true,
-        predictions: {
+        bets: {
           where: { result: { not: null } },
           select: { stake: true, payout: true, result: true },
         },
@@ -77,11 +77,11 @@ export class StatsService {
 
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
-    const { predictions, virtualBalance, ...profile } = user;
+    const { bets, virtualBalance, ...profile } = user;
     return {
       user: profile,
       virtualBalance,
-      ...this.computeStats(predictions),
+      ...this.computeStats(bets),
     };
   }
 
@@ -97,12 +97,11 @@ export class StatsService {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
-    return this.prisma.prediction.findMany({
+    return this.prisma.bet.findMany({
       where: { userId, result: { not: null } },
       orderBy: [{ round: { revealedAt: 'desc' } }, { createdAt: 'desc' }],
       select: {
         id: true,
-        predictedFakeCount: true,
         stake: true,
         payout: true,
         result: true,
@@ -114,12 +113,12 @@ export class StatsService {
     });
   }
 
-  private computeStats(predictions: PredictionForStats[]): ComputedStats {
-    const roundsPlayed = predictions.length;
-    const victories = predictions.filter((prediction) => prediction.result === 'WIN').length;
-    const defeats = predictions.filter((prediction) => prediction.result === 'LOSS').length;
-    const totalStake = predictions.reduce((total, prediction) => total + prediction.stake, 0);
-    const totalPayout = predictions.reduce((total, prediction) => total + (prediction.payout ?? 0), 0);
+  private computeStats(bets: PredictionForStats[]): ComputedStats {
+    const roundsPlayed = bets.length;
+    const victories = bets.filter((bet) => bet.result === 'WIN').length;
+    const defeats = bets.filter((bet) => bet.result === 'LOSS').length;
+    const totalStake = bets.reduce((total, bet) => total + bet.stake, 0);
+    const totalPayout = bets.reduce((total, bet) => total + (bet.payout ?? 0), 0);
     const netGain = totalPayout - totalStake;
     const winRate = roundsPlayed > 0 ? Number((victories / roundsPlayed).toFixed(4)) : 0;
 
@@ -143,7 +142,6 @@ export class StatsService {
       opensAt: true,
       locksAt: true,
       revealedAt: true,
-      trueFakeCount: true,
       createdAt: true,
       updatedAt: true,
       room: {
@@ -153,11 +151,10 @@ export class StatsService {
           status: true,
         },
       },
-      predictions: {
+      bets: {
         select: {
           id: true,
           userId: true,
-          predictedFakeCount: true,
           stake: true,
           payout: true,
           result: true,

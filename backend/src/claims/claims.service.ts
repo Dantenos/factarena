@@ -79,6 +79,7 @@ export class ClaimsService {
       id: true,
       text: true,
       mediaRef: true,
+      videoEndS: true,
       category: true,
       sourceUrl: true,
       createdAt: true,

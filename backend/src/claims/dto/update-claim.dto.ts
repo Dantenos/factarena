@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, IsUrl, MaxLength, Min } from 'class-validator';
 import { ClaimTruthLabel } from './create-claim.dto';
 
 export class UpdateClaimDto {
@@ -11,6 +11,11 @@ export class UpdateClaimDto {
   @IsString()
   @MaxLength(2048)
   mediaRef?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  videoEndS?: number;
 
   @IsOptional()
   @IsEnum(ClaimTruthLabel)

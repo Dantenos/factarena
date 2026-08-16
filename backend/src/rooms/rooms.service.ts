@@ -1,20 +1,21 @@
 import { ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Prediction, Round, RoundClaim, Claim } from '@prisma/client';
+import { Bet, ClipVote, Round, RoundClaim, Claim } from '@prisma/client';
 import { ChatService } from '../chat/chat.service';
-import { PredictionsService } from '../predictions/predictions.service';
+import { BetsService } from '../bets/bets.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RoomPresenceService } from './room-presence.service';
 
 type RoundWithDetails = Round & {
   roundClaims: Array<RoundClaim & { claim: Claim }>;
-  predictions: Prediction[];
+  bets: Bet[];
+  clipVotes: ClipVote[];
 };
 
 @Injectable()
 export class RoomsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly predictionsService: PredictionsService,
+    private readonly betsService: BetsService,
     @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
     private readonly roomPresence: RoomPresenceService,
@@ -51,13 +52,14 @@ export class RoomsService {
     const activeRound = room.rounds.find((candidate: { status: string }) => ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'].includes(candidate.status));
     const roundId = requestedRoundId || activeRound?.id;
     const round = roundId ? await this.findRoundForRoom(id, roundId) : null;
-    const predictions = round?.predictions || [];
+    const bets = round?.bets || [];
 
     return {
       room: { id: room.id, name: room.name, status: room.status, createdBy: room.createdBy },
       members: await this.getMembers(id),
       round: round ? this.sanitizeRound(round) : null,
-      ...this.predictionsService.calculateRoundStats(predictions),
+      pot: bets.reduce((sum, bet) => sum + bet.stake, 0),
+      betCount: bets.length,
       serverTime: new Date().toISOString(),
     };
   }
@@ -151,7 +153,7 @@ export class RoomsService {
           claim: true,
         },
       },
-      predictions: {
+      bets: {
         orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }],
         include: {
           user: {
@@ -159,16 +161,16 @@ export class RoomsService {
           },
         },
       },
+      clipVotes: true,
     };
   }
 
   private sanitizeRound(round: RoundWithDetails) {
     const isRevealed = ['REVEALED', 'FINISHED'].includes(String(round.status));
-    const { trueFakeCount, roundClaims, predictions, ...safeRound } = round;
+    const { roundClaims, bets, clipVotes: _clipVotes, ...safeRound } = round;
     return {
       ...safeRound,
-      ...(isRevealed ? { trueFakeCount } : {}),
-      ...(isRevealed ? { predictions } : {}),
+      ...(isRevealed ? { bets } : {}),
       roundClaims: roundClaims.map((roundClaim) => {
         const { claim } = roundClaim;
         const { truthLabel, ...safeClaim } = claim;

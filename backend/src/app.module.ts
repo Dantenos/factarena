@@ -4,7 +4,8 @@ import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { RoundsModule } from './rounds/rounds.module';
-import { PredictionsModule } from './predictions/predictions.module';
+import { BetsModule } from './bets/bets.module';
+import { ClipVotesModule } from './clip-votes/clip-votes.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { UsersModule } from './users/users.module';
 import { FriendsModule } from './friends/friends.module';
@@ -21,7 +22,8 @@ import { StatsModule } from './stats/stats.module';
     AuthModule,
     RoomsModule,
     RoundsModule,
-    PredictionsModule,
+    BetsModule,
+    ClipVotesModule,
     LedgerModule,
     UsersModule,
     FriendsModule,

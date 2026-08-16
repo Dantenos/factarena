@@ -1,28 +1,7 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { LedgerService } from '../ledger/ledger.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-import { RoomPresenceService } from '../rooms/room-presence.service';
+import { BetsService } from '../bets/bets.service';
 
-type PredictionDatum = { stake: number; predictedFakeCount: number };
-
-type PredictionDistributionEntry = { count: number; stake: number };
-
-export type RoundPredictionStats = {
-  pot: number;
-  predictionCount: number;
-  distribution: Record<string, PredictionDistributionEntry>;
-  odds: Record<string, number>;
-};
-
-@Injectable()
-export class PredictionsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly ledger: LedgerService,
-    private readonly roomPresence: RoomPresenceService,
-  ) {}
-
+export class PredictionsService extends BetsService {}
+/*
   async create(data: { roundId: string; predictedFakeCount: number; stake: number }, userId: string) {
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -85,3 +64,4 @@ export class PredictionsService {
     return { pot, predictionCount: predictions.length, distribution, odds };
   }
 }
+*/

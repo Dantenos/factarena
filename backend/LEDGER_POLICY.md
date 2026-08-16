@@ -1,5 +1,8 @@
 # Politique du ledger
 
+Les mises de jeu sont stockees dans `Bet`. Les votes `ClipVote` ne touchent
+jamais au solde et ne produisent aucun mouvement de ledger.
+
 Les mises utilisent une décrémentation conditionnelle : PostgreSQL n'autorise
 la mise que si le solde courant couvre la stake. Deux mises concurrentes sur un
 solde insuffisant ne peuvent donc pas toutes les deux réussir.
