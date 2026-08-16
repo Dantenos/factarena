@@ -15,7 +15,7 @@ export class ChatService {
   async sendMessage(userId: string, roomId: string, content: string) {
     const room = await this.prisma.room.findUnique({ where: { id: roomId } });
     if (!room) throw new NotFoundException(`Room ${roomId} not found`);
-    this.assertMember(userId, roomId);
+    await this.assertMember(userId, roomId);
 
     const history = await this.prisma.message.findMany({
       where: { roomId },
@@ -57,7 +57,7 @@ export class ChatService {
   }
 
   async findByRoom(roomId: string, userId?: string) {
-    if (userId) this.assertMember(userId, roomId);
+    if (userId) await this.assertMember(userId, roomId);
     return this.prisma.message.findMany({
       where: { roomId },
       orderBy: { createdAt: 'asc' },
@@ -69,8 +69,9 @@ export class ChatService {
     });
   }
 
-  private assertMember(userId: string, roomId: string) {
-    if (!this.roomPresence.isMember(userId, roomId)) {
+  private async assertMember(userId: string, roomId: string): Promise<void> {
+    const isMember = await this.roomPresence.isMember(userId, roomId);
+    if (!isMember) {
       throw new ForbiddenException('Join the room before accessing its chat');
     }
   }

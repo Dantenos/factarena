@@ -55,6 +55,10 @@ services:
       FORTYTWO_CALLBACK_URL: ${FORTYTWO_CALLBACK_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       AI_SERVICE_URL: ${AI_SERVICE_URL} # adresse interne du service IA
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -24,13 +24,17 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy, '42') {
     refreshToken: string,
     profile: any,
   ): Promise<any> {
+    const providerId = typeof profile?.id === 'string' ? profile.id.trim() : '';
     const email = profile?.emails?.[0]?.value;
+    if (!providerId) {
+      throw new Error('42 OAuth profile did not return a valid provider id');
+    }
     const displayName = profile?.displayName || profile?.username || (email ? email.split('@')[0] : undefined);
     const avatarUrl = profile?.photos?.[0]?.value || null;
 
     return this.authService.findOrCreateOAuthUser({
       provider: '42',
-      providerId: profile?.id,
+      providerId,
       email,
       displayName,
       avatarUrl,

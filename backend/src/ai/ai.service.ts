@@ -1,4 +1,13 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  GatewayTimeoutException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,6 +19,13 @@ type ParsedSse = {
   answer: string;
   citations: AiCitation[];
 };
+
+class AiResponseParseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AiResponseParseError';
+  }
+}
 
 export type AiStreamEvent =
   | { type: 'sources'; data: AiCitation[] }
@@ -33,7 +49,7 @@ export class AiService {
       return response.data;
     } catch (error) {
       this.logger.warn(`AI service health check failed: ${String(error)}`);
-      return { status: 'unavailable' };
+      throw this.toAiHttpException(error, 'AI health check');
     }
   }
 
@@ -56,14 +72,7 @@ export class AiService {
       };
     } catch (error) {
       this.logger.warn(`RAG request failed: ${String(error)}`);
-      return {
-        success: false,
-        data: {
-          answer: `Analyse IA indisponible pour la question : ${question}`,
-          citations: [],
-          context_chunks: 0,
-        },
-      };
+      throw this.toAiHttpException(error, 'RAG request');
     }
   }
 
@@ -85,12 +94,7 @@ export class AiService {
       };
     } catch (error) {
       this.logger.warn(`LLM request failed: ${String(error)}`);
-      return {
-        success: false,
-        data: {
-          answer: `Réponse IA indisponible pour la demande : ${prompt}`,
-        },
-      };
+      throw this.toAiHttpException(error, 'LLM request');
     }
   }
 
@@ -106,22 +110,16 @@ export class AiService {
       };
     } catch (error) {
       this.logger.warn(`Moderation request failed: ${String(error)}`);
-      const lowered = message.toLowerCase();
-      if (/idiot|connard|putain|fuck|shit|salope/.test(lowered)) {
-        return {
-          success: false,
-          data: { action: 'delete', reason: 'fallback moderation heuristic' },
-        };
-      }
-      if (/stupide|bête|nul/.test(lowered)) {
-        return {
-          success: false,
-          data: { action: 'warn', reason: 'fallback moderation heuristic' },
-        };
-      }
+      // Moderation is deliberately fail-open: a temporary AI outage must not
+      // turn the chat into a wordlist-based filter. The caller can expose this
+      // status and apply an operational policy without losing the message.
       return {
-        success: false,
-        data: { action: 'allow', reason: 'fallback moderation heuristic' },
+        success: true,
+        data: {
+          action: 'allow',
+          moderation_status: 'moderation_unavailable',
+          reason: 'AI moderation is temporarily unavailable',
+        },
       };
     }
   }
@@ -184,24 +182,37 @@ export class AiService {
 
   async *streamChat(prompt: string, rateKey: string): AsyncGenerator<AiStreamEvent> {
     this.rateLimit.consume(`llm:${rateKey}`, 10, 60_000);
-    const response = await firstValueFrom(this.httpService.post(
-      `${this.aiBaseUrl}/llm/chat`,
-      { message: prompt },
-      { responseType: 'stream', timeout: 120_000 },
-    ));
+    try {
+      const response = await firstValueFrom(this.httpService.post(
+        `${this.aiBaseUrl}/llm/chat`,
+        { message: prompt },
+        { responseType: 'stream', timeout: 120_000 },
+      ));
 
-    let buffer = '';
-    for await (const chunk of response.data as AsyncIterable<Buffer | string>) {
-      buffer += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
-      const events = buffer.split(/\r?\n\r?\n/);
-      buffer = events.pop() ?? '';
-      for (const event of events) {
-        const parsed = this.parseSseEvent(event);
-        if (parsed) yield parsed;
+      let buffer = '';
+      let receivedEvent = false;
+      for await (const chunk of response.data as AsyncIterable<Buffer | string>) {
+        buffer += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+        const events = buffer.split(/\r?\n\r?\n/);
+        buffer = events.pop() ?? '';
+        for (const event of events) {
+          const parsed = this.parseSseEvent(event);
+          if (parsed) {
+            receivedEvent = true;
+            yield parsed;
+          }
+        }
       }
+      const finalEvent = this.parseSseEvent(buffer);
+      if (finalEvent) {
+        receivedEvent = true;
+        yield finalEvent;
+      }
+      if (!receivedEvent) throw new AiResponseParseError('AI service returned no SSE events');
+    } catch (error) {
+      this.logger.warn(`LLM stream failed: ${String(error)}`);
+      throw this.toAiHttpException(error, 'LLM stream');
     }
-    const finalEvent = this.parseSseEvent(buffer);
-    if (finalEvent) yield finalEvent;
     yield { type: 'done', data: {} };
   }
 
@@ -224,36 +235,49 @@ export class AiService {
 
   private parseSse(payload: unknown): ParsedSse {
     if (typeof payload !== 'string') {
-      throw new Error('AI service returned a non-stream response');
+      throw new AiResponseParseError('AI service returned a non-stream response');
     }
 
     let answer = '';
     let citations: AiCitation[] = [];
+    let recognizedEvent = false;
     const events = payload.split(/\r?\n\r?\n/);
 
     for (const event of events) {
       const eventName = event.match(/^event:\s*(.+)$/m)?.[1]?.trim();
       const dataLine = event.match(/^data:\s*(.+)$/m)?.[1];
-      if (!eventName || !dataLine) continue;
+      if (!event.trim()) continue;
+      if (!eventName || !dataLine) {
+        throw new AiResponseParseError('AI service returned malformed SSE data');
+      }
 
       let data: unknown;
       try {
         data = JSON.parse(dataLine);
       } catch {
-        continue;
+        throw new AiResponseParseError('AI service returned invalid SSE JSON');
       }
 
       if (eventName === 'sources' && Array.isArray(data)) {
+        recognizedEvent = true;
         citations = data.filter((item): item is AiCitation => typeof item === 'object' && item !== null);
       }
       if (eventName === 'token' && typeof data === 'object' && data !== null && 'text' in data) {
         const text = (data as { text?: unknown }).text;
-        if (typeof text === 'string') answer += text;
+        if (typeof text !== 'string') throw new AiResponseParseError('AI token has invalid text');
+        recognizedEvent = true;
+        answer += text;
       }
+      if (eventName === 'done') recognizedEvent = true;
       if (eventName === 'error') {
         throw new Error('AI streaming failed');
       }
+      if (!['sources', 'token', 'done'].includes(eventName)) {
+        throw new AiResponseParseError(`Unknown AI SSE event: ${eventName}`);
+      }
     }
+
+    if (!recognizedEvent) throw new AiResponseParseError('AI service returned no valid SSE events');
 
     return { answer, citations };
   }
@@ -261,20 +285,72 @@ export class AiService {
   private parseSseEvent(event: string): AiStreamEvent | null {
     const eventName = event.match(/^event:\s*(.+)$/m)?.[1]?.trim();
     const dataLine = event.match(/^data:\s*(.+)$/m)?.[1];
-    if (!eventName || !dataLine) return null;
+    if (!event.trim()) return null;
+    if (!eventName || !dataLine) throw new AiResponseParseError('AI service returned malformed SSE data');
     if (dataLine === '[DONE]') return { type: 'done', data: {} };
+    let data: unknown;
     try {
-      const data = JSON.parse(dataLine) as unknown;
-      if (eventName === 'sources' && Array.isArray(data)) {
-        return { type: 'sources', data: data.filter((item): item is AiCitation => typeof item === 'object' && item !== null) };
-      }
-      if (eventName === 'token' && typeof data === 'object' && data !== null && 'text' in data) {
-        const text = (data as { text?: unknown }).text;
-        if (typeof text === 'string') return { type: 'token', data: { text } };
-      }
+      data = JSON.parse(dataLine) as unknown;
     } catch {
-      return null;
+      throw new AiResponseParseError('AI service returned invalid SSE JSON');
     }
-    return null;
+    if (eventName === 'sources' && Array.isArray(data)) {
+      return { type: 'sources', data: data.filter((item): item is AiCitation => typeof item === 'object' && item !== null) };
+    }
+    if (eventName === 'token' && typeof data === 'object' && data !== null && 'text' in data) {
+      const text = (data as { text?: unknown }).text;
+      if (typeof text !== 'string') throw new AiResponseParseError('AI token has invalid text');
+      return { type: 'token', data: { text } };
+    }
+    if (eventName === 'done') return { type: 'done', data: {} };
+    if (eventName === 'error') throw new Error('AI streaming failed');
+    throw new AiResponseParseError(`Unknown AI SSE event: ${eventName}`);
+  }
+
+  private toAiHttpException(error: unknown, operation: string): HttpException {
+    if (error instanceof HttpException) return error;
+    if (error instanceof AiResponseParseError) {
+      return new BadGatewayException({
+        code: 'AI_INVALID_RESPONSE',
+        message: `${operation} returned an invalid response`,
+      });
+    }
+
+    const candidate = (error ?? {}) as {
+      code?: unknown;
+      message?: unknown;
+      response?: { status?: unknown; data?: unknown };
+    };
+    const status = typeof candidate.response?.status === 'number' ? candidate.response.status : undefined;
+    if (status === 429) {
+      return new HttpException({
+        code: 'AI_RATE_LIMITED',
+        message: 'The AI service rate limit has been reached',
+        retryAfterSeconds: this.getRetryAfterSeconds(candidate.response?.data),
+      }, HttpStatus.TOO_MANY_REQUESTS);
+    }
+    if (candidate.code === 'ECONNABORTED' || candidate.code === 'ETIMEDOUT' || candidate.code === 'ESOCKETTIMEDOUT') {
+      return new GatewayTimeoutException({ code: 'AI_TIMEOUT', message: `${operation} timed out` });
+    }
+    if (candidate.code === 'ECONNREFUSED' || candidate.code === 'ENOTFOUND' || candidate.code === 'EHOSTUNREACH') {
+      return new ServiceUnavailableException({ code: 'AI_UNAVAILABLE', message: 'The AI service is unavailable' });
+    }
+    if (status !== undefined && status >= 500) {
+      return new ServiceUnavailableException({ code: 'AI_TEMPORARY_ERROR', message: 'The AI service failed temporarily' });
+    }
+    if (status !== undefined && status >= 400) {
+      return new BadGatewayException({ code: 'AI_UPSTREAM_ERROR', message: 'The AI service rejected the request' });
+    }
+    return new ServiceUnavailableException({ code: 'AI_UNAVAILABLE', message: 'The AI service is unavailable' });
+  }
+
+  private getRetryAfterSeconds(data: unknown): number {
+    if (typeof data === 'object' && data !== null && 'retry_after' in data) {
+      const retryAfter = (data as { retry_after?: unknown }).retry_after;
+      if (typeof retryAfter === 'number' && Number.isFinite(retryAfter) && retryAfter > 0) {
+        return Math.ceil(retryAfter);
+      }
+    }
+    return 30;
   }
 }

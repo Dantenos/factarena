@@ -38,7 +38,7 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
     this.running = true;
     try {
       const rounds = await this.prisma.round.findMany({
-        where: { status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'] as any } },
+        where: { status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'] as any }, room: { status: { not: 'FINISHED' } } },
         select: { id: true, roomId: true, status: true, opensAt: true, locksAt: true },
         orderBy: { locksAt: 'asc' },
       });

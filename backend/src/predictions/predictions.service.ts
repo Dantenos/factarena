@@ -33,7 +33,7 @@ export class PredictionsService {
         }
         const now = new Date();
         const openRound = await tx.round.updateMany({
-          where: { id: data.roundId, status: 'OPEN', locksAt: { gt: now } },
+          where: { id: data.roundId, status: 'OPEN', locksAt: { gt: now }, room: { status: { not: 'FINISHED' } } },
           // This conditional update takes the round row lock. It prevents a
           // prediction transaction that started before the deadline from
           // committing after the game loop has locked the round.

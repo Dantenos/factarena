@@ -12,10 +12,21 @@ export function getJwtSecret(): string {
 }
 
 export function isFortyTwoEnabled(): boolean {
-  return Boolean(
-    process.env.FORTYTWO_CLIENT_ID?.trim() &&
-    process.env.FORTYTWO_CLIENT_SECRET?.trim(),
-  );
+  const clientId = process.env.FORTYTWO_CLIENT_ID?.trim();
+  const clientSecret = process.env.FORTYTWO_CLIENT_SECRET?.trim();
+  const callbackUrl = process.env.FORTYTWO_CALLBACK_URL?.trim();
+
+  if (!clientId || !clientSecret || !callbackUrl) return false;
+
+  try {
+    const parsed = new URL(callbackUrl);
+    const expectedPath = '/api/auth/42/callback';
+    if (parsed.pathname !== expectedPath) return false;
+    if (isProduction && parsed.protocol !== 'https:') return false;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getFortyTwoClientId(): string {
@@ -35,7 +46,26 @@ export function getFortyTwoClientSecret(): string {
 }
 
 export function getFortyTwoCallbackUrl(): string {
-  return process.env.FORTYTWO_CALLBACK_URL?.trim() || 'http://localhost:3000/api/auth/42/callback';
+  const value = process.env.FORTYTWO_CALLBACK_URL?.trim();
+  if (!value) {
+    throw new Error('FORTYTWO_CALLBACK_URL is required for OAuth 42');
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error('FORTYTWO_CALLBACK_URL must be an absolute URL');
+  }
+
+  if (parsed.pathname !== '/api/auth/42/callback') {
+    throw new Error('FORTYTWO_CALLBACK_URL must target /api/auth/42/callback');
+  }
+  if (isProduction && parsed.protocol !== 'https:') {
+    throw new Error('FORTYTWO_CALLBACK_URL must use HTTPS in production');
+  }
+
+  return parsed.toString().replace(/\/$/, '');
 }
 
 export function getFrontendCallbackUrl(token: string): string | null {

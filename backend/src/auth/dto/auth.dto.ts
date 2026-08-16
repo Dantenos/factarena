@@ -1,9 +1,11 @@
 import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Email must be a valid email address.' })
   @IsNotEmpty({ message: 'Email is required.' })
   @MaxLength(254)
+  @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)
   email!: string;
 
   @IsString()
@@ -17,6 +19,7 @@ export class LoginDto {
   @IsEmail({}, { message: 'Email must be a valid email address.' })
   @IsNotEmpty({ message: 'Email is required.' })
   @MaxLength(254)
+  @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)
   email!: string;
 
   @IsString()

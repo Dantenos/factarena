@@ -7,8 +7,28 @@ import { Prisma } from '@prisma/client';
 export class RoundsService {
   constructor(private readonly prisma: PrismaService, private readonly ledger: LedgerService) {}
 
+  /**
+   * Ensures that a round is addressed through its owning room.
+   *
+   * WebSocket payloads contain both identifiers, so this check must happen
+   * before any operation that broadcasts state to a room. Returning the same
+   * error for an unknown round and a round from another room avoids exposing
+   * cross-room information through the gateway.
+   */
+  async assertBelongsToRoom(roundId: string, roomId: string): Promise<void> {
+    const round = await this.prisma.round.findFirst({
+      where: { id: roundId, roomId },
+      select: { id: true },
+    });
+
+    if (!round) {
+      throw new NotFoundException(`Round ${roundId} not found in room ${roomId}`);
+    }
+  }
+
   async create(data: { roomId: string; claimIds: string[]; durationSeconds: number }, createdById: string) {
     const distinctClaimIds = [...new Set(data.claimIds)];
+    if (distinctClaimIds.length === 0) throw new BadRequestException('A round must contain at least one claim');
     if (distinctClaimIds.length !== data.claimIds.length) throw new BadRequestException('A claim may appear only once in a round');
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const room = await tx.room.findUnique({ where: { id: data.roomId } });
@@ -54,10 +74,11 @@ export class RoundsService {
   }
 
   async lock(id: string, userId: string) {
-    const round = await this.prisma.round.findUnique({ where: { id }, select: { room: { select: { createdBy: true } } } });
+    const round = await this.prisma.round.findUnique({ where: { id }, select: { room: { select: { createdBy: true, status: true } } } });
     if (!round) throw new NotFoundException(`Round ${id} not found`);
     if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may lock a round');
-    const locked = await this.lockIfDueOrOpen(id, false);
+    if (round.room.status === 'FINISHED') throw new BadRequestException('Cannot modify a finished room');
+    const locked = await this.lockIfDueOrOpen(id, true);
     if (!locked) throw new BadRequestException('Only an open round can be locked');
     return locked;
   }
@@ -66,13 +87,14 @@ export class RoundsService {
     const round = await this.prisma.round.findUnique({ where: { id }, include: { room: true } });
     if (!round) throw new NotFoundException(`Round ${id} not found`);
     if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may reveal a round');
+    if (round.room.status === 'FINISHED') throw new BadRequestException('Cannot modify a finished room');
     return this.revealAndSettle(id);
   }
 
   /** Atomically transitions an expired OPEN round to LOCKED. */
   async openIfDue(id: string) {
     const claimed = await this.prisma.round.updateMany({
-      where: { id, status: 'COUNTDOWN' as any, opensAt: { lte: new Date() } },
+      where: { id, status: 'COUNTDOWN' as any, opensAt: { lte: new Date() }, room: { status: { not: 'FINISHED' } } },
       data: { status: 'OPEN' },
     });
     return claimed.count === 1 ? this.findOne(id) : null;
@@ -89,6 +111,7 @@ export class RoundsService {
       where: {
         id,
         status: 'OPEN',
+        room: { status: { not: 'FINISHED' } },
         ...(dueOnly ? { locksAt: { lte: now } } : {}),
       },
       data: { status: 'LOCKED' },
@@ -99,10 +122,12 @@ export class RoundsService {
   /** Resolves a locked round without requiring a connected host. */
   async revealAndSettle(id: string) {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const round = await tx.round.findUnique({ where: { id }, include: { room: true, predictions: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } } });
+      const round = await tx.round.findUnique({ where: { id }, include: { room: true, roundClaims: { select: { id: true } }, predictions: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } } });
       if (!round) throw new NotFoundException(`Round ${id} not found`);
+      if (round.room?.status === 'FINISHED') throw new BadRequestException('Cannot reveal a round in a finished room');
       if (round.status !== 'LOCKED') throw new BadRequestException('Only a locked round can be revealed');
-      const claimed = await tx.round.updateMany({ where: { id, status: 'LOCKED' }, data: { status: 'REVEALED', revealedAt: new Date() } });
+      if (Array.isArray(round.roundClaims) && round.roundClaims.length === 0) throw new BadRequestException('Cannot reveal a round without claims');
+      const claimed = await tx.round.updateMany({ where: { id, status: 'LOCKED', room: { status: { not: 'FINISHED' } } }, data: { status: 'REVEALED', revealedAt: new Date() } });
       if (claimed.count !== 1) throw new BadRequestException('Round has already been resolved');
       if (round.predictions.length === 0) return tx.round.findUniqueOrThrow({ where: { id } });
       const trueFakeCount = round.trueFakeCount!;
@@ -115,7 +140,7 @@ export class RoundsService {
         const winnerIndex = winners.findIndex((winner: { id: string }) => winner.id === prediction.id);
         const payout = winnerIndex === -1 ? 0 : basePayout + (winnerIndex < remainder ? 1 : 0);
         await tx.prediction.update({ where: { id: prediction.id }, data: { result: winnerIndex === -1 ? 'LOSS' : 'WIN', payout } });
-        if (payout > 0) await this.ledger.creditPayout(tx, prediction.userId, payout);
+        if (payout > 0) await this.ledger.creditPayout(tx, prediction.userId, payout, `payout:${prediction.id}`);
       }
       return tx.round.findUniqueOrThrow({ where: { id }, include: { predictions: true } });
     });

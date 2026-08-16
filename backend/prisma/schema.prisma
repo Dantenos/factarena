@@ -3,11 +3,9 @@
 // Possédé par le back-core (NestJS). POURQUOI ici : Prisma est l'ORM imposé ;
 // ce fichier est la source unique du modèle relationnel et des migrations.
 //
-// ATTENTION : SCHÉMA MINIMAL (initialisation). On démarre volontairement avec
-// la SEULE table User. Le modèle complet cible (Room, Round, Claim, Prediction,
-// Transaction, ClaimVerdict, Stat...) est décrit dans docs/ARCHITECTURE.md et
-// sera ajouté au fur et à mesure. Chacun ajoute SES tables ici quand il code
-// sa feature.
+// Schema relationnel complet du backend : utilisateurs, rooms, manches, claims,
+// predictions, ledger, presence, chat, amis et verdicts IA. Toute evolution du
+// schema doit etre materialisee par une migration Prisma versionnee.
 //
 // Rappel (docs/ARCHITECTURE.md §5.2) : la table des embeddings (pgvector) N'EST
 // PAS gérée par Prisma mais par le service back-ai (FastAPI), dans la même base.
@@ -154,6 +152,7 @@ model Round {
 
 model Claim {
   id         String          @id @default(cuid())
+  sourceKey  String?         @unique // identifiant stable du dataset éditorial
   createdBy  String?
   text       String
   mediaRef   String?
@@ -214,6 +213,7 @@ model Transaction {
   type         TransactionType
   amount       Int
   balanceAfter Int
+  referenceId  String?         @unique // clé d'idempotence pour payout/remboursement
   createdAt    DateTime        @default(now())
 
   user User @relation(fields: [userId], references: [id])

@@ -64,6 +64,7 @@ services:
       # devDependencies... dont le CLI de Nest, qui est justement ce qui fait
       # tourner le mode watch. On repasse donc en development ici.
       NODE_ENV: development
+      SEED_DEMO_DATA: "true"
     # Je garde le « prisma db push » du Dockerfile : le schéma doit être en place
     # avant que l'API réponde à quoi que ce soit, qu'on soit en dev ou en prod.
     command: ["sh", "-c", "npx prisma db push --skip-generate && npm run start:dev"]

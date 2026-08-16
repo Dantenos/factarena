@@ -24,16 +24,17 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
+  @UseGuards(JwtAuthGuard)
   me(@Request() req: { user: { userId: string } }) {
     return this.usersService.findById(req.user.userId);
   }
 
   @Post('me/avatar')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('avatar', {
     storage: diskStorage({
       destination: (_req: unknown, _file: unknown, cb: (error: Error | null, destination: string) => void) => {
@@ -41,11 +42,8 @@ export class UsersController {
         mkdirSync(directory, { recursive: true });
         cb(null, directory);
       },
-      filename: (_req: unknown, file: { mimetype: string }, cb: (error: Error | null, filename: string) => void) => {
-        const extension = file.mimetype === 'image/png' ? 'png'
-          : file.mimetype === 'image/gif' ? 'gif'
-          : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
-        cb(null, `${randomUUID()}-${Date.now()}.${extension}`);
+      filename: (_req: unknown, _file: { mimetype: string }, cb: (error: Error | null, filename: string) => void) => {
+        cb(null, `${randomUUID()}.upload`);
       },
     }),
     limits: { fileSize: 5 * 1024 * 1024, files: 1 },
@@ -55,18 +53,22 @@ export class UsersController {
   }))
   uploadAvatar(
     @Request() req: { user: { userId: string } },
-    @UploadedFile() file?: { filename: string },
+    @UploadedFile() file?: { path: string },
   ) {
     if (!file) throw new BadRequestException('A valid image avatar is required');
-    return this.usersService.setAvatar(req.user.userId, file.filename);
+    return this.usersService.setAvatarFromUpload(req.user.userId, file.path);
   }
 
+  // Avatars are intentionally public so browsers can load them through an
+  // <img src="..."> without sending a bearer token. Filenames are generated
+  // with randomUUID() on upload and validated in UsersService before reading.
   @Get('avatars/:filename')
   avatar(@Param('filename') filename: string): StreamableFile {
     return this.usersService.getAvatar(filename);
   }
 
   @Patch('me')
+  @UseGuards(JwtAuthGuard)
   updateProfile(
     @Request() req: { user: { userId: string } },
     @Body() dto: UpdateProfileDto,
@@ -75,6 +77,7 @@ export class UsersController {
   }
 
   @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
   changePassword(
     @Request() req: { user: { userId: string } },
     @Body() dto: ChangePasswordDto,
@@ -83,6 +86,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   getById(@Param('id', CuidParamPipe) id: string) {
     return this.usersService.findById(id);
   }

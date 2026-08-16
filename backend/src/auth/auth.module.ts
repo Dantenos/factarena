@@ -7,9 +7,19 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { FortyTwoStrategy } from './strategies/fortytwo.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { FortyTwoAuthGuard } from './guards/fortytwo-auth.guard';
+import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
+import { RateLimitService } from '../common/rate-limit.service';
 import { getJwtSecret, isFortyTwoEnabled } from '../common/env';
 
-const authProviders: Provider[] = [AuthService, JwtAuthGuard, RolesGuard];
+const authProviders: Provider[] = [
+  AuthService,
+  JwtAuthGuard,
+  RolesGuard,
+  FortyTwoAuthGuard,
+  AuthRateLimitGuard,
+  RateLimitService,
+];
 if (isFortyTwoEnabled()) {
   authProviders.push(FortyTwoStrategy);
 }
@@ -29,6 +39,6 @@ if (isFortyTwoEnabled()) {
   ],
   controllers: [AuthController],
   providers: authProviders,
-  exports: [JwtModule, JwtAuthGuard, RolesGuard],
+  exports: [JwtModule, JwtAuthGuard, RolesGuard, FortyTwoAuthGuard, AuthRateLimitGuard],
 })
 export class AuthModule {}

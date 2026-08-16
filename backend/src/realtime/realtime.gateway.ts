@@ -156,6 +156,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.assertNonNegativeInteger(body?.predictedFakeCount, 'predictedFakeCount');
     this.assertPositiveInteger(body?.stake, 'stake');
     await this.assertInRoom(socket, body.roomId);
+    await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
     const prediction = await this.predictionsService.create({
       roundId: body.roundId,
       predictedFakeCount: body.predictedFakeCount,
@@ -171,6 +172,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.assertCuid(body?.roomId, 'roomId');
     this.assertCuid(body?.roundId, 'roundId');
     await this.assertInRoom(socket, body.roomId);
+    await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
     const round = await this.roundsService.lock(body.roundId, socket.data.userId);
     const state = await this.roomsService.getState(body.roomId);
     this.server.to(this.roomChannel(body.roomId)).emit('round:locked', { round, ...this.liveStats(state) });
@@ -183,6 +185,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.assertCuid(body?.roomId, 'roomId');
     this.assertCuid(body?.roundId, 'roundId');
     await this.assertInRoom(socket, body.roomId);
+    await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
     const round = await this.roundsService.reveal(body.roundId, socket.data.userId);
     const state = await this.roomsService.getState(body.roomId);
     this.server.to(this.roomChannel(body.roomId)).emit('round:revealed', { round, ...this.liveStats(state) });

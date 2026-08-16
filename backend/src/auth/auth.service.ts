@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -25,8 +26,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    const email = this.normalizeEmail(dto.email);
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (existingUser) {
@@ -35,20 +37,29 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        passwordHash,
-        role: 'USER',
-      },
-    });
+    let user: AuthUser;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          role: 'USER',
+        },
+      });
+    } catch (error: unknown) {
+      if ((error as { code?: string }).code === 'P2002') {
+        throw new ConflictException('Email already exists');
+      }
+      throw error;
+    }
 
     return this.buildAuthResponse(user);
   }
 
   async login(dto: LoginDto) {
+    const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (!user || !user.passwordHash) {
@@ -71,15 +82,22 @@ export class AuthService {
     displayName?: string | null;
     avatarUrl?: string | null;
   }) {
-    if (!params.email) {
+    const provider = params.provider?.trim();
+    const providerId = params.providerId?.trim();
+    const email = params.email?.trim().toLowerCase();
+
+    if (provider !== '42' || provider.length > 32 || !providerId || providerId.length > 255) {
+      throw new BadRequestException('OAuth provider identity is invalid');
+    }
+    if (!email) {
       throw new UnauthorizedException('OAuth provider did not return an email');
     }
 
     const providerUser = await this.prisma.user.findUnique({
       where: {
         oauthProvider_oauthProviderId: {
-          oauthProvider: params.provider,
-          oauthProviderId: params.providerId,
+          oauthProvider: provider,
+          oauthProviderId: providerId,
         },
       },
     });
@@ -89,32 +107,31 @@ export class AuthService {
     }
 
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: params.email },
+      where: { email },
     });
 
     if (existingUser) {
-      const updatedUser = await this.prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          oauthProvider: params.provider,
-          oauthProviderId: params.providerId,
-          displayName: params.displayName ?? existingUser.displayName,
-          avatarUrl: params.avatarUrl ?? existingUser.avatarUrl,
-        },
-      });
-      return this.buildAuthResponse(updatedUser);
+      throw new ConflictException('An account already exists for this email; link OAuth after authenticating first');
     }
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: params.email,
-        displayName: params.displayName,
-        avatarUrl: params.avatarUrl,
-        oauthProvider: params.provider,
-        oauthProviderId: params.providerId,
-        role: 'USER',
-      },
-    });
+    let user: AuthUser;
+    try {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          displayName: params.displayName,
+          avatarUrl: params.avatarUrl,
+          oauthProvider: provider,
+          oauthProviderId: providerId,
+          role: 'USER',
+        },
+      });
+    } catch (error: unknown) {
+      if ((error as { code?: string }).code === 'P2002') {
+        throw new ConflictException('An OAuth account with this identity already exists');
+      }
+      throw error;
+    }
 
     return this.buildAuthResponse(user);
   }
@@ -137,5 +154,9 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 }
