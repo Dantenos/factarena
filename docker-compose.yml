@@ -32,16 +32,19 @@ services:
     # les autres services attendent que la base réponde vraiment car deux services sont interdépendents.
     # PostgreSQL doit être prêt avant que Node.js ne démarre. Node.js doit être prêt avant que Python) ne tente d'appeler l'API
     # c'est pourquoi il y a autant de healthcheck (un par service)
+    depends_on:
+      logstash:
+        condition: service_healthy
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.30.0.10:12201"
+        tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-factarena}"]
       interval: 5s
       timeout: 5s
       retries: 10
-    # logging:
-    #   driver: "gelf"
-    #   options:
-    #     gelf-address: "tcp://127.0.0.1:12201"
-    #     tag: "factarena/postgres"
     networks:
       - factarena
     restart: unless-stopped
@@ -76,17 +79,17 @@ services:
     # un moment, d'où le pavé : ne remettez pas « localhost » ici.
     # Le http:// est volontaire : on est À L'INTÉRIEUR du conteneur, et le sujet
     # n'impose le chiffrement que pour le trafic qui vient du navigateur.
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.30.0.10:12201"
+        tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 40s
-    # logging:
-    #   driver: "gelf"
-    #   options:
-    #     gelf-address: "tcp://127.0.0.1:12201"
-    #     tag: "factarena/backend"
     networks:
       - factarena
     restart: unless-stopped
@@ -108,6 +111,11 @@ services:
     expose:
       - "8000"
     # pour python:slim on sonde /health via urllib.
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.30.0.10:12201"
+        tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
       interval: 10s
@@ -132,6 +140,14 @@ services:
     build: ./frontend
     expose:
       - "4173"
+    depends_on:
+      logstash:
+        condition: service_healthy
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.30.0.10:12201"
+        tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:4173/ || exit 1"]
       interval: 10s
@@ -144,20 +160,22 @@ services:
 
 
   # ==========================================================
-  # ELK STACK
+  # DEVOPS : ELK STACK
   # ==========================================================
 
-  # ----------------------------------------------------------
-  # Elasticsearch
-  # Stockage et indexation des logs
-  # ----------------------------------------------------------
+  # ==========================================================================
+  # DEVOPS : Elasticsearch (store and index logs)
+  # ==========================================================================
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
+    build:
+      context: ./devops/elk/elasticsearch
     environment:
       discovery.type: single-node
       xpack.security.enabled: "true"
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
+      KIBANA_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
+      LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD must be set in .env}
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
       path.repo: '["/snapshots"]'
     volumes:
@@ -176,104 +194,61 @@ services:
       - elk
     restart: unless-stopped
 
-  # --------------------------------------------------------------------------
-  # Elasticsearch initialization
-  #
-  # This service automatically configures the kibana_system password before
-  # Kibana starts. It runs once and exits successfully.
-  # --------------------------------------------------------------------------
+  # ==========================================================================
+  # DEVOPS : Logstash (Collect & Transform logs)
+  # ==========================================================================
 
-  elasticsearch-init:
-    image: curlimages/curl:8.15.0
-    environment:
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
-      KIBANA_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - elk
-    restart: "no"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -eu
-
-        echo "Waiting for Elasticsearch..."
-
-        until curl -fsS \
-          -u "elastic:$${ELASTIC_PASSWORD}" \
-          http://elasticsearch:9200/_cluster/health \
-          >/dev/null; do
-          sleep 2
-        done
-
-        echo "Configuring kibana_system password..."
-
-        curl -fsS \
-          -u "elastic:$${ELASTIC_PASSWORD}" \
-          -X POST \
-          http://elasticsearch:9200/_security/user/kibana_system/_password \
-          -H "Content-Type: application/json" \
-          -d "{\"password\":\"$${KIBANA_PASSWORD}\"}"
-
-        echo "Elasticsearch initialization completed."
-
-  # --------------------------------------------------------------------------
-  # Elasticsearch admin utility
-  # --------------------------------------------------------------------------
-
-  elasticsearch-admin:
-    image: curlimages/curl:8.15.0
-    profiles:
-      - admin
-    networks:
-      - elk
-
-  # ----------------------------------------------------------
-  # ELK STACK: Logstash (Collecte & Transformation)
-  # ----------------------------------------------------------
   logstash:
-    image: docker.elastic.co/logstash/logstash:9.5.1
+    build:
+      context: ./devops/elk/logstash
     environment:
-      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
-      LOGSTASH_ENV: ${LOGSTASH_ENV}
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
       LOGSTASH_USER: ${LOGSTASH_USER}
       LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
     volumes:
-      - ./devops/elk/logstash:/usr/share/logstash/pipeline:ro
-    ports:
-      - "5000:5000"
-    # expose:
-    # - "5000"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9600/_node/pipelines >/dev/null || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 20s
+      - ./devops/elk/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    expose:
+      - "12201/udp"
+      - "9600"
     depends_on:
       elasticsearch:
         condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/9600' 2>/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     networks:
-      - factarena
-      - elk
+      factarena:
+        ipv4_address: 172.30.0.10
+      elk:
     restart: unless-stopped
 
-  # ----------------------------------------------------------
-  # ELK STACK: Kibana (Visualisation & Dashboards)
-  # ----------------------------------------------------------
+  # ==========================================================================
+  # DEVOPS : Kibana (Visualisation & Dashboards)
+  # ==========================================================================
+
   kibana:
-    image: docker.elastic.co/kibana/kibana:9.5.1
+    build:
+      context: ./devops/elk/kibana
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
       ELASTICSEARCH_USERNAME: ${KIBANA_USER}
       ELASTICSEARCH_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
+      KIBANA_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
       SERVER_BASEPATH: /kibana
       SERVER_REWRITEBASEPATH: "true"
+    volumes:
+      - ./devops/elk/kibana/dashboard-demo.ndjson:/usr/share/kibana/config/dashboard.ndjson:ro
     depends_on:
-      elasticsearch-init:
-        condition: service_completed_successfully
+      elasticsearch:
+        condition: service_healthy
+      logstash:
+        condition: service_healthy
     expose:
       - "5601"
     healthcheck:
@@ -284,59 +259,74 @@ services:
       retries: 10
       start_period: 40s
     networks:
-      - factarena
       - elk
     restart: unless-stopped
 
-  # ----------------------------------------------------------
-  # MONITORING: Prometheus (Collecte de métriques)
-  # ----------------------------------------------------------
-  prometheus:
-    image: prom/prometheus:v2.48.0
-    volumes:
-      - ./devops/monitoring/prometheus:/etc/prometheus:ro
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-    expose:
-      - "9090"
-    healthcheck:
-      test:
-        ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9090/-/healthy || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    networks:
-      - factarena
-    restart: unless-stopped
+  # # ----------------------------------------------------------
+  # # DEVOPS : MONITORING: Prometheus (Collecte de métriques)
+  # # ----------------------------------------------------------
+  # prometheus:
+  #   image: prom/prometheus:v2.48.0
+  #   volumes:
+  #     - ./devops/monitoring/prometheus:/etc/prometheus:ro
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #     - "--storage.tsdb.path=/prometheus"
+  #   expose:
+  #     - "9090"
+  #   depends_on:
+  #     logstash:
+  #       condition: service_healthy
+  #   logging:
+  #     driver: gelf
+  #     options:
+  #       gelf-address: "udp://172.30.0.10:12201"
+  #       tag: "{{.Name}}"
+  #   healthcheck:
+  #     test:
+  #       ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9090/-/healthy || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 15s
+  #   networks:
+  #     - factarena
+  #   restart: unless-stopped
 
-  # ----------------------------------------------------------
-  # MONITORING: Grafana (Visualisation & Alertes)
-  # ----------------------------------------------------------
-  grafana:
-    image: grafana/grafana:10.2.2
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set in .env}
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
-      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    expose:
-      - "3000"
-    healthcheck:
-      test:
-        ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    networks:
-      - factarena
-    restart: unless-stopped
+  # # ----------------------------------------------------------
+  # # DEVOPS : MONITORING: Grafana (Visualisation & Alertes)
+  # # ----------------------------------------------------------
+  # grafana:
+  #   image: grafana/grafana:10.2.2
+  #   environment:
+  #     GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+  #     GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set in .env}
+  #     GF_USERS_ALLOW_SIGN_UP: "false"
+  #     GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+  #     GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   expose:
+  #     - "3000"
+  #   depends_on:
+  #     logstash:
+  #       condition: service_healthy
+  #   logging:
+  #     driver: gelf
+  #     options:
+  #       gelf-address: "udp://172.30.0.10:12201"
+  #       tag: "{{.Name}}"
+  #   healthcheck:
+  #     test:
+  #       ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 15s
+  #   networks:
+  #     - factarena
+  #   restart: unless-stopped
 
   # ----------------------------------------------------------
   # PostgreSQL backup
@@ -353,6 +343,11 @@ services:
       - ./backups:/backups
       - ./scripts:/scripts:ro
     entrypoint: ["sh", "-c", "while true; do /scripts/backup.sh; sleep $$BACKUP_INTERVAL_SECONDS; done"]
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.30.0.10:12201"
+        tag: "{{.Name}}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -374,8 +369,8 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-      grafana:
-        condition: service_healthy
+      # grafana:
+      #   condition: service_healthy
       logstash:
         condition: service_healthy
     ports:
@@ -383,19 +378,20 @@ services:
     # Idem : nginx aussi écoute en 0.0.0.0:80, donc IPv4. On sonde 127.0.0.1.
     # C'est la sonde /healthz du bloc « server » sur le port 80 (voir nginx.conf) :
     # elle répond en clair, sans redirection, uniquement pour Docker.
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.30.0.10:12201"
+        tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6
       start_period: 10s
-    # logging:
-    #   driver: "gelf"
-    #   options:
-    #     gelf-address: "tcp://127.0.0.1:12201"
-    #     tag: "factarena/nginx"
     networks:
       - factarena
+      - elk
     restart: unless-stopped
 
 # ------------------------------------------------------------
@@ -404,6 +400,9 @@ services:
 networks:
   factarena:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
   elk:
     driver: bridge
     internal: true
