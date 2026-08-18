@@ -37,7 +37,7 @@ export default defineConfig({
       // Ces deux lignes disent juste à Vite : « dis au navigateur de passer par
       // wss://<le site>:443 », donc par nginx, qui sait faire suivre.
       protocol: 'wss',
-      clientPort: 443,
+      clientPort: 8443,
     },
   },
 });

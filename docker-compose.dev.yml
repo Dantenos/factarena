@@ -52,8 +52,9 @@ services:
   # Le back : Nest en mode watch, il redémarre seul à chaque sauvegarde.
   # ----------------------------------------------------------
   backend:
+    user: "root"
     volumes:
-      - ./backend:/app
+      - ./backend:/app:Z
       - backend_uploads:/app/uploads
       # Même histoire que pour le front, et ici c'est encore plus critique :
       # le node_modules de l'image contient le client Prisma généré au build,

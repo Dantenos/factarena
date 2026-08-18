@@ -21,9 +21,8 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
 
-		<Route path="/play" element={<Play />}>
-			<Route path="room" element={<Room />} />
-		</Route>
+		  <Route path="/play" element={<Play />} />
+			<Route path="/room" element={<Room />} />
       </Route>
     </Routes>
   );
