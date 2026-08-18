@@ -1,12 +1,44 @@
-import { Module } from '@nestjs/common';
+import { Global, Module, Provider } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { PrismaModule } from '../prisma/prisma.module';
+import { FortyTwoStrategy } from './strategies/fortytwo.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { FortyTwoAuthGuard } from './guards/fortytwo-auth.guard';
+import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
+import { RateLimitService } from '../common/rate-limit.service';
+import { getJwtSecret, isFortyTwoEnabled } from '../common/env';
 
-// STRUCTURE VIDE (volontaire à ce stade). L'inscription / connexion par email +
-// mot de passe hashé (Argon2/bcrypt), les JWT et l'OAuth 42 seront implémentés
-// ici. On pose seulement le squelette pour que le Back Core sache où coder.
+const authProviders: Provider[] = [
+  AuthService,
+  JwtAuthGuard,
+  RolesGuard,
+  FortyTwoAuthGuard,
+  AuthRateLimitGuard,
+  RateLimitService,
+];
+if (isFortyTwoEnabled()) {
+  authProviders.push(FortyTwoStrategy);
+}
+
+// Module d'authentification : il expose les routes /api/auth/* et fournit les
+// services nécessaires pour stocker les utilisateurs, hasher les mots de passe
+// et signer des JWT.
+@Global()
 @Module({
+  imports: [
+    PrismaModule,
+    PassportModule.register({ session: false }),
+    JwtModule.register({
+      secret: getJwtSecret(),
+      signOptions: { expiresIn: '1h' },
+    }),
+  ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: authProviders,
+  exports: [JwtModule, JwtAuthGuard, RolesGuard, FortyTwoAuthGuard, AuthRateLimitGuard],
 })
 export class AuthModule {}

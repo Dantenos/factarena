@@ -34,6 +34,7 @@ SEVERE_CATEGORIES = {
 class ModerationRequest(BaseModel):
     # Validation back (exigence du sujet) : message non vide, taille bornée.
     message: str = Field(min_length=1, max_length=4000)
+    history: list[str] = Field(default_factory=list, max_length=20)
 
 
 def _decide(result: dict) -> dict:
@@ -63,7 +64,9 @@ def _decide(result: dict) -> dict:
 @router.post("/check")
 async def check(req: ModerationRequest):
     try:
-        result = await moderate(req.message)
+        context = "\n".join(req.history[-20:])
+        moderated_input = f"Historique récent:\n{context}\n\nMessage à modérer:\n{req.message}" if context else req.message
+        result = await moderate(moderated_input)
     except Exception:
         # Si Mistral est injoignable, on ne tranche pas à sa place : on renvoie
         # une erreur, et c'est le back qui décide de sa politique de repli

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -14,7 +15,13 @@ async function bootstrap() {
   // Validation GLOBALE des DTO (exigence du sujet : valider les entrées côté
   // back). whitelist:true retire les champs non déclarés dans le DTO ;
   // transform:true convertit les payloads reçus en instances typées.
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    forbidUnknownValues: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+  }));
 
   // 0.0.0.0 : indispensable en conteneur pour être joignable par nginx.
   await app.listen(3000, '0.0.0.0');

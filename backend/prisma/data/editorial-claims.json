@@ -1,0 +1,30 @@
+[
+  {
+    "sourceKey": "britannica:photography:first-permanent-photo",
+    "text": "La première photographie permanente a été réalisée au XIXe siècle.",
+    "truthLabel": "TRUE",
+    "category": "history",
+    "sourceUrl": "https://www.britannica.com/technology/photography"
+  },
+  {
+    "sourceKey": "nasa:great-wall:visible-from-moon",
+    "text": "La Grande Muraille de Chine est visible à l’œil nu depuis la Lune.",
+    "truthLabel": "FALSE",
+    "category": "science",
+    "sourceUrl": "https://www.nasa.gov/general/can-you-see-the-great-wall-of-china-from-space/"
+  },
+  {
+    "sourceKey": "usgs:water:boiling-point:sea-level",
+    "text": "L’eau bout à 100 degrés Celsius au niveau de la mer.",
+    "truthLabel": "TRUE",
+    "category": "science",
+    "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school/science/boiling-water"
+  },
+  {
+    "sourceKey": "britannica:biology:four-human-lungs",
+    "text": "Les humains possèdent quatre poumons fonctionnels.",
+    "truthLabel": "FALSE",
+    "category": "biology",
+    "sourceUrl": "https://www.britannica.com/science/lung"
+  }
+]
