@@ -3,11 +3,9 @@
 // Possédé par le back-core (NestJS). POURQUOI ici : Prisma est l'ORM imposé ;
 // ce fichier est la source unique du modèle relationnel et des migrations.
 //
-// ATTENTION : SCHÉMA MINIMAL (initialisation). On démarre volontairement avec
-// la SEULE table User. Le modèle complet cible (Room, Round, Claim, Prediction,
-// Transaction, ClaimVerdict, Stat...) est décrit dans docs/ARCHITECTURE.md et
-// sera ajouté au fur et à mesure. Chacun ajoute SES tables ici quand il code
-// sa feature.
+// Schema relationnel complet du backend : utilisateurs, rooms, manches, claims,
+// predictions, ledger, presence, chat, amis et verdicts IA. Toute evolution du
+// schema doit etre materialisee par une migration Prisma versionnee.
 //
 // Rappel (docs/ARCHITECTURE.md §5.2) : la table des embeddings (pgvector) N'EST
 // PAS gérée par Prisma mais par le service back-ai (FastAPI), dans la même base.
@@ -29,12 +27,215 @@ enum UserStatus {
   IN_GAME
 }
 
+enum RoomStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+}
+
+enum RoundStatus {
+  COUNTDOWN
+  OPEN
+  LOCKED
+  REVEALED
+  FINISHED
+}
+
+enum ClaimTruthLabel {
+  TRUE
+  FALSE
+}
+
+enum PredictionResult {
+  WIN
+  LOSS
+}
+
+enum TransactionType {
+  BET
+  PAYOUT
+  BONUS
+  REFUND
+}
+
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique // identifiant de connexion (auth email + mot de passe)
-  passwordHash String            // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
-  avatarUrl    String?           // avatar optionnel (un défaut est fourni côté app)
-  status       UserStatus @default(OFFLINE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id           String        @id @default(cuid())
+  email          String        @unique // identifiant de connexion (auth email + mot de passe)
+  displayName    String?       // nom affiché dans l'application
+  role           String        @default("USER")
+  passwordHash   String?       // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
+  oauthProvider  String?       // fournisseur OAuth lié (ex. 42)
+  oauthProviderId String?      // identifiant du compte OAuth
+  avatarUrl      String?       // avatar optionnel (un défaut est fourni côté app)
+  status         UserStatus    @default(OFFLINE)
+  virtualBalance Int           @default(1000)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  rooms        Room[]        @relation("RoomHost")
+  bets         Bet[]
+  clipVotes    ClipVote[]
+  transactions Transaction[]
+  friends      Friend[]      @relation("Friendships")
+  friendOf     Friend[]      @relation("FriendTargets")
+  messages     Message[]
+  createdClaims Claim[]    @relation("ClaimCreator")
+
+  @@unique([oauthProvider, oauthProviderId])
+}
+
+model Friend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("Friendships", fields: [userId], references: [id])
+  friend User @relation("FriendTargets", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([roomId])
+  @@index([userId])
+}
+
+model RoomPresence {
+  socketId    String   @id
+  userId      String
+  roomId      String
+  lastSeenAt  DateTime @default(now())
+
+  @@index([roomId, lastSeenAt])
+  @@index([userId, lastSeenAt])
+}
+
+model Room {
+  id        String     @id @default(cuid())
+  name      String
+  status    RoomStatus @default(WAITING)
+  createdBy String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  host     User     @relation("RoomHost", fields: [createdBy], references: [id])
+  rounds   Round[]
+  messages Message[]
+}
+
+model Round {
+  id            String      @id @default(cuid())
+  roomId        String
+  status        RoundStatus @default(OPEN)
+  opensAt       DateTime    @default(now())
+  locksAt       DateTime
+  revealedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  room        Room          @relation(fields: [roomId], references: [id])
+  bets        Bet[]
+  clipVotes   ClipVote[]
+  roundClaims RoundClaim[]
+}
+
+model Claim {
+  id         String          @id @default(cuid())
+  sourceKey  String?         @unique // identifiant stable du dataset éditorial
+  createdBy  String?
+  text       String
+  mediaRef   String?
+  videoEndS  Int?
+  truthLabel ClaimTruthLabel
+  category   String?
+  sourceUrl  String?
+  createdAt  DateTime        @default(now())
+
+  roundClaims RoundClaim[]
+  clipVotes   ClipVote[]
+  verdicts    ClaimVerdict[]
+  creator    User?           @relation("ClaimCreator", fields: [createdBy], references: [id])
+
+  @@index([createdBy])
+}
+
+model RoundClaim {
+  id         String @id @default(cuid())
+  roundId    String
+  claimId    String
+  orderIndex Int
+
+  round Round @relation(fields: [roundId], references: [id])
+  claim Claim @relation(fields: [claimId], references: [id])
+
+  @@unique([roundId, orderIndex])
+}
+
+model ClaimVerdict {
+  id          String  @id @default(cuid())
+  claimId     String  @unique
+  verdictText String
+  confidence  Float?
+  citations   Json?
+
+  claim Claim @relation(fields: [claimId], references: [id])
+}
+
+model Bet {
+  id        String         @id @default(cuid())
+  userId    String
+  roundId   String
+  stake     Int
+  payout    Int?
+  result    PredictionResult?
+  createdAt DateTime       @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  round Round @relation(fields: [roundId], references: [id])
+
+  @@unique([userId, roundId])
+  @@index([roundId])
+}
+
+model ClipVote {
+  id        String   @id @default(cuid())
+  userId    String
+  roundId   String
+  claimId   String
+  isFake    Boolean
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  round Round @relation(fields: [roundId], references: [id])
+  claim Claim @relation(fields: [claimId], references: [id])
+
+  @@unique([userId, roundId, claimId])
+  @@index([roundId])
+  @@index([claimId])
+}
+
+model Transaction {
+  id           String          @id @default(cuid())
+  userId       String
+  type         TransactionType
+  amount       Int
+  balanceAfter Int
+  referenceId  String?         @unique // clé d'idempotence pour payout/remboursement
+  createdAt    DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
 }
