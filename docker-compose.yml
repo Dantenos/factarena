@@ -38,7 +38,9 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://172.30.0.10:12201"
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-factarena}"]
@@ -82,7 +84,9 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://172.30.0.10:12201"
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
@@ -114,7 +118,9 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://172.30.0.10:12201"
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
@@ -146,7 +152,9 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://172.30.0.10:12201"
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:4173/ || exit 1"]
@@ -167,15 +175,23 @@ services:
   # DEVOPS : Elasticsearch (store and index logs)
   # ==========================================================================
 
+  elasticsearch-snapshots-init:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
+    user: root
+    volumes:
+      - elasticsearch_snapshots:/snapshots
+      - ./devops/elk/elasticsearch/init-snapshots.sh:/usr/local/bin/init-snapshots.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/init-snapshots.sh"]
+    restart: "no"
+    networks:
+      - elk
+
   elasticsearch:
-    build:
-      context: ./devops/elk/elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
     environment:
       discovery.type: single-node
       xpack.security.enabled: "true"
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
-      KIBANA_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
-      LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD must be set in .env}
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
       path.repo: '["/snapshots"]'
     volumes:
@@ -183,9 +199,15 @@ services:
       - elasticsearch_snapshots:/snapshots
     expose:
       - "9200"
+    depends_on:
+      elasticsearch-snapshots-init:
+        condition: service_completed_successfully
     healthcheck:
       test:
-        ["CMD-SHELL", "curl -fs -u elastic:$${ELASTIC_PASSWORD} http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1"]
+        [
+          "CMD-SHELL",
+          "curl -fsS -u elastic:$${ELASTIC_PASSWORD} http://127.0.0.1:9200/_security/_authenticate >/dev/null"
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -193,6 +215,25 @@ services:
     networks:
       - elk
     restart: unless-stopped
+
+  elasticsearch-init:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
+      LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD must be set in .env}
+    volumes:
+      - ./devops/elk/elasticsearch/ilm:/usr/local/share/elasticsearch-config/ilm:ro
+      - ./devops/elk/elasticsearch/templates:/usr/local/share/elasticsearch-config/templates:ro
+      - ./devops/elk/elasticsearch/snapshots:/usr/local/share/elasticsearch-config/snapshots:ro
+      - ./devops/elk/elasticsearch/security:/usr/local/share/elasticsearch-config/security:ro
+      - ./devops/elk/elasticsearch/init-elasticsearch.sh:/usr/local/bin/init-elasticsearch.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/init-elasticsearch.sh"]
+    networks:
+      - elk
+    restart: "no"
 
   # ==========================================================================
   # DEVOPS : Logstash (Collect & Transform logs)
@@ -209,14 +250,14 @@ services:
     volumes:
       - ./devops/elk/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     expose:
-      - "12201/udp"
+      - "12201/tcp"
       - "9600"
     depends_on:
       elasticsearch:
         condition: service_healthy
     healthcheck:
       test:
-        ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/9600' 2>/dev/null"]
+        ["CMD-SHELL", "cat /proc/net/tcp /proc/net/tcp6 | grep -qi ':2FA9.*0A'"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -251,6 +292,13 @@ services:
         condition: service_healthy
     expose:
       - "5601"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
+        tag: "{{.Name}}"
     healthcheck:
       test:
         ["CMD-SHELL", "curl -fs http://127.0.0.1:5601/kibana/api/status >/dev/null || exit 1"]
@@ -281,7 +329,7 @@ services:
   #   logging:
   #     driver: gelf
   #     options:
-  #       gelf-address: "udp://172.30.0.10:12201"
+  #       gelf-address: "tcp://172.30.0.10:12201"
   #       tag: "{{.Name}}"
   #   healthcheck:
   #     test:
@@ -315,7 +363,7 @@ services:
   #   logging:
   #     driver: gelf
   #     options:
-  #       gelf-address: "udp://172.30.0.10:12201"
+  #       gelf-address: "tcp://172.30.0.10:12201"
   #       tag: "{{.Name}}"
   #   healthcheck:
   #     test:
@@ -346,7 +394,9 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://172.30.0.10:12201"
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     depends_on:
       postgres:
@@ -381,7 +431,9 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: "udp://172.30.0.10:12201"
+        gelf-address: "tcp://172.30.0.10:12201"
+        gelf-tcp-max-reconnect: "10"
+        gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]

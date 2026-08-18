@@ -28,6 +28,5 @@ CLAUDE.md
 config-claude-code-ft-transcendence.md
 
 # --- Secrets : ne JAMAIS commit (exigence du sujet) ---
-.env*
 k8s/*.yaml
 docker-compose.prod.yml

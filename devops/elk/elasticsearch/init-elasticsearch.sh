@@ -2,54 +2,75 @@
 
 set -euo pipefail
 
+ES_URL="http://elasticsearch:9200"
+CONFIG_DIR="/usr/local/share/elasticsearch-config"
+
+ILM_POLICY_NAME="factarena_logs_policy"
+INDEX_TEMPLATE_NAME="factarena_logs"
+SNAPSHOT_REPOSITORY_NAME="factarena_backup"
+SLM_POLICY_NAME="factarena_logs_snapshot"
+LOGSTASH_ROLE_NAME="logstash_writer"
+LOGSTASH_USER_NAME="logstash_writer"
+
 echo "=================================================="
-echo " Elasticsearch startup"
+echo " Elasticsearch initialization"
 echo "=================================================="
 
-echo "==> Starting Elasticsearch..."
+echo "==> Elasticsearch is healthy."
 
-exec /usr/local/bin/docker-entrypoint.sh elasticsearch
+echo "==> Verifying Elasticsearch authentication..."
 
-echo "==> Waiting for Elasticsearch to become ready..."
-
-until curl -fsS \
+curl -fsS \
     -u "elastic:${ELASTIC_PASSWORD}" \
-    "http://127.0.0.1:9200/_cluster/health" \
+    "${ES_URL}/_security/_authenticate" \
     >/dev/null
-do
-    if ! kill -0 "$ES_PID" 2>/dev/null; then
-        echo "ERROR: Elasticsearch stopped unexpectedly."
-        exit 1
-    fi
 
-    sleep 2
-done
+echo "==> Elasticsearch authentication successful."
 
-echo "==> Elasticsearch is ready."
-
-echo "==> Creating/updating factarena logs index template..."
+echo "==> Configuring snapshot repository..."
 
 curl -fsS \
     -u "elastic:${ELASTIC_PASSWORD}" \
     -X PUT \
-    "http://127.0.0.1:9200/_index_template/factarena_logs" \
+    "${ES_URL}/_snapshot/${SNAPSHOT_REPOSITORY_NAME}" \
     -H "Content-Type: application/json" \
-    -d '{
-        "index_patterns": [
-            "factarena-logs-*"
-        ],
-        "priority": 200,
-        "template": {
-            "settings": {
-                "number_of_replicas": 0
-            }
-        }
-    }'
+    --data-binary "@${CONFIG_DIR}/snapshots/repository.json"
 
-echo "==> Factarena logs index template configured."
+echo "==> Snapshot repository '${SNAPSHOT_REPOSITORY_NAME}' configured."
 
-echo "==> Elasticsearch initialization completed."
+echo "==> Applying SLM policy..."
 
-wait "${ELASTICSEARCH_PID}"
+curl -fsS \
+    -u "elastic:${ELASTIC_PASSWORD}" \
+    -X PUT \
+    "${ES_URL}/_slm/policy/${SLM_POLICY_NAME}" \
+    -H "Content-Type: application/json" \
+    --data-binary "@${CONFIG_DIR}/snapshots/slm-policy.json"
 
-echo "==> Elasticsearch is ready."
+echo "==> SLM policy '${SLM_POLICY_NAME}' configured."
+
+echo "==> Applying ILM policy..."
+
+curl -fsS \
+    -u "elastic:${ELASTIC_PASSWORD}" \
+    -X PUT \
+    "${ES_URL}/_ilm/policy/${ILM_POLICY_NAME}" \
+    -H "Content-Type: application/json" \
+    --data-binary "@${CONFIG_DIR}/ilm/factarena-logs-30d.json"
+
+echo "==> ILM policy '${ILM_POLICY_NAME}' configured."
+
+echo "==> Applying FactArena logs index template..."
+
+curl -fsS \
+    -u "elastic:${ELASTIC_PASSWORD}" \
+    -X PUT \
+    "${ES_URL}/_index_template/${INDEX_TEMPLATE_NAME}" \
+    -H "Content-Type: application/json" \
+    --data-binary "@${CONFIG_DIR}/templates/factarena-logs.json"
+
+echo "==> Index template '${INDEX_TEMPLATE_NAME}' configured."
+
+echo "=================================================="
+echo " Elasticsearch initialization completed"
+echo "=================================================="
