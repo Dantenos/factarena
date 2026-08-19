@@ -182,19 +182,9 @@ services:
   # DEVOPS : Elasticsearch (store and index logs)
   # ==========================================================================
 
-  elasticsearch-snapshots-init:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
-    user: root
-    volumes:
-      - elasticsearch_snapshots:/snapshots
-      - ./devops/elk/elasticsearch/init-snapshots.sh:/usr/local/bin/init-snapshots.sh:ro
-    entrypoint: ["/bin/bash", "/usr/local/bin/init-snapshots.sh"]
-    restart: "no"
-    networks:
-      - elk
-
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
+    build:
+      context: ./devops/elk/elasticsearch
     environment:
       discovery.type: single-node
       xpack.security.enabled: "true"
@@ -206,9 +196,6 @@ services:
       - elasticsearch_snapshots:/snapshots
     expose:
       - "9200"
-    depends_on:
-      elasticsearch-snapshots-init:
-        condition: service_completed_successfully
     healthcheck:
       test:
         [
@@ -222,25 +209,6 @@ services:
     networks:
       - elk
     restart: unless-stopped
-
-  elasticsearch-init:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    environment:
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
-      LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD must be set in .env}
-    volumes:
-      - ./devops/elk/elasticsearch/ilm:/usr/local/share/elasticsearch-config/ilm:ro
-      - ./devops/elk/elasticsearch/templates:/usr/local/share/elasticsearch-config/templates:ro
-      - ./devops/elk/elasticsearch/snapshots:/usr/local/share/elasticsearch-config/snapshots:ro
-      - ./devops/elk/elasticsearch/security:/usr/local/share/elasticsearch-config/security:ro
-      - ./devops/elk/elasticsearch/init-elasticsearch.sh:/usr/local/bin/init-elasticsearch.sh:ro
-    entrypoint: ["/bin/bash", "/usr/local/bin/init-elasticsearch.sh"]
-    networks:
-      - elk
-    restart: "no"
 
   # ==========================================================================
   # DEVOPS : Logstash (Collect & Transform logs)
@@ -256,6 +224,8 @@ services:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
     volumes:
       - ./devops/elk/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./devops/elk/logstash/init-logstash.sh:/usr/local/bin/init-logstash.sh:ro
+      - ./devops/elk/logstash/logstash-role.json:/usr/local/share/logstash/logstash-role.json:ro
     expose:
       - "12201/tcp"
       - "9600"
@@ -317,72 +287,6 @@ services:
       - elk
     restart: unless-stopped
 
-  # # ----------------------------------------------------------
-  # # DEVOPS : MONITORING: Prometheus (Collecte de métriques)
-  # # ----------------------------------------------------------
-  # prometheus:
-  #   image: prom/prometheus:v2.48.0
-  #   volumes:
-  #     - ./devops/monitoring/prometheus:/etc/prometheus:ro
-  #     - prometheus_data:/prometheus
-  #   command:
-  #     - "--config.file=/etc/prometheus/prometheus.yml"
-  #     - "--storage.tsdb.path=/prometheus"
-  #   expose:
-  #     - "9090"
-  #   depends_on:
-  #     logstash:
-  #       condition: service_healthy
-  #   logging:
-  #     driver: gelf
-  #     options:
-  #       gelf-address: "tcp://172.30.0.10:12201"
-  #       tag: "{{.Name}}"
-  #   healthcheck:
-  #     test:
-  #       ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9090/-/healthy || exit 1"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 15s
-  #   networks:
-  #     - factarena
-  #   restart: unless-stopped
-
-  # # ----------------------------------------------------------
-  # # DEVOPS : MONITORING: Grafana (Visualisation & Alertes)
-  # # ----------------------------------------------------------
-  # grafana:
-  #   image: grafana/grafana:10.2.2
-  #   environment:
-  #     GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-  #     GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set in .env}
-  #     GF_USERS_ALLOW_SIGN_UP: "false"
-  #     GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
-  #     GF_SERVER_SERVE_FROM_SUB_PATH: "true"
-  #   volumes:
-  #     - grafana_data:/var/lib/grafana
-  #   expose:
-  #     - "3000"
-  #   depends_on:
-  #     logstash:
-  #       condition: service_healthy
-  #   logging:
-  #     driver: gelf
-  #     options:
-  #       gelf-address: "tcp://172.30.0.10:12201"
-  #       tag: "{{.Name}}"
-  #   healthcheck:
-  #     test:
-  #       ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 15s
-  #   networks:
-  #     - factarena
-  #   restart: unless-stopped
-
   # ----------------------------------------------------------
   # PostgreSQL backup
   # ----------------------------------------------------------
@@ -426,8 +330,6 @@ services:
         condition: service_healthy
       kibana:
         condition: service_healthy
-      # grafana:
-      #   condition: service_healthy
       logstash:
         condition: service_healthy
     ports:

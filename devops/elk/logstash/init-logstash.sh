@@ -29,26 +29,7 @@ curl -fsS \
     -X PUT \
     "http://elasticsearch:9200/_security/role/logstash_writer_role" \
     -H "Content-Type: application/json" \
-    -d '{
-        "cluster": [
-            "monitor",
-            "manage_index_templates"
-        ],
-        "indices": [
-            {
-                "names": [
-                    "factarena-logs-*"
-                ],
-                "privileges": [
-                    "create_index",
-                    "create",
-                    "index",
-                    "write",
-                    "view_index_metadata"
-                ]
-            }
-        ]
-    }'
+    --data-binary "@/usr/local/share/logstash/logstash-role.json"
 
 echo "==> Logstash role configured."
 
