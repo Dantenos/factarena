@@ -288,37 +288,6 @@ services:
     restart: unless-stopped
 
   # ----------------------------------------------------------
-  # PostgreSQL backup
-  # ----------------------------------------------------------
-  backup:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-factarena}
-      BACKUP_INTERVAL_SECONDS: 86400 # 24 heures
-    volumes:
-      - postgres_data:/var/lib/postgresql/data:ro
-      - ./backups:/backups
-      - ./scripts:/scripts:ro
-    entrypoint: ["sh", "-c", "while true; do /scripts/backup.sh; sleep $$BACKUP_INTERVAL_SECONDS; done"]
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "tcp://172.30.0.10:12201"
-        gelf-tcp-max-reconnect: "10"
-        gelf-tcp-reconnect-delay: "1"
-        tag: "{{.Name}}"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      logstash:
-        condition: service_healthy
-    networks:
-      - factarena
-    restart: unless-stopped
-
-  # ----------------------------------------------------------
   # Reverse proxy nginx : (443).
   # ----------------------------------------------------------
   nginx:
