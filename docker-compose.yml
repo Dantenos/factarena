@@ -198,10 +198,7 @@ services:
       - "9200"
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "curl -fsS -u elastic:$${ELASTIC_PASSWORD} http://127.0.0.1:9200/_security/_authenticate >/dev/null"
-        ]
+        ["CMD-SHELL", "curl -fsS -u elastic:$${ELASTIC_PASSWORD} http://127.0.0.1:9200/_security/_authenticate >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -223,9 +220,10 @@ services:
       LOGSTASH_PASSWORD: ${LOGSTASH_PASSWORD}
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
     volumes:
-      - ./devops/elk/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./devops/elk/logstash/log-config:/usr/share/logstash/log-conf:ro
+      - ./devops/elk/logstash/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
       - ./devops/elk/logstash/init-logstash.sh:/usr/local/bin/init-logstash.sh:ro
-      - ./devops/elk/logstash/logstash-role.json:/usr/local/share/logstash/logstash-role.json:ro
+      - ./devops/elk/elasticsearch/security/logstash-role.json:/usr/local/share/logstash/logstash-role.json:ro
     expose:
       - "12201/tcp"
       - "9600"
@@ -258,10 +256,16 @@ services:
       ELASTICSEARCH_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD must be set in .env}
       KIBANA_PASSWORD: ${KIBANA_PASSWORD:?KIBANA_PASSWORD must be set in .env}
+      KIBANA_APP_USER: ${KIBANA_APP_USER}
+      KIBANA_APP_PASSWORD: ${KIBANA_APP_PASSWORD}
+      XPACK_SECURITY_ENCRYPTIONKEY: ${KIBANA_SECURITY_ENCRYPTION_KEY}
+      XPACK_ENCRYPTED_SAVEDOBJECTS_ENCRYPTIONKEY: ${KIBANA_ENCRYPTED_SAVED_OBJECTS_KEY}
+      XPACK_REPORTING_ENCRYPTIONKEY: ${KIBANA_REPORTING_ENCRYPTION_KEY}
       SERVER_BASEPATH: /kibana
       SERVER_REWRITEBASEPATH: "true"
     volumes:
-      - ./devops/elk/kibana/dashboard-demo.ndjson:/usr/share/kibana/config/dashboard.ndjson:ro
+      - ./devops/elk/kibana/dashboards/dashboard-demo.ndjson:/usr/share/kibana/config/dashboard.ndjson:ro
+      - ./devops/elk/elasticsearch/security/kibana-user-role.json:/usr/local/share/kibana/kibana-user-role.json:ro
     depends_on:
       elasticsearch:
         condition: service_healthy

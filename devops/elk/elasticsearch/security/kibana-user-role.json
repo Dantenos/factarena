@@ -1,0 +1,30 @@
+{
+    "cluster": [
+      "monitor"
+    ],
+    "indices": [
+      {
+        "names": [
+          "factarena-logs-*"
+        ],
+        "privileges": [
+          "read",
+          "view_index_metadata"
+        ]
+      }
+    ],
+    "applications": [
+      {
+        "application": "kibana-.kibana",
+        "privileges": [
+          "feature_discover.read",
+          "feature_dashboard.read",
+          "feature_visualize.read",
+          "feature_maps.read"
+        ],
+        "resources": [
+          "*"
+        ]
+      }
+    ]
+  }

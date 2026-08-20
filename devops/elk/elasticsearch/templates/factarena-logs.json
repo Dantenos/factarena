@@ -15,7 +15,13 @@
           "type": "date"
         },
         "message": {
-          "type": "text"
+          "type": "text",
+              "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 1024
+            }
+          }
         },
         "service": {
           "properties": {

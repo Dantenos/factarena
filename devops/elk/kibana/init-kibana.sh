@@ -50,7 +50,7 @@ do
     sleep 2
 done
 
-echo "==> Kibana is fully ready."
+# echo "==> Kibana is fully ready."
 
 echo "==> Importing Kibana saved objects..."
 
@@ -61,7 +61,27 @@ curl -fsS \
     -H "kbn-xsrf: true" \
     --form file=@/usr/share/kibana/config/dashboard.ndjson
 
-echo
+echo "==> Configuring user..."
+
+curl -fsS -X PUT \
+  -u "elastic:${ELASTIC_PASSWORD}" \
+  -H 'Content-Type: application/json' \
+  "http://elasticsearch:9200/_security/role/user_kibana" \
+  --data-binary "@/usr/local/share/kibana/kibana-user-role.json"
+
+  curl -fsS -X PUT \
+  -u "elastic:${ELASTIC_PASSWORD}" \
+  -H 'Content-Type: application/json' \
+  "http://elasticsearch:9200/_security/user/factarena" \
+  -d '{
+    "password": "'"${KIBANA_APP_PASSWORD}"'",
+    "roles": [
+      "user_kibana"
+    ],
+    "full_name": "FactArena Kibana User"
+  }'
+
+
 echo "==> Kibana saved objects imported successfully."
 
 echo "==> Kibana is running."
