@@ -9,8 +9,11 @@ echo "=================================================="
 echo "==> Waiting for Elasticsearch..."
 
 until curl -fsS \
+    --cacert /usr/share/logstash/config/certs/ca/ca.crt \
+    --cert /usr/share/logstash/config/certs/logstash/logstash.crt \
+    --key /usr/share/logstash/config/certs/logstash/logstash.pkcs8.key \
     -u "elastic:${ELASTIC_PASSWORD}" \
-    "http://elasticsearch:9200/_cluster/health" \
+    "https://elasticsearch:9200/_cluster/health" \
     >/dev/null
 do
     sleep 2
@@ -25,9 +28,12 @@ echo "==> Elasticsearch is ready."
 echo "==> Creating/updating Logstash role..."
 
 curl -fsS \
+    --cacert /usr/share/logstash/config/certs/ca/ca.crt \
+    --cert /usr/share/logstash/config/certs/logstash/logstash.crt \
+    --key /usr/share/logstash/config/certs/logstash/logstash.pkcs8.key \
     -u "elastic:${ELASTIC_PASSWORD}" \
     -X PUT \
-    "http://elasticsearch:9200/_security/role/logstash_writer_role" \
+    "https://elasticsearch:9200/_security/role/logstash_writer_role" \
     -H "Content-Type: application/json" \
     --data-binary "@/usr/local/share/logstash/logstash-role.json"
 
@@ -40,9 +46,12 @@ echo "==> Logstash role configured."
 echo "==> Creating/updating factarena logs index template..."
 
 curl -fsS \
+    --cacert /usr/share/logstash/config/certs/ca/ca.crt \
+    --cert /usr/share/logstash/config/certs/logstash/logstash.crt \
+    --key /usr/share/logstash/config/certs/logstash/logstash.pkcs8.key \
     -u "elastic:${ELASTIC_PASSWORD}" \
     -X PUT \
-    "http://elasticsearch:9200/_index_template/factarena_logs" \
+    "https://elasticsearch:9200/_index_template/factarena_logs" \
     -H "Content-Type: application/json" \
     -d '{
         "index_patterns": [
@@ -65,9 +74,12 @@ echo "==> Factarena logs index template configured."
 echo "==> Creating/updating Logstash user..."
 
 curl -fsS \
+    --cacert /usr/share/logstash/config/certs/ca/ca.crt \
+    --cert /usr/share/logstash/config/certs/logstash/logstash.crt \
+    --key /usr/share/logstash/config/certs/logstash/logstash.pkcs8.key \
     -u "elastic:${ELASTIC_PASSWORD}" \
     -X PUT \
-    "http://elasticsearch:9200/_security/user/logstash_writer" \
+    "https://elasticsearch:9200/_security/user/logstash_writer" \
     -H "Content-Type: application/json" \
     -d "{
         \"password\": \"${LOGSTASH_PASSWORD}\",

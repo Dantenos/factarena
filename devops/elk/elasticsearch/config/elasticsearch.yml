@@ -1,0 +1,29 @@
+network.host: 0.0.0.0
+
+cluster.name: factarena
+node.name: elasticsearch
+
+discovery.type: single-node
+
+xpack.security.enabled: true
+
+# HTTPS pour les clients : Kibana, Logstash, etc.
+xpack.security.http.ssl:
+  enabled: true
+  certificate: certs/elasticsearch/elasticsearch.crt
+  key: certs/elasticsearch/elasticsearch.key
+  certificate_authorities:
+    - certs/ca/ca.crt
+
+  # mTLS : tout client HTTP doit présenter un certificat
+  client_authentication: required
+
+# TLS + mTLS pour le transport Elasticsearch
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: full
+  certificate: certs/elasticsearch/elasticsearch.crt
+  key: certs/elasticsearch/elasticsearch.key
+  certificate_authorities:
+    - certs/ca/ca.crt
+  client_authentication: required
