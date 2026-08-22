@@ -27,11 +27,7 @@ nginx/certs/
 CLAUDE.md
 config-claude-code-ft-transcendence.md
 
-# --- Secrets : ne JAMAIS commit (exigence du sujet) ---
-k8s/*.yaml
-docker-compose.prod.yml
-*.key
+# --- Devops: ELK certs ---
 devops/elk/certs/**/*.key
 devops/elk/certs/**/*.p12
-devops/elk/certs/**/*.zip
-devops/elk/certs/instances.yml
+devops/elk/certs/*

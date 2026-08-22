@@ -178,6 +178,15 @@ services:
   # DEVOPS : ELK STACK
   # ==========================================================
 
+  cert-generator:
+    build:
+      context: ./devops/elk/cert-generator
+      dockerfile: Dockerfile
+    container_name: cert-generator
+    volumes:
+      - ./devops/elk/certs:/certs
+    restart: "no"
+
   # ==========================================================================
   # DEVOPS : Elasticsearch (store and index logs)
   # ==========================================================================
@@ -201,6 +210,9 @@ services:
       - ./devops/elk/certs/healthchecker:/usr/share/elasticsearch/config/certs/healthchecker:ro
     expose:
       - "9200"
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
     healthcheck:
       test:
       - CMD-SHELL
