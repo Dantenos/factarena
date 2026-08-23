@@ -20,7 +20,7 @@ do
 done
 
 echo "==> Elasticsearch is ready."
-
+#-------------------------------------------------------
 echo "==> Configuring kibana_system password..."
 
 curl -fsS \
@@ -35,12 +35,12 @@ curl -fsS \
 
 
 echo "==> kibana_system password configured."
-
+#-------------------------------------------------------
 echo "==> Starting Kibana..."
 
 /usr/local/bin/kibana-docker &
 KIBANA_PID=$!
-
+#-------------------------------------------------------
 echo "==> Waiting for Kibana..."
 
 until curl -fsS \
@@ -60,7 +60,7 @@ do
 done
 
 echo "==> Kibana is ready for setups."
-
+#-------------------------------------------------------
 echo "==> Importing Kibana saved objects..."
 
 curl -fsS \
@@ -72,7 +72,7 @@ curl -fsS \
     "https://kibana:5601/kibana/api/saved_objects/_import?overwrite=true" \
     -H "kbn-xsrf: true" \
     --form file=@/usr/share/kibana/config/dashboard.ndjson
-
+#-------------------------------------------------------
 echo "==> Configuring user..."
 
 curl -fsS \
@@ -84,7 +84,7 @@ curl -fsS \
     -X PUT \
     "https://elasticsearch:9200/_security/role/user_kibana" \
     --data-binary "@/usr/local/share/kibana/kibana-user-role.json"
-
+#-------------------------------------------------------
 echo "==> Kibana role configured."
 
 curl -fsS \
@@ -105,7 +105,7 @@ curl -fsS \
 
 
 echo "==> Kibana saved objects imported successfully and FactArena user configured."
-
+#-------------------------------------------------------
 echo "==> Kibana is running."
 
 wait "$KIBANA_PID"

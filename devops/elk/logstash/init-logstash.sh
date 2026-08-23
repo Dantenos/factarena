@@ -20,7 +20,7 @@ do
 done
 
 echo "==> Elasticsearch is ready."
-
+#-------------------------------------------------------
 echo "==> Creating/updating Logstash role..."
 
 curl -fsS \
@@ -34,7 +34,7 @@ curl -fsS \
     --data-binary "@/usr/local/share/logstash/logstash-role.json"
 
 echo "==> Logstash role configured."
-
+#-------------------------------------------------------
 echo "==> Creating/updating factarena logs index template..."
 
 curl -fsS \
@@ -58,7 +58,7 @@ curl -fsS \
     }'
 
 echo "==> Factarena logs index template configured."
-
+#-------------------------------------------------------
 echo "==> Creating/updating Logstash user..."
 
 curl -fsS \
@@ -80,7 +80,7 @@ curl -fsS \
 echo "==> Logstash user configured."
 
 echo "==> Elasticsearch Logstash configuration completed."
-
+#-------------------------------------------------------
 echo "==> Starting Logstash..."
 
 exec /usr/local/bin/docker-entrypoint

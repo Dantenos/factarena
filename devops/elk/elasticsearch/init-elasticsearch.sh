@@ -18,7 +18,7 @@ cleanup() {
 }
 
 trap cleanup SIGTERM SIGINT
-
+#-------------------------------------------------------
 echo "==> Waiting for Elasticsearch..."
 
 until curl -fsS \
@@ -38,7 +38,7 @@ do
 done
 
 echo "==> Elasticsearch is healthy."
-
+#-------------------------------------------------------
 echo "==> Verifying Elasticsearch authentication..."
 
 curl -fsS \
@@ -50,7 +50,7 @@ curl -fsS \
     >/dev/null
 
 echo "==> Elasticsearch authentication successful."
-
+#-------------------------------------------------------
 echo "==> Configuring snapshot repository..."
 
 curl -fsS \
@@ -64,7 +64,7 @@ curl -fsS \
     --data-binary "@/usr/local/share/elasticsearch-config/snapshots/repository.json"
 
 echo "==> Snapshot repository 'factarena_backup' configured."
-
+#-------------------------------------------------------
 echo "==> Applying SLM policy..."
 
 curl -fsS \
@@ -78,7 +78,7 @@ curl -fsS \
     --data-binary "@/usr/local/share/elasticsearch-config/snapshots/slm-policy.json"
 
 echo "==> SLM policy 'factarena_logs_snapshot' configured."
-
+#-------------------------------------------------------
 echo "==> Applying ILM policy..."
 
 curl -fsS \
@@ -92,7 +92,7 @@ curl -fsS \
     --data-binary "@/usr/local/share/elasticsearch-config/ilm/factarena-logs-30d.json"
 
 echo "==> ILM policy 'factarena_logs_policy' configured."
-
+#-------------------------------------------------------
 echo "==> Applying FactArena logs index template..."
 
 curl -fsS \
@@ -106,9 +106,6 @@ curl -fsS \
     --data-binary "@/usr/local/share/elasticsearch-config/templates/factarena-logs.json"
 
 echo "==> Index template 'factarena_logs' configured."
-
-echo "=================================================="
-echo " Elasticsearch initialization completed"
-echo "=================================================="
+#-------------------------------------------------------
 
 wait "$ES_PID"
