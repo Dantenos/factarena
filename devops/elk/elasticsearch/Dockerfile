@@ -2,6 +2,9 @@ FROM docker.elastic.co/elasticsearch/elasticsearch:9.5.1
 
 USER root
 
+COPY --chown=1000:0 config/elasticsearch.yml \
+    /usr/share/elasticsearch/config/elasticsearch.yml
+
 RUN mkdir -p /snapshots \
     && chown 1000:0 /snapshots \
     && chmod 0750 /snapshots

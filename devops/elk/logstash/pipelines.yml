@@ -22,6 +22,10 @@
   path.config: "/usr/share/logstash/log-conf/frontend.conf"
   pipeline.workers: 1
 
+- pipeline.id: postgres
+  path.config: "/usr/share/logstash/log-conf/postgres.conf"
+  pipeline.workers: 1
+
 - pipeline.id: generic
   path.config: "/usr/share/logstash/log-conf/generic.conf"
   pipeline.workers: 1

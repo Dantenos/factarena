@@ -257,6 +257,7 @@ find "$CERT_DIR" -type f -name "*.crt" -exec chmod 640 {} \;
 
 # Private keys
 find "$CERT_DIR" -type f -name "*.key" -exec chmod 640 {} \;
+
 # ============================================================
 # Verification
 # ============================================================

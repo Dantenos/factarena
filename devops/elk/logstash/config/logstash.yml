@@ -1,6 +1,13 @@
-pipeline.ecs_compatibility: v8
-
+# Listen for Logstash monitoring/API requests on all network interfaces.
 api.http.host: "0.0.0.0"
+
+# Port used by the Logstash monitoring/API endpoint.
 api.http.port: 9600
 
+# Enable Elastic Common Schema (ECS) v8 compatibility for Logstash events.
+pipeline.ecs_compatibility: v8
+
+# Disable Logstash's built-in X-Pack monitoring.
+# Monitoring is handled by the project's own observability stack.
+# It's another services for that : Prometheus and Grafana, that may or may not be implemented.
 xpack.monitoring.enabled: false
