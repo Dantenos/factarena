@@ -26,3 +26,8 @@ nginx/certs/
 .claude/
 CLAUDE.md
 config-claude-code-ft-transcendence.md
+
+# --- Devops: ELK certs ---
+devops/elk/certs/**/*.key
+devops/elk/certs/**/*.p12
+devops/elk/certs/*

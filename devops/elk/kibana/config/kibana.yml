@@ -1,0 +1,40 @@
+# Listen on all network interfaces inside the container.
+# External access is handled through the Nginx reverse proxy.
+server.host: "0.0.0.0"
+
+# Port used by the Kibana web server.
+server.port: 5601
+
+# Stopping Kibana from trying to reach Internet for those packages:
+telemetry.optIn: false
+xpack.fleet.enabled: false
+xpack.fleet.agents.enabled: false
+
+# HTTPS server configuration for Nginx to Kibana:
+server.ssl.enabled: true
+server.ssl.certificate: /usr/share/kibana/config/certs/kibana/kibana-server.crt
+server.ssl.key: /usr/share/kibana/config/certs/kibana/kibana-server.key
+server.ssl.certificateAuthorities:
+  - /usr/share/kibana/config/certs/ca/ca.crt
+
+# mTLS : every HTTPS server must show a valid certificate
+server.ssl.clientAuthentication: required
+
+# HTTPS client configuration for Kibana to Elasticsearch:
+elasticsearch.hosts:
+  - "https://elasticsearch:9200"
+elasticsearch.ssl.certificateAuthorities:
+  - /usr/share/kibana/config/certs/ca/ca.crt
+elasticsearch.ssl.certificate:
+  /usr/share/kibana/config/certs/kibana/kibana-client.crt
+elasticsearch.ssl.key:
+  /usr/share/kibana/config/certs/kibana/kibana-client.key
+
+# mTLS : every HTTPS client must show a valid certificate
+elasticsearch.ssl.alwaysPresentCertificate: true
+elasticsearch.ssl.verificationMode: full
+
+# Kibana's encryption security:
+xpack.security.encryptionKey: ${KIBANA_SECURITY_ENCRYPTION_KEY}
+xpack.encryptedSavedObjects.encryptionKey: ${KIBANA_ENCRYPTED_SAVED_OBJECTS_KEY}
+xpack.reporting.encryptionKey: ${KIBANA_REPORTING_ENCRYPTION_KEY}

@@ -1,0 +1,20 @@
+{
+	"cluster": [
+		"monitor",
+		"manage_index_templates"
+	],
+	"indices": [
+		{
+			"names": [
+				"factarena-logs-*"
+			],
+			"privileges": [
+				"create_index",
+				"create",
+				"index",
+				"write",
+				"view_index_metadata"
+			]
+		}
+	]
+}
