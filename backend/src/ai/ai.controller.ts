@@ -23,7 +23,11 @@ export class AiController {
   @Post('rag')
   @Roles('ADMIN', 'SEED', 'USER')
   askRag(@Body() dto: RagRequestDto, @Req() req: Request) {
-    return this.aiService.askRag(dto.question, dto.limit ?? 4, this.userId(req));
+    // Le contexte de manche (s'il est fourni) part au garde-fou anti-spoil.
+    return this.aiService.askRag(dto.question, dto.limit ?? 4, this.userId(req), {
+      topics: dto.liveTopics,
+      claims: dto.liveClaims,
+    });
   }
 
   @Post('llm')

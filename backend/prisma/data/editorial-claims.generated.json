@@ -1,0 +1,1011 @@
+[
+  {
+    "sourceKey": "tf1-info:70d32e6cfa18",
+    "text": "Une vidéo virale montre un robot humanoïde capable de courir à vive allure sur un terrain en pente",
+    "truthLabel": "TRUE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/verif-chine-cette-video-d-un-robot-chinois-en-devaler-une-pente-en-courant-est-elle-authentique-2383044.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2025-07-15",
+    "themeTags": [
+      "video",
+      "virale",
+      "montre",
+      "robot",
+      "humanoide",
+      "capable"
+    ]
+  },
+  {
+    "sourceKey": "20-minutes:9ffd429db48e",
+    "text": "Une fausse vidéo de Trump en train d’embrasser les pieds de Musk diffusée dans les locaux du HUD",
+    "truthLabel": "TRUE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/societe/4140873-20250227-oui-fausse-video-trump-train-embrasser-pieds-musk-projetee-administration-us",
+    "_publisher": "20 Minutes",
+    "_rating": "Vrai",
+    "_reviewDate": "2025-02-27",
+    "themeTags": [
+      "fausse",
+      "video",
+      "trump",
+      "train",
+      "embrasser",
+      "pieds"
+    ]
+  },
+  {
+    "sourceKey": "20-minutes:38848bc935e5",
+    "text": "Cette vidéo de « duel » entre un « mini-cerf » et un rhinocéros est-elle générée par IA ?",
+    "truthLabel": "TRUE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/monde/4197565-20260128-video-duel-entre-mini-cerf-rhinoceros-generee-ia",
+    "_publisher": "20 Minutes",
+    "_rating": "Vrai",
+    "_reviewDate": "2026-01-28",
+    "themeTags": [
+      "video",
+      "duel",
+      "entre",
+      "mini",
+      "cerf",
+      "rhinoceros"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:e35c97e8a568",
+    "text": "Kylian Mbappé a partagé sur Instagram une photo d'un de ses buts modifiée par IA",
+    "truthLabel": "TRUE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/sport/verif-une-photo-de-son-but-postee-par-kylian-mbappe-sur-instagram-a-t-elle-ete-modifiee-par-ia-2381646.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2025-07-08",
+    "themeTags": [
+      "kylian",
+      "mbappe",
+      "partage",
+      "instagram",
+      "photo",
+      "d'un"
+    ]
+  },
+  {
+    "sourceKey": "franceinfo:960f47dd2793",
+    "text": "Dans notre pays, il y a 10 millions de personnes qui sont mal inscrites ou non inscrites sur les listes électorales, c'est 20% du corps électoral",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/vrai-ou-faux-y-a-t-il-10-millions-de-francais-non-inscrits-ou-mal-inscrits-sur-les-listes-electorales-comme-l-affirme-manon-aubry_6376201.html",
+    "_publisher": "franceinfo",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-03-05",
+    "themeTags": [
+      "notre",
+      "pays",
+      "millions",
+      "personnes",
+      "inscrites",
+      "listes"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:d41188c3be39",
+    "text": "Les plus de 50 ans sont désormais majoritaires au sein du corps électoral",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.tf1info.fr/politique/les-seniors-plus-de-50-ans-sont-ils-desormais-majoritaires-parmi-les-electeurs-francais-selon-economiste-maxime-sbaihi-sur-reseau-social-x-2282350.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-01-11",
+    "themeTags": [
+      "desormais",
+      "majoritaires",
+      "sein",
+      "corps",
+      "electoral"
+    ]
+  },
+  {
+    "sourceKey": "beto:1d15c9aef6ad",
+    "text": "La Secrétaire exécutive adjointe de la Communauté de développement de l’Afrique australe (SADC), Angèle Makombo, a réagi ce jeudi aux rumeurs et publications fallacieuses circulant après le Sommet virtuel des Chefs d’État et de Gouvernement de la SADC, tenu le 17 décembre.",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://beto.cd/sadc-la-secretaire-executive-adjointe-dement-que-tshisekedi-ait-ete-prive-de-parole/",
+    "_publisher": "BETO",
+    "_rating": "True",
+    "_reviewDate": "2025-12-19",
+    "themeTags": [
+      "secretaire",
+      "executive",
+      "adjointe",
+      "communaute",
+      "developpement",
+      "afrique"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:e211b355835c",
+    "text": "La France n'a pas eu de budget à l'équilibre depuis 51 ans",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.tf1info.fr/politique/verif-la-france-n-a-t-elle-vraiment-connu-aucun-budget-deficit-a-l-equilibre-depuis-51-ans-comme-l-affirme-demission-premier-ministre-francois-bayrou-2393543.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2025-09-09",
+    "themeTags": [
+      "france",
+      "budget",
+      "l'equilibre",
+      "depuis"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:d9aff17225b1",
+    "text": "S'il n'obtient qu'une majorité relative aux législatives, le RN peut refuser de gouvernement",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.tf1info.fr/elections/legislatives-le-rn-de-jordan-bardella-peut-il-refuser-de-gouverner-en-cas-de-majorite-relative-2306885.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-07-03",
+    "themeTags": [
+      "s'il",
+      "n'obtient",
+      "qu'une",
+      "majorite",
+      "relative",
+      "legislatives"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:77f2010f9f3d",
+    "text": "Nous sommes en France plus de 19 millions dans ce pays à avoir au moins un ancêtre immigré",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.tf1info.fr/politique/immigration-en-france-sommes-nous-19-millions-a-avoir-au-moins-un-ancetre-immigre-2325833.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-09-30",
+    "themeTags": [
+      "sommes",
+      "france",
+      "millions",
+      "pays",
+      "ancetre",
+      "immigre"
+    ]
+  },
+  {
+    "sourceKey": "franceinfo:032a9f02ad2e",
+    "text": "\"Que ce soit les clandestins ou des étrangers en situation légale, on franchit des records\"",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/l-immigration-legale-et-illegale-franchit-elle-des-records-en-france_6736599.html",
+    "_publisher": "franceinfo",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-09-05",
+    "themeTags": [
+      "soit",
+      "clandestins",
+      "etrangers",
+      "situation",
+      "legale",
+      "franchit"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:2f55b8f01d94",
+    "text": "Le nombre de titres de séjours délivrés en France bat des records sous la présidence d'Emmanuel Macron",
+    "truthLabel": "TRUE",
+    "category": "politique_fr",
+    "sourceUrl": "https://www.tf1info.fr/societe/immigration-un-record-de-titres-de-sejour-delivres-sous-la-presidence-macron-2267902.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-08-28",
+    "themeTags": [
+      "nombre",
+      "titres",
+      "sejours",
+      "delivres",
+      "france",
+      "records"
+    ]
+  },
+  {
+    "sourceKey": "franceinfo:57a0e13c633f",
+    "text": "\"C'est un Français sur quatre qui est victime d'allergies, qui sont en lien avec la qualité de l'air, avec aussi le climat et qui renforcent les allergies\"",
+    "truthLabel": "TRUE",
+    "category": "science",
+    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/vrai-ou-faux-un-francais-sur-quatre-souffre-t-il-d-allergies-et-sont-elles-en-lien-avec-le-rechauffement-climatique_6527075.html",
+    "_publisher": "franceinfo",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-05-20",
+    "themeTags": [
+      "c'est",
+      "francais",
+      "quatre",
+      "victime",
+      "d'allergies",
+      "lien"
+    ]
+  },
+  {
+    "sourceKey": "franceinfo:6b6a8842162b",
+    "text": "\"Les chats sont une catastrophe pour la biodiversité. Les chiens sont une catastrophe pour le climat.\"",
+    "truthLabel": "TRUE",
+    "category": "science",
+    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/vrai-ou-faux-les-chiens-et-les-chats-sont-ils-des-catastrophes-pour-la-biodiversite-et-le-climat_6216132.html",
+    "_publisher": "franceinfo",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-12-15",
+    "themeTags": [
+      "chats",
+      "catastrophe",
+      "biodiversite",
+      "chiens",
+      "climat"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:bfcdd7d8332a",
+    "text": "Les inondations en Grèce sont liées au réchauffement climatique",
+    "truthLabel": "TRUE",
+    "category": "science",
+    "sourceUrl": "https://www.tf1info.fr/international/tempete-daniel-les-inondations-meurtrieres-en-grece-peuvent-elles-etre-liees-au-rechauffement-climatique-oui-selon-des-chercheurs-du-cnrs-2269069.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-09-08",
+    "themeTags": [
+      "inondations",
+      "grece",
+      "liees",
+      "rechauffement",
+      "climatique"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:a72b87b5404c",
+    "text": "Avec le réchauffement climatique, l’Espagne risque de devenir un désert sur 75% de sa surface",
+    "truthLabel": "TRUE",
+    "category": "science",
+    "sourceUrl": "https://www.tf1info.fr/international/l-espagne-est-elle-menacee-de-devenir-un-desert-sur-75-de-son-territoire-comme-l-affirme-jean-luc-melenchon-2267901.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-09-05",
+    "themeTags": [
+      "rechauffement",
+      "climatique",
+      "espagne",
+      "risque",
+      "devenir",
+      "desert"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:8aac89bb5f9e",
+    "text": "Le nouveau commissaire européen désigné au climat a travaillé pour la compagnie pétrolière Shell",
+    "truthLabel": "TRUE",
+    "category": "science",
+    "sourceUrl": "https://www.tf1info.fr/environnement-ecologie/le-neerlandais-wopke-hoekstra-nouveau-commissaire-europeen-au-climat-a-t-il-travaille-pour-une-grande-compagnie-petroliere-2269897.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-09-15",
+    "themeTags": [
+      "nouveau",
+      "commissaire",
+      "europeen",
+      "designe",
+      "climat",
+      "travaille"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:4f1c068d4da6",
+    "text": "Une vingtaine de départements sont encore dépourvus d'unités de soins palliatifs en France",
+    "truthLabel": "TRUE",
+    "category": "sante",
+    "sourceUrl": "https://www.tf1info.fr/sante/verif-une-vingtaine-de-departements-sont-ils-encore-depourvus-d-unites-de-soins-palliatifs-en-france-2453503.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2026-07-17",
+    "themeTags": [
+      "vingtaine",
+      "departements",
+      "encore",
+      "depourvus",
+      "d'unites",
+      "soins"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:081cfae6b584",
+    "text": "En France, 85% du territoire est un désert médical",
+    "truthLabel": "TRUE",
+    "category": "sante",
+    "sourceUrl": "https://www.tf1info.fr/societe/verif-sante-france-85-du-territoire-francais-est-il-un-desert-medical-2437118.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2026-04-20",
+    "themeTags": [
+      "france",
+      "territoire",
+      "desert",
+      "medical"
+    ]
+  },
+  {
+    "sourceKey": "franceinfo:4b86907db0d9",
+    "text": "Le Dry January\" a un effet bénéfique sur la santé",
+    "truthLabel": "TRUE",
+    "category": "sante",
+    "sourceUrl": "https://www.franceinfo.fr/vrai-ou-fake/vrai-ou-faux-dry-january-un-mois-sans-alcool-a-t-il-vraiment-des-effets-benefiques-sur-la-sante_6990731.html",
+    "_publisher": "franceinfo",
+    "_rating": "Vrai",
+    "_reviewDate": "2025-01-05",
+    "themeTags": [
+      "january",
+      "effet",
+      "benefique",
+      "sante"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:bf53b9139d37",
+    "text": "Les maladies psychiques sont le premier poste de dépense de l'assurance maladie",
+    "truthLabel": "TRUE",
+    "category": "sante",
+    "sourceUrl": "https://www.tf1info.fr/sante/sante-les-maladies-psychiques-sont-elles-le-premier-poste-de-depense-de-l-assurance-maladie-comme-le-dit-le-nouveau-premier-ministre-michel-barnier-2326894.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2024-10-04",
+    "themeTags": [
+      "maladies",
+      "psychiques",
+      "premier",
+      "poste",
+      "depense",
+      "l'assurance"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:5bf717abeb43",
+    "text": "Deux tiers des 300.000 patients qui nécessiteraient des soins palliatifs en sont privés",
+    "truthLabel": "TRUE",
+    "category": "sante",
+    "sourceUrl": "https://www.tf1info.fr/sante/projet-loi-fin-de-vie-deux-tiers-des-300-000-patients-qui-necessiteraient-des-soins-palliatifs-en-sont-ils-prives-2279327.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-12-13",
+    "themeTags": [
+      "deux",
+      "tiers",
+      "patients",
+      "necessiteraient",
+      "soins",
+      "palliatifs"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:0becf78c9ff8",
+    "text": "L'aide médicale d'État, c'est 0,4 % des dépenses de soins du pays",
+    "truthLabel": "TRUE",
+    "category": "sante",
+    "sourceUrl": "https://www.tf1info.fr/sante/immigration-l-aide-medicale-d-etat-ame-ne-represente-t-elle-que-0-4-des-depenses-de-sante-2272555.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Vrai",
+    "_reviewDate": "2023-10-11",
+    "themeTags": [
+      "l'aide",
+      "medicale",
+      "d'etat",
+      "c'est",
+      "depenses",
+      "soins"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:12305f3d9469",
+    "text": "Une vidéo d'une fusée de SpaceX vient de s'écraser sur la Lune",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4DK3WE",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-12",
+    "themeTags": [
+      "video",
+      "d'une",
+      "fusee",
+      "spacex",
+      "vient",
+      "s'ecraser"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:537909821525",
+    "text": "Une vidéo d'un migrant demandant de l'argent et un hébergement gratuit",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C64E863",
+    "_publisher": "Factuel AFP",
+    "_rating": "Vidéo manipulée",
+    "_reviewDate": "2026-08-21",
+    "themeTags": [
+      "video",
+      "d'un",
+      "migrant",
+      "demandant",
+      "l'argent",
+      "hebergement"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:ed508cbd23e4",
+    "text": "Une vidéo de l'éclipse solaire 2025 dans le nord de l'Espagne",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4WH263",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-20",
+    "themeTags": [
+      "video",
+      "l'eclipse",
+      "solaire",
+      "nord",
+      "l'espagne"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:ab9975e4ad0c",
+    "text": "Cette vidéo montre une église incendiée par un immigrant musluman au Canada",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4PL366",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-17",
+    "themeTags": [
+      "video",
+      "montre",
+      "eglise",
+      "incendiee",
+      "immigrant",
+      "musluman"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:ac3025a0edda",
+    "text": "Une vidéo d’un civil abattu par des groupes armés à Goma",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4422ZR",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-10",
+    "themeTags": [
+      "video",
+      "civil",
+      "abattu",
+      "groupes",
+      "armes",
+      "goma"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:66dd941c673d",
+    "text": "Cette vidéo montre la complicité de gendarmes marocains dans l'afflux de migrants à Ceuta",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/verif-ceuta-ce-que-l-on-sait-sur-la-video-d-un-camion-d-ou-descendent-des-dizaines-de-jeunes-hommes-au-maroc-2456710.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-05",
+    "themeTags": [
+      "video",
+      "montre",
+      "complicite",
+      "gendarmes",
+      "marocains",
+      "l'afflux"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:c54141b40c56",
+    "text": "Une vidéo de l'afflux migratoire depuis le Maroc vers Ceuta",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C3U329E",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-04",
+    "themeTags": [
+      "video",
+      "l'afflux",
+      "migratoire",
+      "depuis",
+      "maroc",
+      "ceuta"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:4fa0005da839",
+    "text": "Des liasses de billets issus du détournement d'argent des dons européens en Ukraine",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/que-sait-on-de-cette-video-de-saisie-d-argent-en-ukraine-censee-illustrer-le-detournement-de-fonds-europeens-2460339.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-08-25",
+    "themeTags": [
+      "liasses",
+      "billets",
+      "issus",
+      "detournement",
+      "d'argent",
+      "dons"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:d9acdcec6239",
+    "text": "Une vidéo prouve que l’Iran a détruit un data center d’Amazon à Bahreïn",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C3L349H",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-30",
+    "themeTags": [
+      "video",
+      "prouve",
+      "iran",
+      "detruit",
+      "data",
+      "center"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:5f5be62672e2",
+    "text": "Une vidéo des viandes envoyées d'Israël jetées par le peuple de Gaza",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2Q38ZW",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-22",
+    "themeTags": [
+      "video",
+      "viandes",
+      "envoyees",
+      "d'israel",
+      "jetees",
+      "peuple"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:fb6bdcd44edd",
+    "text": "Une vidéo du dernier hommage à CR7 rendu à Madère",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2274KE",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-13",
+    "themeTags": [
+      "video",
+      "dernier",
+      "hommage",
+      "rendu",
+      "madere"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:c3c896eefe25",
+    "text": "Cette vidéo montre une faute non-sanctionnée de Messi au Mondial face à la Suisse",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2DF8WE",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-17",
+    "themeTags": [
+      "video",
+      "montre",
+      "faute",
+      "sanctionnee",
+      "messi",
+      "mondial"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:33473c20cd4b",
+    "text": "Une vidéo d'Erling Halland se faisant peur à lui-même",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B9DA49M",
+    "_publisher": "Factuel AFP",
+    "_rating": "Vidéo manipulée",
+    "_reviewDate": "2026-07-07",
+    "themeTags": [
+      "video",
+      "d'erling",
+      "halland",
+      "faisant",
+      "peur",
+      "meme"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:752ec3935e47",
+    "text": "Une vidéo du Hezbollah revendiquant une attaque à venir en France pour le 14 juillet",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B9ZW3NR",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-13",
+    "themeTags": [
+      "video",
+      "hezbollah",
+      "revendiquant",
+      "attaque",
+      "venir",
+      "france"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:92bfe656e748",
+    "text": "Voici une vidéo d'Erling Haaland se faisant peur à lui-même",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B9LT6CQ",
+    "_publisher": "Factuel AFP",
+    "_rating": "Vidéo manipulée",
+    "_reviewDate": "2026-07-08",
+    "themeTags": [
+      "voici",
+      "video",
+      "d'erling",
+      "haaland",
+      "faisant",
+      "peur"
+    ]
+  },
+  {
+    "sourceKey": "20-minutes:9f47b9ee7f95",
+    "text": "Une vidéo prouve la théorie de la terre creuse",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/planete/4232655-20260707-video-prouve-theorie-terre-creuse-existence-mondes-secrets-sous-pieds-vraiment",
+    "_publisher": "20 Minutes",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-07",
+    "themeTags": [
+      "video",
+      "prouve",
+      "theorie",
+      "terre",
+      "creuse"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:16daacba47fd",
+    "text": "La vidéo d'un gigantesque objet noir démontre l'existence du projet HAARP pour dérégler le climat",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/meteo/verif-haarp-un-gigantesque-objet-noir-cette-video-revele-t-elle-l-utilisation-d-un-outil-de-manipulation-du-climat-2451105.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-03",
+    "themeTags": [
+      "video",
+      "d'un",
+      "gigantesque",
+      "objet",
+      "noir",
+      "demontre"
+    ]
+  },
+  {
+    "sourceKey": "20-minutes:e1153fc89139",
+    "text": "Une vidéo de quokka authentique",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/societe/4232171-20260703-australie-petit-marsupial-tres-doue-reclamer-nourriture-ia",
+    "_publisher": "20 Minutes",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-03",
+    "themeTags": [
+      "video",
+      "quokka",
+      "authentique"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:831a77b11ebd",
+    "text": "Une vidéo de l'effondrement d'un immeuble après le séisme au Vénézuela",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B8R37G7",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-07-01",
+    "themeTags": [
+      "video",
+      "l'effondrement",
+      "d'un",
+      "immeuble",
+      "apres",
+      "seisme"
+    ]
+  },
+  {
+    "sourceKey": "20-minutes:4387359b2685",
+    "text": "Cette vidéo d’un mur de glace prouve que la Terre est plate",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/societe/4231942-20260630-video-mur-glace-prouve-terre-plate-non",
+    "_publisher": "20 Minutes",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-30",
+    "themeTags": [
+      "video",
+      "glace",
+      "prouve",
+      "terre",
+      "plate"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:b0a5e68ec583",
+    "text": "Cette vidéo montre le séisme survenu au Venezuela le 24 juin 2026",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B8N26G3",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-30",
+    "themeTags": [
+      "video",
+      "montre",
+      "seisme",
+      "survenu",
+      "venezuela",
+      "juin"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:d3c880f48d0c",
+    "text": "Une vidéo d'une musulmane recevant le baptême",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B7YN4WE",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-25",
+    "themeTags": [
+      "video",
+      "d'une",
+      "musulmane",
+      "recevant",
+      "bapteme"
+    ]
+  },
+  {
+    "sourceKey": "beto-cd:b768d41d0c86",
+    "text": "Des vidéos affirment qu'Ebola « n'existe pas » ou serait un prétexte à vaccins. C'est faux : l'épidémie est documentée par Africa CDC et l'OMS, et plusieurs contenus viraux ont déjà été démontés.",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://beto.cd/desintox-non-ebola-nest-pas-une-invention-pour-vendre-des-vaccins-en-ituri/",
+    "_publisher": "beto.cd",
+    "_rating": "False",
+    "_reviewDate": "2026-06-19",
+    "themeTags": [
+      "videos",
+      "affirment",
+      "qu'ebola",
+      "n'existe",
+      "serait",
+      "pretexte"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:32e2feeebdfd",
+    "text": "Une vidéo montre Martin Fayulu demander pardon à Félix Tshisekedi.",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B7BL666",
+    "_publisher": "Factuel AFP",
+    "_rating": "Vidéo manipulée",
+    "_reviewDate": "2026-06-17",
+    "themeTags": [
+      "video",
+      "montre",
+      "martin",
+      "fayulu",
+      "demander",
+      "pardon"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:43562ef318a5",
+    "text": "Une vidéo d'une mobilisation contre les projets touristiques liés à la famille Trump en Albanie",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B6MH6WE",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-16",
+    "themeTags": [
+      "video",
+      "d'une",
+      "mobilisation",
+      "contre",
+      "projets",
+      "touristiques"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:08020f5fb90d",
+    "text": "Une vidéo montre une boite de conserve sans viande donnée aux soldats russes",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/verif-une-boite-de-conserve-sans-viande-cette-video-montre-t-elle-le-rationnement-drastique-des-soldats-russes-2447135.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-12",
+    "themeTags": [
+      "video",
+      "montre",
+      "boite",
+      "conserve",
+      "viande",
+      "donnee"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:49ce8bf80e81",
+    "text": "Une vidéo montre des soldats détruire un hélicoptère américain avec un lance-roquette valant 150 dollars",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/verif-des-iraniens-ont-ils-detruit-un-helicoptere-americain-avec-une-arme-a-150-dollars-2446886.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-11",
+    "themeTags": [
+      "video",
+      "montre",
+      "soldats",
+      "detruire",
+      "helicoptere",
+      "americain"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:03ae7bb0df75",
+    "text": "Cette vidéo montre des soldats israéliens dévaster une église au Liban",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B6DV6KF",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-06-10",
+    "themeTags": [
+      "video",
+      "montre",
+      "soldats",
+      "israeliens",
+      "devaster",
+      "eglise"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:af8dbf39c248",
+    "text": "Une vidéo montre Céline Dion snobé une fan qui chantait pour elle en refermant sous son nez la vitre de sa voiture",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/culture/verif-celine-dion-a-t-elle-snobe-une-fan-qui-chantait-pour-elle-en-refermant-sous-son-nez-la-vitre-de-sa-voiture-2444110.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-05-28",
+    "themeTags": [
+      "video",
+      "montre",
+      "celine",
+      "dion",
+      "snobe",
+      "chantait"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:b836d723f052",
+    "text": "Une vidéo montre un soldat tué par un homme derrière son ordinateur avec une manette de jeu vidéo",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/verif-la-nouvelle-guerre-moderne-cette-video-montre-t-elle-vraiment-un-soldat-tue-par-un-homme-derriere-son-ordinateur-2443627.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-05-26",
+    "themeTags": [
+      "video",
+      "montre",
+      "soldat",
+      "homme",
+      "derriere",
+      "ordinateur"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:ecf4b4a2ed89",
+    "text": "Des vidéos où des personnes ne portent pas de masques près des personnes contaminées par l'hantavirus",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/sante/verif-agent-de-securite-sans-protection-elus-a-proximite-des-malades-ces-images-prouvent-elles-que-l-hantavirus-est-une-supercherie-2441364.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-05-13",
+    "themeTags": [
+      "videos",
+      "personnes",
+      "portent",
+      "masques",
+      "pres",
+      "contaminees"
+    ]
+  },
+  {
+    "sourceKey": "factuel-afp:24603761d74a",
+    "text": "Une vidéo montre une attaque iranienne contre des infrastructures énergétiques à Dubaï.",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B2GG9G3",
+    "_publisher": "Factuel AFP",
+    "_rating": "Faux",
+    "_reviewDate": "2026-05-12",
+    "themeTags": [
+      "video",
+      "montre",
+      "attaque",
+      "iranienne",
+      "contre",
+      "infrastructures"
+    ]
+  },
+  {
+    "sourceKey": "dpa-factchecking:8586598a0246",
+    "text": "Cette vidéo montre deux missiles iraniens frapper un navire militaire américain près de l'île de Jask.",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://dpa-factchecking.com/belgium/260114-99-165398",
+    "_publisher": "dpa-factchecking",
+    "_rating": "faux",
+    "_reviewDate": "2026-05-12",
+    "themeTags": [
+      "video",
+      "montre",
+      "deux",
+      "missiles",
+      "iraniens",
+      "frapper"
+    ]
+  },
+  {
+    "sourceKey": "tf1-info:4e2110da480f",
+    "text": "Une vidéo démontre que l'armée américaine a développé des drones corbeaux",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/high-tech/verif-la-bataille-du-futur-l-armee-americaine-a-t-elle-developpe-des-drones-corbeaux-capables-de-passer-inapercus-2440467.html",
+    "_publisher": "TF1 Info",
+    "_rating": "Faux",
+    "_reviewDate": "2026-05-08",
+    "themeTags": [
+      "video",
+      "demontre",
+      "l'armee",
+      "americaine",
+      "developpe",
+      "drones"
+    ]
+  }
+]

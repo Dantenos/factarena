@@ -53,14 +53,32 @@ export class AiService {
     }
   }
 
-  async askRag(question: string, limit = 4, rateKey = 'internal') {
+  async askRag(
+    question: string,
+    limit = 4,
+    rateKey = 'internal',
+    // Contexte de la manche en cours (vide par défaut = hors partie). Transmis
+    // au garde-fou anti-spoil du service IA : sans lui, le bot pourrait révéler
+    // si un clip en jeu est vrai ou faux (cf. docs/AI.md §9). Les noms partent
+    // en snake_case car c'est le contrat FastAPI (live_topics / live_claims).
+    live: { topics?: string[]; claims?: string[] } = {},
+  ) {
     this.rateLimit.consume(`rag:${rateKey}`, 20, 60_000);
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.aiBaseUrl}/rag/ask`, { question, limit }, {
-          responseType: 'text',
-          timeout: 120_000,
-        }),
+        this.httpService.post(
+          `${this.aiBaseUrl}/rag/ask`,
+          {
+            question,
+            limit,
+            live_topics: live.topics ?? [],
+            live_claims: live.claims ?? [],
+          },
+          {
+            responseType: 'text',
+            timeout: 120_000,
+          },
+        ),
       );
       const parsed = this.parseSse(response.data);
       return {
@@ -178,6 +196,57 @@ export class AiService {
       }
     }));
     return verdicts;
+  }
+
+  /**
+   * Variante RAG de `streamChat` : même streaming SSE, mais vers /rag/ask.
+   *
+   * POURQUOI cette méthode existe : le bot du chat passait par /llm/chat, donc
+   * il répondait SANS source. Or c'est justement la citation de sources qui
+   * démontre le module RAG. Ici on garde le streaming (exigé par le module LLM)
+   * ET on récupère l'événement `sources`.
+   *
+   * `live` porte le contexte de la manche en cours jusqu'au garde-fou anti-spoil
+   * du service IA (docs/AI.md §9) : c'est lui qui refuse de répondre si la
+   * question porte sur un clip en jeu.
+   */
+  async *streamRag(
+    prompt: string,
+    rateKey: string,
+    live: { topics?: string[]; claims?: string[] } = {},
+  ): AsyncGenerator<AiStreamEvent> {
+    this.rateLimit.consume(`rag:${rateKey}`, 20, 60_000);
+    try {
+      const response = await firstValueFrom(this.httpService.post(
+        `${this.aiBaseUrl}/rag/ask`,
+        { question: prompt, live_topics: live.topics ?? [], live_claims: live.claims ?? [] },
+        { responseType: 'stream', timeout: 120_000 },
+      ));
+
+      let buffer = '';
+      let receivedEvent = false;
+      for await (const chunk of response.data as AsyncIterable<Buffer | string>) {
+        buffer += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+        const events = buffer.split(/\r?\n\r?\n/);
+        buffer = events.pop() ?? '';
+        for (const event of events) {
+          const parsed = this.parseSseEvent(event);
+          if (parsed) {
+            receivedEvent = true;
+            yield parsed;
+          }
+        }
+      }
+      const finalEvent = this.parseSseEvent(buffer);
+      if (finalEvent) {
+        receivedEvent = true;
+        yield finalEvent;
+      }
+      if (!receivedEvent) throw new AiResponseParseError('AI service returned no SSE events');
+    } catch (error) {
+      this.logger.warn(`RAG stream failed: ${String(error)}`);
+      throw this.toAiHttpException(error, 'RAG stream');
+    }
   }
 
   async *streamChat(prompt: string, rateKey: string): AsyncGenerator<AiStreamEvent> {
