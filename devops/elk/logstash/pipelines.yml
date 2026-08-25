@@ -1,0 +1,31 @@
+- pipeline.id: router
+  path.config: "/usr/share/logstash/log-conf/router.conf"
+  pipeline.workers: 1
+
+- pipeline.id: kibana
+  path.config: "/usr/share/logstash/log-conf/kibana.conf"
+  pipeline.workers: 1
+
+- pipeline.id: backend
+  path.config: "/usr/share/logstash/log-conf/backend.conf"
+  pipeline.workers: 1
+
+- pipeline.id: nginx
+  path.config: "/usr/share/logstash/log-conf/nginx.conf"
+  pipeline.workers: 1
+
+- pipeline.id: ai-service
+  path.config: "/usr/share/logstash/log-conf/ai-service.conf"
+  pipeline.workers: 1
+
+- pipeline.id: frontend
+  path.config: "/usr/share/logstash/log-conf/frontend.conf"
+  pipeline.workers: 1
+
+- pipeline.id: postgres
+  path.config: "/usr/share/logstash/log-conf/postgres.conf"
+  pipeline.workers: 1
+
+- pipeline.id: generic
+  path.config: "/usr/share/logstash/log-conf/generic.conf"
+  pipeline.workers: 1

@@ -37,7 +37,7 @@ services:
     volumes:
       # Le dossier du projet est branché en direct dans le conteneur : c'est
       # tout l'intérêt du mode dev, votre éditeur écrit, Vite voit le changement.
-      - ./frontend:/app
+      - ./frontend:/app:Z
       # Cette ligne bizarre est indispensable. La ligne du dessus recouvre TOUT
       # /app avec votre dossier local — y compris node_modules, qui n'existe pas
       # chez vous (il est installé dans l'image). Sans ça, Vite disparaît et le
@@ -54,6 +54,7 @@ services:
   backend:
     volumes:
       - ./backend:/app
+      - backend_uploads:/app/uploads
       # Même histoire que pour le front, et ici c'est encore plus critique :
       # le node_modules de l'image contient le client Prisma généré au build,
       # qu'on n'a pas en local. Sans cette ligne, plus de Prisma du tout.
@@ -63,6 +64,7 @@ services:
       # devDependencies... dont le CLI de Nest, qui est justement ce qui fait
       # tourner le mode watch. On repasse donc en development ici.
       NODE_ENV: development
+      SEED_DEMO_DATA: "true"
     # Je garde le « prisma db push » du Dockerfile : le schéma doit être en place
     # avant que l'API réponde à quoi que ce soit, qu'on soit en dev ou en prod.
     command: ["sh", "-c", "npx prisma db push --skip-generate && npm run start:dev"]

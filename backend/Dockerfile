@@ -9,7 +9,7 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 # openssl + libc6-compat : requis par le moteur Prisma sur Alpine (musl) pour
-# 'prisma generate' (ici) et 'prisma db push' (au runtime). Sans eux, Prisma
+# 'prisma generate' (ici) et les migrations Prisma (au runtime). Sans eux, Prisma
 # échoue à charger libssl (erreur classique Prisma + Alpine au 1er démarrage).
 RUN apk add --no-cache openssl libc6-compat
 # Je copie les deux manifestes AVANT le reste du code : tant qu'on ne touche
@@ -35,20 +35,21 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-# libssl (via openssl) pour le moteur Prisma appelé au démarrage ('db push').
+# libssl (via openssl) pour le moteur Prisma appele au demarrage.
 RUN apk add --no-cache openssl libc6-compat
 # On récupère les dépendances DÉJÀ installées à l'étape build (dont la CLI
 # `prisma` ET le client généré). Copier tout node_modules garantit que
-# `prisma db push` fonctionne hors-ligne au démarrage — donc pas de
+# `prisma migrate deploy` fonctionne hors-ligne au démarrage — donc pas de
 # téléchargement réseau, et le « docker compose up » unique tient.
 COPY package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+RUN mkdir -p /app/uploads/avatars && chown -R node:node /app/uploads
 # Utilisateur non-root (sécurité).
 USER node
 EXPOSE 3000
-# Au démarrage : `prisma db push` crée/synchronise la table users depuis le
-# schéma (pas encore de migrations versionnées au stade squelette), PUIS on
-# lance l'API. --skip-generate : le client est déjà généré à l'étape build.
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main.js"]
+# Au démarrage : `prisma migrate deploy` applique les migrations versionnées,
+# puis `prisma db seed` prepare les donnees de base avant de lancer l'API.
+# Le client Prisma est deja genere a l'etape build.
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"]
