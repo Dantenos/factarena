@@ -1,8 +1,9 @@
 # Architecture — ft_transcendence · **FactArena**
 
-> **FactArena — arène de prédiction en temps réel sur les fake news.**
-> Jeu multijoueur temps réel : on parie des **crédits virtuels** sur le nombre
-> d'affirmations fausses dans un lot de claims, puis une IA révèle le verdict **sourcé**.
+> **FactArena — arène de fact-check en temps réel sur les fake news.**
+> Jeu multijoueur temps réel : une compilation de ~10 clips viraux s'enchaîne, on juge
+> chaque clip **« good news / fake news »** (crédits virtuels en jeu), puis une IA révèle
+> le verdict **sourcé**. Le plus précis rafle le pot.
 > Projet de fin de tronc commun 42, équipe de 5.
 
 Ce document est la référence technique de l'équipe. Il explique le **POURQUOI** de chaque
@@ -24,19 +25,19 @@ FactArena fusionne les deux pistes de l'équipe :
 **Boucle de jeu :**
 1. **Auth & lobby** — connexion email+mot de passe (obligatoire) ou 42 OAuth ; le lobby
    montre les salons, les amis + statut en ligne, le solde de crédits et le classement.
-2. **Salon** — plusieurs joueurs rejoignent un salon live ; un **lot de N claims**
-   (texte/image ou clip court) est chargé. L'état de la manche est **synchronisé par le
+2. **Salon** — plusieurs joueurs rejoignent un salon live ; une **compilation de ~10 clips
+   viraux** (lecteur embarqué) s'enchaîne. L'état de la manche est **synchronisé par le
    serveur** via WebSocket (horloge autoritaire côté serveur).
-3. **Prédiction & mise** — pendant le compte à rebours, chaque joueur **prédit le nombre
-   de claims faux** (0..N) et **mise des crédits virtuels** ; la distribution des
-   prédictions et les cotes (pari mutuel) évoluent en direct ; le chat du salon est actif
-   (modéré par IA).
-4. **Verrouillage** — à zéro, les prédictions gèlent (verrou dur côté serveur).
-5. **Révélation** — le bot IA **streame** un verdict sourcé par claim (LLM sur contexte
+3. **Mise & vote par clip** — le joueur mise une fois des **crédits virtuels** en entrant,
+   puis juge **chaque clip « good news / fake news »** dans une **fenêtre de vote
+   synchronisée** ; la distribution des votes du salon évolue en direct ; le chat est actif
+   (modéré par IA, et interrogeable — voir `AI.md §9`).
+4. **Verrouillage** — le vote de chaque clip gèle à la fin de sa fenêtre (verrou serveur).
+5. **Révélation** — le bot IA **streame** un verdict sourcé par clip (LLM sur contexte
    RAG, avec citations + confiance).
-6. **Score (déterministe, à somme nulle)** — la prédiction la plus proche de N remporte le
-   pot ; le règlement des crédits est **une transaction PostgreSQL atomique** (pas de
-   double-dépense). Les perdants cèdent leur mise aux gagnants.
+6. **Score (déterministe, à somme nulle) — course à la précision** — le joueur qui a **bien
+   jugé le plus de clips** remporte le pot ; le règlement des crédits est **une transaction
+   PostgreSQL atomique** (pas de double-dépense). Les perdants cèdent leur mise aux gagnants.
 7. **Persistance** — historique, stats, classement mis à jour. Manche suivante.
 
 > ### Décision d'architecture n°1 — la vérité de jeu ne vient PAS du LLM
@@ -50,13 +51,23 @@ FactArena fusionne les deux pistes de l'équipe :
 > évaluateur : « ta condition de victoire est non-déterministe » (module jeu) et « ton IA
 > peut halluciner le résultat » (risque RAG). Le score est reproductible et défendable.
 
-> ### Décision d'architecture n°2 — on abandonne la synchro vidéo image par image
+> ### Décision d'architecture n°2 (RÉVISÉE ~août 2026) — lecteur vidéo embarqué, mais synchro sur la FENÊTRE DE VOTE, pas sur l'image
 >
-> La piste B impliquait une synchro vidéo **frame-accurate** entre clients : coûteux,
-> fragile, source d'erreurs console (autoplay, flux interrompus). On la remplace par une
-> **machine à états de manche pilotée par le serveur** (`countdown → lock → reveal`)
-> diffusée par WebSocket. Même ressenti social/live, une fraction du risque — réaliste
-> pour 5 étudiants.
+> **Pivot Option B.** On réintègre un **lecteur vidéo embarqué** : une compilation de ~10
+> clips viraux **s'enchaîne pendant la manche**, et les joueurs jugent chaque clip en direct
+> (bouton **« good news » / « fake news »**). Le score est une **course à la précision** — le
+> pot va au plus juste, ça reste PvP à somme nulle (cf. module jeu, la défense tient).
+>
+> **Ce qu'on N'abandonne PAS : la synchro frame-accurate de la vidéo.** La vidéo joue côté
+> client ; seule la **fenêtre de vote** est pilotée par le serveur (« clip N, vote ouvert
+> jusqu'à T+Δ », identique pour tous). C'est ÇA la synchro temps réel notée (IV.1/IV.6) — le
+> pixel de la vidéo, non. Le PvP reste équitable sans le coût du frame-sync.
+>
+> **⚠️ Dépendance assumée :** l'embed rouvre le risque « erreurs console ». On parie sur la
+> lecture « erreurs de source TIERCE tolérées » (test Chrome à l'appui : tout le bruit part
+> sous les domaines plateforme, `localhost` reste à 0). → player en **iframe propre**
+> (YouTube/Facebook de préférence) ; **jamais** de widget X/Insta/TikTok qui exécute son JS
+> dans notre origine. Interprétation non validée par un staff à ce stade — risque connu.
 
 **[À VALIDER] Les paris se font en crédits virtuels, sans valeur réelle ni cash-out.**
 Choix volontaire : cadre scolaire sain, pas de KYC/paiement, et les pages ToS/Privacy le
@@ -74,12 +85,12 @@ recalage (le sujet recommande de dépasser 14). Chaque module cite sa sous-secti
 | # | Module | Réf. sujet | Pourquoi il colle |
 |---|---|---|---|
 | 1 | Framework front + back | IV.1 (l.472) | React(Vite)+Tailwind & NestJS — frameworks explicitement admis. Risque ~nul. |
-| 2 | Temps réel (WebSockets) | IV.1 (l.481) | Cœur du produit : machine à états, cotes/pot live, verdict streamé, chat. Couvre connexion/déconnexion propres. |
+| 2 | Temps réel (WebSockets) | IV.1 (l.481) | Cœur du produit : machine à états, votes/pot live, verdict streamé, chat. Couvre connexion/déconnexion propres. |
 | 3 | User interaction (chat + profil + amis) | IV.1 (l.486) | **Ancré sur le chat du salon** (envoi/réception) comme livrable porteur ; profil/amis incidents ici. |
 | 4 | Gestion utilisateur standard | IV.3 (l.555) | Édition profil, **upload avatar** (+ défaut), amis + **statut en ligne**, page profil. Distinct de l'auth de base. |
 | 5 | RAG complet | IV.4 (l.609) | Corpus fact-check sur pgvector ; récupération par claim + citations. Réutilisé en surface Q&A autonome « pose un claim ». |
 | 6 | Interface LLM (streaming) | IV.4 (l.614) | Génère l'explication token par token, gestion d'erreurs + **rate limiting**. Surface chatbot à saisie libre distincte. |
-| 7 | **Jeu web** (Arène de prédiction) | IV.6 (l.645) | Règles claires, victoire/défaite, matchs live, joueurs les uns contre les autres (pari mutuel à somme nulle). |
+| 7 | **Jeu web** (Arène de fact-check) | IV.6 (l.645) | Règles claires, victoire/défaite, matchs live, joueurs les uns contre les autres (vote good/fake par clip, course à la précision à somme nulle). |
 
 ### Minors (4 × 1 = 4 pts)
 
@@ -116,11 +127,11 @@ Le sujet punit sévèrement les modules « à moitié faits ». Trois zones sont
 2. **RAG « large dataset » (l.610)** : ingérer **des milliers de documents** (dataset
    fact-check public / sous-ensemble Wikipédia). Ne jamais présenter le corpus comme
    « petit ». Démontrer la surface Q&A autonome, pas seulement le pipeline interne.
-3. **Le module jeu (IV.6) est le plus contestable** : durcir son identité — (a) N vient
-   d'une clé de réponse pré-étiquetée déterministe ; (b) rendre le PvP visible et à somme
-   nulle (distribution des prédictions adverses, tableau de scores du salon) ; (c) écran
-   de **règles écrites** + repli « plus proche gagne » pour qu'il y ait toujours un
-   gagnant ; (d) comptes de test/seed pour démontrer un salon à < 3 humains.
+3. **Le module jeu (IV.6) est le plus contestable** : durcir son identité — (a) le verdict
+   de chaque clip vient d'une clé de réponse pré-étiquetée déterministe ; (b) rendre le PvP
+   visible et à somme nulle (distribution des votes adverses, tableau de scores du salon) ;
+   (c) écran de **règles écrites** + repli « le plus de bonnes réponses gagne » pour qu'il y
+   ait toujours un gagnant ; (d) comptes de test/seed pour démontrer un salon à < 3 humains.
 
 ---
 
@@ -185,24 +196,30 @@ Le navigateur ne parle **qu'à nginx**.
 Entités relationnelles (Prisma) :
 
 ```
-User ──1─N── Prediction        (un joueur prédit/mise par manche)
+User ──1─N── Bet             (un joueur mise une fois par manche)
+User ──1─N── ClipVote        (un vote good/fake par clip vu)
 User ──1─N── Transaction       (journal des crédits virtuels)
 User ──N─N── User (Friendship) (amitié + statut en ligne)
 User ──1─N── Stat / classement
 
 Room/Match ──1─N── Round        (un salon enchaîne des manches)
-Round ──N─N── Claim (via RoundClaim)   (une manche = un lot de N claims)
-Round ──1─N── Prediction        (les mises de la manche)
+Round ──N─N── Claim (via RoundClaim)   (une manche = un lot de N clips)
+Round ──1─N── Bet               (les mises de la manche)
+RoundClaim ──1─N── ClipVote     (les votes good/fake sur ce clip)
 Claim ──1─1── ClaimVerdict      (explication IA — AFFICHAGE seulement)
 ```
 
 Champs porteurs :
 - **Claim** : `id`, `text` / `mediaRef`, **`truthLabel`** (clé de réponse éditoriale :
   TRUE/FALSE — c'est la source de vérité du jeu), `category`, `sourceUrl`.
-- **Round** : `id`, `roomId`, `status` (OPEN/LOCKED/REVEALED), `opensAt`, `locksAt`,
-  `trueFakeCount` (dérivé/caché des `truthLabel` du lot).
-- **Prediction** (le « pari ») : `id`, `userId`, `roundId`, `predictedFakeCount`, `stake`,
-  `payout?`, `result` (WIN/LOSS), `createdAt`.
+- **Round** : `id`, `roomId`, `status` (OPEN/LOCKED/REVEALED), `opensAt`, `locksAt`.
+  (Plus de `trueFakeCount` : le score n'est plus « combien de faux » mais la précision clip
+  par clip — la vérité de chaque clip est le `truthLabel` du `Claim`.)
+- **Bet** (le « pari » d'une manche) : `id`, `userId`, `roundId`, `stake`, `correctCount`
+  (dérivé des votes), `payout?`, `result` (WIN/LOSS), `createdAt`.
+- **ClipVote** (le jugement d'un clip) : `id`, `userId`, `roundClaimId`, `vote` (GOOD/FAKE),
+  `isCorrect` (dérivé du `truthLabel` : GOOD ⇔ TRUE), `votedAt`. Fenêtre de vote synchronisée
+  par le serveur — un vote hors fenêtre est refusé.
 - **ClaimVerdict** : `id`, `claimId`, `verdictText` (LLM), `confidence`, `citations` (JSON,
   issues du RAG). **N'intervient jamais dans le score** — display only.
 - **Transaction** : `id`, `userId`, `type` (BET/PAYOUT/BONUS), `amount`, `balanceAfter`.
@@ -232,10 +249,10 @@ backend/src/
 ├── auth/            # email+mdp (Argon2), JWT, OAuth 42
 ├── users/           # profils, avatars, amis, statut en ligne (présence WS)
 ├── rooms/           # salons/matchs, cycle de vie
-├── rounds/          # machine à états manche (countdown/lock/reveal), lot de claims
-├── predictions/     # mises, cotes pari mutuel, résolution
+├── rounds/          # machine à états manche (fenêtre de vote par clip), compilation de clips
+├── predictions/     # mises + votes good/fake par clip, score (course à la précision), résolution
 ├── ledger/          # crédits virtuels (transactions atomiques, solde)
-├── realtime/        # gateway WebSocket (état de manche, cotes, chat, présence)
+├── realtime/        # gateway WebSocket (état de manche, votes live, chat, présence)
 ├── fact-check/      # appelle back-ai (verdict d'affichage + Q&A)
 ├── moderation/      # relaie le chat vers la modération IA
 ├── stats/           # historique, classement, achievements
@@ -312,8 +329,17 @@ Points clés : `depends_on` + healthchecks (attendre Postgres) ; migrations Pris
 6. **Comptes de test/bots** admis pour démontrer le multi-user à l'éval ?
 
 **[À VALIDER par l'ÉQUIPE] :**
-- **DÉCIDÉ — Médium d'une manche : texte/image pour le MVP** (plus sûr, déterministe,
-  moins de risque console). La vidéo n'arrivera qu'après les 18 pts fonctionnels.
+- **DÉCIDÉ (révisé ~août 2026) — Médium d'une manche : lecteur VIDÉO embarqué** (pivot
+  Option B). Compilation de ~10 clips qui s'enchaînent, vote **good/fake par clip** en
+  fenêtre synchronisée, score en **course à la précision**. Remplace le choix initial
+  texte/image. Dépendance assumée : risque console de l'embed (cf. Décision n°2 révisée).
+- **[À VALIDER] — IA questionnable dans le chat** (`@bot` / `/ask` → réponse RAG streamée).
+  Donne un vrai foyer au module LLM (streaming, saisie libre, rate-limit) + au RAG.
+  ⚠️ Deux garde-fous : **(1)** le bot NE commente PAS les clips de la manche en cours (sinon
+  il arbitre le jeu → viole Décision n°1) ; il répond général/historique et poste le verdict
+  sourcé seulement à la révélation. **(2)** garder RAG et LLM démontrablement distincts + un
+  mode « retrieval off » pour prouver le LLM seul et déclencher un vrai 429/erreur en live
+  (piège §3). Le rate-limit exigé par IV.4 devient démontrable naturellement (anti-spam `@bot`).
 - Source des clés de réponse & du corpus : à la main vs dataset public (LIAR/PolitiFact/
   Wikipédia) qui sert aussi de corpus RAG « large ». **Assigner un owner dédié** (tâche
   contenu sous-estimée).

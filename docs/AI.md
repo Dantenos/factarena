@@ -202,6 +202,8 @@ Ce qui transforme « j'ai codé » en « je marque les points » :
 - [ ] Déclencher un **vrai 429** en live (spammer l'endpoint) -> gestion propre, pas un crash.
 - [ ] Modération : envoyer un message toxique -> **auto-action** visible, et expliquer que
       c'est un modèle qui décide, pas une liste de mots.
+- [ ] Bot questionnable dans le chat : `@bot` -> réponse **sourcée qui s'affiche en streaming** ;
+      et vérifier qu'il **refuse de spoiler** un clip de la manche en cours (protège la décision n°1).
 - [ ] Savoir **expliquer** chaque brique (exigence du chapitre I : je livre ce que je
       comprends et j'assume).
 
@@ -225,6 +227,78 @@ Ce qui transforme « j'ai codé » en « je marque les points » :
 - Volume final du corpus (2000 articles par défaut : à monter si on veut « plus large »).
 - Le pipeline X-Fact -> table `Claim` : format d'export, qui code quoi (moi la préparation
   des données, le Back Core la table). À caler en réunion.
+
+---
+
+## 9. Le bot questionnable dans le chat (idée à intégrer — pivot Option B)
+
+Idée d'équipe : dans le chat du salon, un joueur peut **interroger l'IA** — `@bot` ou
+`/ask <question>` — et recevoir une réponse **streamée et sourcée**. Pourquoi c'est malin pour
+MOI : ça donne enfin une **surface vivante** à mon module LLM et à mon RAG, au lieu d'un simple
+champ de test. Le même chat porte donc deux de mes modules : la **modération** (passive) et
+l'**interrogation** (active).
+
+### Ce que ça réutilise (rien de neuf à inventer)
+- Question factuelle → mon endpoint **`/rag/ask`** existant : réponse ancrée sur le corpus,
+  avec citations (AFP, franceinfo, Wikipédia…). C'est ma surface Q&A, juste déclenchée depuis
+  le chat.
+- Le back relaie `@bot` vers `ai-service:8000` (jamais le front en direct, cf. règle d'or §3)
+  et poste la réponse dans le chat comme un message d'un utilisateur « FactBot ».
+
+### Les deux garde-fous (sinon je casse deux modules)
+1. **Le bot n'arbitre JAMAIS la manche en cours** (décision n°1). Si quelqu'un demande « le
+   clip 3 est fake ? » pendant le vote, répondre = **divulguer la clé de réponse** et laisser
+   l'IA trancher le gain. Interdit. Dès qu'une question porte sur un clip en jeu, le bot refuse
+   (« je ne commente pas ça pendant la manche 🤐 »). Le verdict + l'explication sourcée ne
+   sortent **qu'à la révélation** (là, le bot PEUT poster l'explication RAG).
+
+   > **⚠️ On a d'abord essayé un seuil SÉMANTIQUE (embeddings) — abandonné.** Mesuré en vrai :
+   > mistral-embed tasse les scores dans une bande trop étroite (« pile sur le clip » ~0.78 vs
+   > « hors sujet » ~0.71, marge ~0.07). Un seuil global (TAU) fuit ou sur-bloque. Pas de TAU
+   > fiable → on change d'approche.
+
+   → **Implémentation retenue = CASCADE (`app/rag/guardrail.py`, branché dans `/rag/ask`) :**
+   ```
+   is_blocked(question, live_topics, live_claims):
+       # Couche 1 — THÉMATIQUE (déterministe, sans API) :
+       if is_about_live_topics(question, live_topics): return True
+       # Couche 2 — JUGE LLM (« sinon », rattrape les reformulations) :
+       return await judged_about_live_clips(question, live_claims)
+   ```
+   - **Couche 1** : chaque clip déclare ses **mots-thèmes** (entités/sujets, curés avec le
+     contenu — cf. `CLAIMS.md`). Matching insensible casse/accents, mot entier ou expression.
+     Gratuit, instantané, 100 % explicable. Attrape l'évident.
+   - **Couche 2** : pour les reformulations qui esquivent les mots-thèmes, on demande au LLM
+     « cette question porte-t-elle sur l'une de ces affirmations ? OUI/NON (OUI en cas de doute) ».
+     Bien plus fiable qu'un cosinus. **Testé** : « ce grand rapace qui saisit un nourrisson,
+     c'est authentique ? » (sans « aigle » ni « bébé ») → bloqué.
+   - Tourne **AVANT** le retrieval (sinon `/rag/ask` retrouverait l'article fact-check du clip
+     et répondrait). **Fail-closed** : si le juge LLM tombe (Mistral en panne) → 503, pas de spoil.
+   - **Ceinture + bretelles (pas encore branché) :** au retrieval, exclure aussi les docs des
+     clips vivants (`WHERE claim_id NOT IN (...)`) — même si les deux couches laissent passer,
+     le clip n'est jamais cité.
+2. **RAG vs LLM restent démontrablement distincts** (piège n°1). Le `@bot` sourcé = le RAG
+   (`/rag/ask`). Je garde `/llm/chat` (retrieval coupé) comme surface séparée pour prouver le
+   LLM seul et déclencher un vrai 429. Le chat ne brouille pas les deux : une commande sourcée
+   cite toujours, la démo « LLM nu » reste à part.
+
+### Le bonus points
+IV.4 exige un **rate limit** sur l'interface LLM. Un bot qu'on peut spammer avec `@bot` en a
+besoin de toute façon → mon limiteur FastAPI devient **démontrable dans un usage naturel**
+(plusieurs `@bot` d'affilée → 429 géré proprement, un « doucement 😅 » posté dans le chat au
+lieu d'un crash).
+
+### Ce que ça me coûte à coder
+- **FAIT — le garde-fou en cascade** (`app/rag/guardrail.py` + branchement dans `/rag/ask`,
+  8 tests pytest verts). Reste : brancher l'exclusion des clips vivants au retrieval (bretelles).
+  Tout le reste (`/rag/ask`, streaming, rate-limit) existait déjà.
+- **Le contrat avec le Back Core** : sa requête `@bot` sur `/rag/ask` m'apporte deux listes des
+  clips de la manche ouverte — `live_topics` (mots-thèmes, couche 1) et `live_claims` (textes,
+  couche 2). Vides hors manche. C'est lui qui tient l'état de la manche ; moi je tranche.
+- **Côté Back Core** (pas moi) : détecter `@bot` / `/ask` dans un message, m'appeler avec ces
+  deux listes, et poster ma réponse dans le flux WebSocket du chat.
+- **Côté contenu / Back Core** : chaque `Claim` a besoin de ses **mots-thèmes** (`themeTags`),
+  curés avec le reste de la fiche — cf. `CLAIMS.md`.
 
 ---
 

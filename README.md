@@ -1,6 +1,6 @@
 *This project has been created as part of the 42 curriculum by <login1>, <login2>, <login3>, <login4>, <login5>.*
 
-# FactArena — Live Fake-News Prediction Arena
+# FactArena — Live Fake-News Fact-Checking Arena
 
 > TODO before first evaluation: replace every `<login>` and every TODO block.
 > The subject requires this README to be complete, honest and written in English.
@@ -30,22 +30,22 @@ the subject rejects a project on either one. Everything else, we can discuss.
 
 ## Description
 
-**FactArena** is a real-time multiplayer prediction game about misinformation. Players
-join a live room, are shown a short curated **claim-set** (text/images — optionally a
-video clip) containing *N* factual claims, and — competing against each other — **predict
-how many claims are fake** while staking **virtual credits** (no real money, ever) at live
-pari-mutuel odds. A countdown locks all predictions; then an AI bot **streams** a sourced
-verdict for each claim (true/false + confidence + citations). The prediction closest to the
-true fake-count wins the shared pot; players climb a global leaderboard.
+**FactArena** is a real-time multiplayer fact-checking game about misinformation. Players
+join a live room and watch a **compilation of ~10 short viral video clips** play in sequence;
+for each clip, competing against each other, they call it **"good news" or "fake news"** in a
+server-synchronized vote window, having staked **virtual credits** (no real money, ever). When
+the compilation ends, an AI bot **streams** a sourced verdict for each clip (true/false +
+confidence + citations). Scoring is an **accuracy race**: whoever correctly judged the most
+clips wins the shared pot; players climb a global leaderboard.
 
-**Key design decision:** the true fake-count that decides the winners comes from a
+**Key design decision:** the verdict of each clip that decides the winners comes from a
 **pre-labeled editorial answer key** stored in the database, **not** from the live LLM.
 Scoring is deterministic; the RAG/LLM layer only *explains* the pre-known verdict — it never
 adjudicates the game. Real-time "sync" is a server-authoritative round state machine
 (countdown → lock → reveal) over WebSocket, not frame-accurate video streaming.
 
 Key features:
-- Real-time prediction rooms with live odds/pot, countdown and locked bets (WebSockets)
+- Real-time rooms: a viral-clip compilation plays; per-clip good/fake voting with live pot, synchronized vote windows and locked votes (WebSockets)
 - AI fact-checking bot: streamed LLM explanations grounded by a RAG vector database
 - A standalone "ask a claim → sourced answer" Q&A surface (reuses the RAG engine)
 - User accounts (email/password + 42 OAuth), profiles, avatars, friends, online status
@@ -108,7 +108,7 @@ TODO: keep this section updated (seed data, test accounts).
 | `<login2>` | **Back-end Core** | NestJS, auth, WebSockets, round state machine, credits, PostgreSQL |
 | `<login3>` | **Tech Lead / Architect** — AI (Python) | FastAPI, RAG corpus, LLM streaming, moderation |
 | `<login4>` | Front-end UI & Access — **Product Owner** | Product vision, backlog, React UI, WCAG, legal pages |
-| `<login5>` | Front-end Real-time & UX | Room/betting UI, chat integration, live odds |
+| `<login5>` | Front-end Real-time & UX | Room/betting UI, chat integration, live vote tally |
 
 All members are **Developers**: they write code, review each other's PRs, test and document
 their scope.
@@ -136,7 +136,7 @@ TODO: full justification of major technical choices.
 ## Database Schema
 
 TODO: diagram. Core tables: User, Friendship, Room/Match, Round, Claim (with editorial
-`truthLabel` answer key), RoundClaim, Prediction, Transaction (credit ledger), ClaimVerdict
+`truthLabel` answer key), RoundClaim, Bet + ClipVote (per-clip good/fake), Transaction (credit ledger), ClaimVerdict
 (AI explanation, display-only), Stat/Leaderboard, and the FastAPI-managed Document table
 (pgvector embeddings). See `docs/ARCHITECTURE.md` for relations.
 
@@ -158,7 +158,7 @@ for the audited rationale and per-module subject references.
 | Standard user management | Major | 2 | | Not started |
 | Complete RAG system | Major | 2 | | Not started |
 | LLM interface (streaming) | Major | 2 | | Not started |
-| Web-based game (prediction arena) | Major | 2 | | Not started — **needs staff validation** |
+| Web-based game (live fact-check arena) | Major | 2 | | Not started — **needs staff validation** |
 | ORM (Prisma) | Minor | 1 | | Not started |
 | OAuth 2.0 (42) | Minor | 1 | | Not started |
 | AI content moderation | Minor | 1 | | Not started |
