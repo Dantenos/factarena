@@ -26,10 +26,76 @@ export class RoundsService {
     }
   }
 
-  async create(data: { roomId: string; claimIds: string[]; durationSeconds: number }, createdById: string) {
-    const distinctClaimIds = [...new Set(data.claimIds)];
-    if (distinctClaimIds.length === 0) throw new BadRequestException('A round must contain at least one claim');
-    if (distinctClaimIds.length !== data.claimIds.length) throw new BadRequestException('A claim may appear only once in a round');
+  /**
+   * Tire au sort les claims d'une manche, en respectant deux règles.
+   *
+   * ÉQUILIBRAGE (docs/CLAIMS.md §5) : on vise environ 60 % de fausses. Si le lot
+   * ne contenait que des fausses, répondre « fake » à tout suffirait à gagner et
+   * le jeu n'aurait plus d'intérêt.
+   *
+   * PAS DE RÉPÉTITION : on écarte les claims déjà jouées dans ce salon, sinon
+   * les habitués reverraient les mêmes extraits et connaîtraient les réponses.
+   * Si le stock est épuisé, on rouvre tout plutôt que de refuser la partie.
+   */
+  private async tirerClaims(tx: Prisma.TransactionClient, roomId: string, nombre: number) {
+    const dejaJouees = await tx.roundClaim.findMany({
+      where: { round: { roomId } },
+      select: { claimId: true },
+    });
+    const exclues = new Set(dejaJouees.map((rc: { claimId: string }) => rc.claimId));
+
+    const toutes = await tx.claim.findMany({ select: { id: true, truthLabel: true } });
+    if (toutes.length < nombre) {
+      throw new BadRequestException(
+        `Pas assez de claims en base pour une manche de ${nombre} (${toutes.length} disponibles)`,
+      );
+    }
+    const inedites = toutes.filter((c: { id: string }) => !exclues.has(c.id));
+    const vivier = inedites.length >= nombre ? inedites : toutes;
+
+    const melanger = <T>(liste: T[]): T[] => {
+      // Fisher-Yates : mélange uniforme, contrairement à un sort() aléatoire
+      // qui biaise la distribution.
+      const copie = [...liste];
+      for (let i = copie.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copie[i], copie[j]] = [copie[j], copie[i]];
+      }
+      return copie;
+    };
+
+    const fausses = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'FALSE'));
+    const vraies = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'TRUE'));
+
+    const cibleFausses = Math.round(nombre * 0.6);
+    const choisies = [
+      ...fausses.slice(0, cibleFausses),
+      ...vraies.slice(0, nombre - cibleFausses),
+    ];
+    // Si une catégorie manque de stock, on complète avec l'autre : mieux vaut un
+    // lot légèrement déséquilibré qu'une manche impossible à lancer.
+    if (choisies.length < nombre) {
+      const restantes = melanger(vivier.filter((c: { id: string }) => !choisies.some((x) => x.id === c.id)));
+      choisies.push(...restantes.slice(0, nombre - choisies.length));
+    }
+    // Mélange final : sans lui, toutes les fausses arriveraient en premier et
+    // le joueur devinerait le schéma dès la troisième manche.
+    return melanger(choisies).map((c: { id: string }) => c.id);
+  }
+
+  async create(
+    data: { roomId: string; claimIds?: string[]; claimCount?: number; durationSeconds: number },
+    createdById: string,
+  ) {
+    // Liste imposée : on la valide comme avant. Sinon on tirera au sort dans la
+    // transaction (il faut y être pour lire les claims déjà jouées du salon).
+    const imposees = data.claimIds ? [...new Set(data.claimIds)] : null;
+    if (imposees && imposees.length !== data.claimIds!.length) {
+      throw new BadRequestException('A claim may appear only once in a round');
+    }
+    if (imposees && imposees.length === 0) {
+      throw new BadRequestException('A round must contain at least one claim');
+    }
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const room = await tx.room.findUnique({ where: { id: data.roomId } });
       if (!room) throw new NotFoundException(`Room ${data.roomId} not found`);
@@ -37,6 +103,9 @@ export class RoundsService {
       if (room.status === 'FINISHED') throw new BadRequestException('Cannot add rounds to a finished room');
       const activeRound = await tx.round.findFirst({ where: { roomId: data.roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] as any } } });
       if (activeRound) throw new ConflictException('This room already has an active round');
+      // Soit la liste imposée, soit un tirage automatique (8 clips par défaut,
+      // ce qui donne une manche d'une durée raisonnable).
+      const distinctClaimIds = imposees ?? (await this.tirerClaims(tx, data.roomId, data.claimCount ?? 8));
       const claims = await tx.claim.findMany({ where: { id: { in: distinctClaimIds } }, select: { id: true } });
       if (claims.length !== distinctClaimIds.length) throw new BadRequestException('One or more claims do not exist');
       const opensAt = new Date(Date.now() + 3_000);
