@@ -28,7 +28,11 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/play" element={<Play />} />
-          <Route path="/room" element={<Room />} />
+          {/* Le salon a besoin de SON identifiant : sans lui la page ne peut ni
+              rejoindre le bon canal WebSocket, ni charger la manche en cours.
+              L'ancienne route /room (sans paramètre) renvoie donc au lobby. */}
+          <Route path="/room/:roomId" element={<Room />} />
+          <Route path="/room" element={<Play />} />
         </Route>
 
         {/* Filet : une URL inconnue affichait une page blanche (aucune route ne
