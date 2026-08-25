@@ -22,30 +22,33 @@ from app.mistral_client import embed
 # verifie=True  -> valeur confirmée sur la source (URL précise).
 # verifie=False -> ordre de grandeur bien établi, À VÉRIFIER/ACTUALISER + URL exacte.
 INDICATEURS = [
+    # ⚠️ Les libellés précisent la MÉTHODE et la PÉRIODE, sinon le RAG mélange
+    # ces chiffres avec ceux d'Eurostat (source='eurostat') qui mesure autrement :
+    # INSEE = moyenne annuelle au sens du BIT ; Eurostat = valeur mensuelle
+    # désaisonnalisée. Les deux sont justes, mais un évaluateur qui obtient deux
+    # taux différents sans explication croira à une erreur.
     (
-        "En moyenne sur l'année 2025, le taux de chômage en France au sens du BIT "
-        "est de 7,7 % de la population active. Source : INSEE, 2025.",
+        "Selon l'INSEE, en moyenne sur l'année 2025, le taux de chômage en France "
+        "au sens du BIT est de 7,7 % de la population active. Il s'agit d'une "
+        "moyenne annuelle : les mesures mensuelles d'Eurostat peuvent différer. "
+        "Source : INSEE, 2025.",
         "https://www.insee.fr/fr/statistiques/8735266",
         True,
     ),
     (
-        "En 2025, le taux de chômage des jeunes de 15 à 24 ans en France est de "
-        "19,8 % en moyenne sur l'année. Source : INSEE, 2025.",
+        "Selon l'INSEE, en 2025, le taux de chômage des jeunes de 15 à 24 ans en "
+        "France est de 19,8 % en moyenne sur l'année (au sens du BIT). Eurostat "
+        "publie le même indicateur pour les moins de 25 ans, en mensuel. "
+        "Source : INSEE, 2025.",
         "https://www.insee.fr/fr/statistiques/8735266",
         True,
     ),
-    (
-        "Fin 2024, la dette publique de la France représente environ 113 % du "
-        "produit intérieur brut (PIB). Source : INSEE, comptes nationaux.",
-        "https://www.insee.fr",
-        False,  # à vérifier : valeur exacte + informations rapides INSEE de l'année
-    ),
-    (
-        "En 2024, la dépense publique de la France représente environ 57 % du PIB, "
-        "l'une des plus élevées de l'Union européenne. Source : INSEE / Eurostat.",
-        "https://www.insee.fr",
-        False,  # à vérifier : % exact et montant en milliards
-    ),
+    # RETIRÉS (dette publique ~113 % fin 2024, dépense publique ~57 % en 2024) :
+    # c'étaient des ordres de grandeur non vérifiés, avec une URL générique
+    # (https://www.insee.fr) qui ne prouvait rien. Les deux sont désormais
+    # récupérés EN DIRECT depuis l'API Eurostat (ingest_eurostat.py), donc
+    # datés, sourcés et à jour. Un chiffre non vérifiable n'a pas sa place dans
+    # un corpus de fact-checking.
 ]
 
 # À CURER ENSUITE (chiffres pertinents pour les thèmes du jeu, à vérifier d'abord) :
