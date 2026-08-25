@@ -95,6 +95,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       LLM_API_KEY: ${LLM_API_KEY}
       LLM_MODEL: ${LLM_MODEL}
+      # Clé Google pour l'ingestion des fact-checks (API Fact Check Tools).
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy

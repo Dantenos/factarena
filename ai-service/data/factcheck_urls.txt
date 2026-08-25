@@ -1,0 +1,16 @@
+# URLs des articles de fact-check à ingérer dans le RAG (source='factcheck').
+# Une URL par ligne. Lignes vides et lignes # ignorées.
+# Lancer :  docker compose exec ai-service python -m app.rag.ingest_factcheck
+#
+# Astuce : si un site bloque les bots (France24, AFP...), passer par son snapshot
+# web.archive.org (préfixe https://web.archive.org/web/2id_/ + l'URL d'origine).
+
+# --- Aigle qui attrape un bébé (canular en images de synthèse, 2012) -> FAUX ---
+https://www.snopes.com/fact-check/kindersnatchen/
+
+# --- Images de jeu vidéo Arma 3 présentées comme un vrai combat -> FAUX (cheapfake) ---
+https://www.vice.com/en/article/military-sim-developer-tired-of-its-game-being-used-to-fake-war-footage/
+
+# --- Aya Nakamura "chantant" pour des dirigeants du Sahel = vidéo générée par IA -> FAUX ---
+# (France24 bloque les bots : on passe par l'archive)
+https://web.archive.org/web/2id_/https://www.france24.com/fr/%C3%A9missions/info-ou-intox/20250404-aya-nakamura-chante-la-gloire-des-dirigeants-africains-attention-%C3%A0-ces-vid%C3%A9os
