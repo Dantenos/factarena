@@ -32,7 +32,13 @@ interface VideoPlayerProps {
 // charger LEUR script dans notre page, et une erreur de leur code deviendrait
 // une erreur sous notre domaine — éliminatoire.
 function estEmbarquable(url: string): boolean {
-  return /(?:youtube-nocookie\.com|youtube\.com)\/embed\//i.test(url);
+  return (
+    /(?:youtube-nocookie\.com|youtube\.com)\/embed\//i.test(url) ||
+    // Facebook via plugins/video.php : iframe pure elle aussi, donc même
+    // garantie côté console. Beaucoup d'articles de l'AFP renvoient vers
+    // Facebook, d'où son intérêt pour la couverture des extraits.
+    /facebook\.com\/plugins\/video\.php/i.test(url)
+  );
 }
 
 export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerProps) {

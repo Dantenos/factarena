@@ -26,6 +26,7 @@ Lancer :
 """
 import os
 import re
+from urllib.parse import quote
 
 import httpx
 
@@ -35,6 +36,15 @@ from app.db import connect
 # seules que l'on sait embarquer sans charger de script tiers.
 YOUTUBE_RE = re.compile(
     r"https?://(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([\w-]{6,})",
+    re.I,
+)
+
+# Facebook s'embarque lui aussi dans une IFRAME PURE, via plugins/video.php :
+# aucun script tiers ne tourne dans notre page, donc même garantie que YouTube
+# vis-à-vis de la console. C'est la seule autre plateforme qu'on s'autorise.
+# AFP et TF1 renvoient beaucoup vers Facebook, d'où l'intérêt de la couvrir.
+FACEBOOK_RE = re.compile(
+    r"https?://(?:www\.)?(?:facebook\.com/[\w.]+/videos/\d+|fb\.watch/[\w-]+)",
     re.I,
 )
 
@@ -58,17 +68,31 @@ def _html(client: httpx.Client, url: str) -> str:
 
 
 def _embed(html: str) -> str | None:
-    """Identifiant YouTube le PLUS FRÉQUENT de la page -> URL embarquable.
+    """Vidéo la PLUS FRÉQUENTE de la page -> URL embarquable, ou None.
 
     Le plus fréquent est presque toujours la vidéo débunkée : elle apparaît dans
     le lecteur, dans les partages et souvent dans les métadonnées, là où une
     vidéo « suggérée » n'apparaît qu'une fois.
+
+    YouTube d'abord (on sait vérifier qu'il accepte l'intégration), Facebook
+    ensuite.
     """
     ids = YOUTUBE_RE.findall(html)
-    if not ids:
-        return None
-    meilleur = max(set(ids), key=ids.count)
-    return f"https://www.youtube-nocookie.com/embed/{meilleur}"
+    if ids:
+        meilleur = max(set(ids), key=ids.count)
+        return f"https://www.youtube-nocookie.com/embed/{meilleur}"
+
+    liens = FACEBOOK_RE.findall(html)
+    if liens:
+        meilleur = max(set(liens), key=liens.count)
+        # Le plugin attend l'URL de la vidéo ENCODÉE en paramètre `href`.
+        # show_text=false masque la légende du post, inutile ici.
+        return (
+            "https://www.facebook.com/plugins/video.php?href="
+            + quote(meilleur, safe="")
+            + "&show_text=false"
+        )
+    return None
 
 
 def _integrable(client: httpx.Client, video_id: str) -> bool:
@@ -117,12 +141,19 @@ def main() -> None:
             if not embed:
                 print(f"  rien {url[:64]}")
                 continue
-            video_id = embed.rsplit("/", 1)[-1]
-            if not _integrable(client, video_id):
-                print(f"  NON  {video_id} refuse l'intégration -> ignorée")
-                continue
+            # La vérification oEmbed ne vaut que pour YouTube : Facebook n'expose
+            # plus d'endpoint public équivalent (il exige un jeton d'application).
+            # On accepte donc ses vidéos sans pré-contrôle — le plugin fonctionne
+            # pour les publications publiques, ce que sont les vidéos débunkées.
+            if "youtube-nocookie" in embed:
+                video_id = embed.rsplit("/", 1)[-1]
+                if not _integrable(client, video_id):
+                    print(f"  NON  {video_id} refuse l'intégration -> ignorée")
+                    continue
+                print(f"  OK   youtube {video_id}  <- {url[:52]}")
+            else:
+                print(f"  OK   facebook          <- {url[:52]}")
             trouves.append((embed, claim_id))
-            print(f"  OK   {video_id}  <- {url[:58]}")
 
     if not trouves:
         print("\nAucune vidéo YouTube embarquable trouvée.")
