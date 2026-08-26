@@ -54,45 +54,56 @@ export default function Room() {
   // et on le rafraîchit à chaque révélation (les gains viennent d'être versés).
   const rafraichirSolde = useCallback(() => {
     solde()
-      .then((r) => setBalance(r.balance))
+      .then((r) => setBalance(r.virtualBalance))
       .catch(() => { /* solde indisponible : on laisse la valeur précédente */ });
   }, []);
   useEffect(rafraichirSolde, [rafraichirSolde]);
-
-  // Historique du chat au chargement : le WebSocket ne diffuse que les messages
-  // qui arrivent APRÈS la connexion, il faut donc charger l'existant.
-  useEffect(() => {
-    if (!roomId) return;
-    api<Array<{ id: string; content: string; createdAt: string; user?: { displayName?: string; email?: string } }>>(
-      `/chat/room/${roomId}`,
-    )
-      .then((liste) =>
-        setMessages(
-          liste.map((m) => ({
-            id: m.id,
-            type: 'user' as const,
-            author: m.user?.displayName || m.user?.email || 'joueur',
-            content: m.content,
-            timestamp: new Date(m.createdAt).getTime(),
-          })),
-        ),
-      )
-      .catch(() => { /* salon sans historique : on démarre vide */ });
-  }, [roomId]);
 
   // Abonnements aux événements temps réel.
   useEffect(() => {
     if (!connecte) return;
     const arret = [
-      ecouter('chat:message', (m: { id: string; content: string; createdAt: string; user?: { displayName?: string; email?: string } }) => {
+      // L'historique ne peut être chargé qu'APRÈS avoir rejoint le salon : le
+      // back exige d'en être membre, et la présence n'est établie que par
+      // room:join. Le charger au montage produisait un 403 visible dans la
+      // console — donc une erreur sous notre domaine, éliminatoire.
+      ecouter('room:joined', () => {
+        api<Array<{ id: string; content: string; createdAt: string; user?: { email?: string } }>>(
+          `/chat/room/${roomId}`,
+        )
+          .then((liste) =>
+            setMessages(
+              liste.map((m) => ({
+                id: m.id,
+                type: 'user' as const,
+                author: m.user?.email?.split('@')[0] ?? 'joueur',
+                content: m.content,
+                timestamp: new Date(m.createdAt).getTime(),
+              })),
+            ),
+          )
+          .catch(() => { /* salon sans historique : on démarre vide */ });
+      }),
+      // ⚠️ Le back n'émet PAS le message à plat : il renvoie
+      // { action, moderation, message: { content, user } }. Lire m.content
+      // directement donnait des messages vides avec un auteur « joueur ».
+      ecouter('chat:message', (d: {
+        action?: string;
+        message?: { id: string; content: string; createdAt: string; user?: { email?: string } };
+      }) => {
+        const m = d?.message;
+        if (!m) return;
         setMessages((prec) => [
           ...prec,
           {
             id: m.id,
             type: 'user',
-            author: m.user?.displayName || m.user?.email || 'joueur',
+            author: m.user?.email?.split('@')[0] ?? 'joueur',
             content: m.content,
             timestamp: new Date(m.createdAt).getTime(),
+            // La modération a masqué le message : le composant Chat affiche
+            // alors un avertissement à la place du contenu.
+            moderated: d.action === 'delete',
           },
         ]);
       }),
@@ -162,6 +173,34 @@ export default function Room() {
     emettre('chat:send', { roomId, content: contenu });
   }
 
+  // Lancement d'une manche. Sans ce bouton, aucune partie ne pouvait démarrer
+  // depuis l'interface : il fallait appeler l'API à la main. Le serveur tire
+  // lui-même les clips, on ne lui envoie que leur nombre et la durée.
+  const [lancement, setLancement] = useState(false);
+  const [erreurManche, setErreurManche] = useState<string | null>(null);
+  async function lancerManche() {
+    if (!roomId) return;
+    setLancement(true);
+    setErreurManche(null);
+    try {
+      await api('/rounds', {
+        method: 'POST',
+        body: { roomId, claimCount: 6, durationSeconds: 180 },
+      });
+      // Pas besoin de recharger : le serveur diffuse le nouvel état par
+      // WebSocket, la page se met à jour toute seule.
+      setIndexClip(0);
+      setMesVotes({});
+      setResultats(null);
+    } catch (e) {
+      // Cas courants : on n'est pas l'hôte du salon, ou une manche est déjà
+      // en cours. On l'affiche au lieu de laisser le bouton sans effet.
+      setErreurManche(e instanceof Error ? e.message : 'Lancement impossible');
+    } finally {
+      setLancement(false);
+    }
+  }
+
   if (!roomId) {
     return (
       <section className="bg-noir-krystal w-full min-h-full p-6 text-white">
@@ -211,6 +250,23 @@ export default function Room() {
 
           {clipCourant && (
             <p className="text-white text-sm">{clipCourant.text}</p>
+          )}
+
+          {/* Aucune manche en cours : on propose de la lancer. */}
+          {!round && (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={lancerManche}
+                disabled={lancement || !connecte}
+                className="button-blue-d px-4 py-3 disabled:opacity-40"
+              >
+                {lancement ? 'Lancement...' : 'Lancer une manche (6 clips)'}
+              </button>
+              {erreurManche && (
+                <p role="alert" className="text-red-l text-sm">{erreurManche}</p>
+              )}
+            </div>
           )}
 
           {/* Vote good/fake : le cœur du jeu. Désactivé hors fenêtre ouverte ou

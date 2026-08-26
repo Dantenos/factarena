@@ -18,6 +18,23 @@ interface VideoPlayerProps {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
+// Reconnaît une URL à embarquer dans une iframe (lecteur de la plateforme)
+// plutôt qu'à lire avec la balise <video>.
+//
+// POURQUOI DEUX MODES : on n'héberge aucune vidéo, les extraits restent chez
+// leur plateforme d'origine. YouTube s'embarque dans une iframe PURE — le bruit
+// console qu'elle produit est attribué aux domaines Google, jamais au nôtre, ce
+// qui protège la contrainte « zéro erreur console » du sujet. La balise <video>
+// et ses contrôles custom (tout le code plus bas) restent utiles pour un fichier
+// vidéo direct, en développement ou si on héberge un jour un extrait.
+//
+// ⚠️ Ne pas étendre ça à X, Instagram ou TikTok : ces plateformes exigent de
+// charger LEUR script dans notre page, et une erreur de leur code deviendrait
+// une erreur sous notre domaine — éliminatoire.
+function estEmbarquable(url: string): boolean {
+  return /(?:youtube-nocookie\.com|youtube\.com)\/embed\//i.test(url);
+}
+
 export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -218,6 +235,40 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
   // Format vertical si le ratio est < 1 (plus haut que large). Sert à
   // ajuster la largeur max du conteneur pour un rendu correct dans les deux cas.
   const isVertical = aspectRatio !== null && aspectRatio < 1;
+
+  // Lecteur de la plateforme : on délègue tout à l'iframe. Ce retour est placé
+  // APRÈS tous les hooks, sinon React interdirait l'appel conditionnel.
+  //
+  // Les contrôles custom ne s'appliquent pas ici : le lecteur YouTube a les
+  // siens, et une page tierce ne se pilote pas depuis la nôtre. Les callbacks
+  // onEnded/onTimeUpdate ne sont donc pas déclenchés dans ce mode — il faudrait
+  // l'API IFrame Player de YouTube, à ajouter seulement si la mécanique de jeu
+  // en a réellement besoin.
+  if (estEmbarquable(src)) {
+    return (
+      <div className="relative w-full mx-auto rounded-lg overflow-hidden bg-black aspect-video">
+        <iframe
+          src={src}
+          // title est OBLIGATOIRE pour l'accessibilité : sans lui, un lecteur
+          // d'écran annonce une iframe anonyme (et le sujet demande une
+          // interface accessible).
+          title="Extrait vidéo à vérifier"
+          className="w-full h-full"
+          // On n'autorise QUE ce dont le lecteur a besoin. Pas d'autoplay :
+          // Chrome le bloque avec du son et cela génère un avertissement en
+          // console — que le sujet interdit.
+          // ⚠️ On déclare le plein écran UNIQUEMENT via `allow`. Cumuler avec
+          // l'attribut hérité `allowFullScreen` fait écrire à Chrome « Allow
+          // attribute will take precedence over allowfullscreen » — un
+          // avertissement attribué à NOTRE bundle, donc à notre domaine, ce que
+          // le sujet interdit.
+          allow="encrypted-media; picture-in-picture; fullscreen"
+          // Empêche la page embarquée de connaître l'URL d'où elle est appelée.
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+    );
+  }
 
   return (
     <div

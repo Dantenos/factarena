@@ -111,8 +111,11 @@ export function profil() {
   return api<Utilisateur>('/users/me');
 }
 
+/** ⚠️ Le back renvoie `virtualBalance`, pas `balance` : se tromper de nom
+ *  affichait un solde vide sans la moindre erreur, le champ étant simplement
+ *  `undefined`. */
 export function solde() {
-  return api<{ balance: number }>('/ledger/balance');
+  return api<{ virtualBalance: number }>('/ledger/balance');
 }
 
 export function listeSalons() {
