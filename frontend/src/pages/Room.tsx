@@ -139,12 +139,32 @@ export default function Room() {
           // on retombe donc sur VRAI/FAUX. À faire évoluer si la colonne est
           // ajoutée (voir docs/CLAIMS.md).
           const verdict: ClipVerdict = v.truthLabel === 'TRUE' ? 'VRAI' : 'FAUX';
+
+          // Le back accole le second avis au texte du verdict, après une ligne
+          // vide (voir ai.service.ts). On les sépare ici pour les afficher
+          // distinctement : l'explication d'un côté, le pronostic de l'IA de
+          // l'autre — sans quoi le joueur confondrait les deux.
+          const brut = v.verdictText ?? '';
+          const [explication, apres] = brut.split(/\n\s*\n\s*Second avis de l'IA[^:]*:\s*/);
+          let aiGuess: ClipResult['aiGuess'];
+          let aiGuessWhy: string | undefined;
+          if (apres) {
+            const m = apres.match(/^(VRAI|FAUX|INCERTAIN)\b\.?\s*(.*)$/s);
+            if (m) {
+              aiGuess = m[1] as ClipResult['aiGuess'];
+              aiGuessWhy = m[2]?.trim() || undefined;
+            }
+          }
+
           return {
             id: v.claimId,
             verdict,
             title: v.text ?? '',
-            explanation: v.verdictText ?? "Explication en cours de génération.",
+            explanation: explication?.trim() || "Explication en cours de génération.",
             source: v.sourceUrl ?? '',
+            userVoted: mesVotes[v.claimId] !== undefined,
+            aiGuess,
+            aiGuessWhy,
           };
         });
         setResultats(resultatsClips);

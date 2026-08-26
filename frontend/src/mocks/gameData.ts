@@ -59,6 +59,12 @@ export interface ClipResult {
   explanation: string;  // explication du bot IA (RAG) sur pourquoi ce verdict
   source: string;       // source citée par le RAG (ex: "AFP Factuel")
   userVoted: boolean;    // true si le joueur a voté sur ce clip précis
+  // Ce que l'IA aurait répondu SANS connaître la clé et sans son article
+  // source. Purement informatif : le score n'en dépend jamais. Quand elle se
+  // trompe, on l'affiche tel quel — c'est la limite d'une IA face au
+  // fact-checking, et la montrer vaut mieux que la masquer.
+  aiGuess?: "VRAI" | "FAUX" | "INCERTAIN";
+  aiGuessWhy?: string;
 }
 
 export const mockClipResults: ClipResult[] = [

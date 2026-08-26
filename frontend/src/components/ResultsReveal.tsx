@@ -60,6 +60,33 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
                 <p className="text-white/50 text-xs mt-1 ml-1">
                   IA-RAG ▸ <span className="text-white/70">{clip.explanation}</span> — {clip.source}
                 </p>
+
+                {/* Second avis : ce que l'IA aurait répondu si elle avait joué,
+                    privée de la clé ET de son article source. On le distingue
+                    nettement du verdict officiel, qui seul décide du score.
+                    Afficher ses erreurs est volontaire : mesurée sur un
+                    échantillon, elle ne voit juste qu'une fois sur quatre. */}
+                {clip.aiGuess && (
+                  <p className="text-xs mt-1 ml-1">
+                    <span className="text-white/40">Si l'IA avait joué ▸ </span>
+                    <span
+                      className={
+                        clip.aiGuess === 'INCERTAIN'
+                          ? 'text-white/60 font-semibold'
+                          : clip.aiGuess === clip.verdict
+                            ? 'text-emerald-400 font-semibold'
+                            : 'text-red-400 font-semibold'
+                      }
+                    >
+                      {clip.aiGuess}
+                      {clip.aiGuess !== 'INCERTAIN' &&
+                        (clip.aiGuess === clip.verdict ? ' ✓' : ' ✗ elle s\'est trompée')}
+                    </span>
+                    {clip.aiGuessWhy && (
+                      <span className="text-white/40"> — {clip.aiGuessWhy}</span>
+                    )}
+                  </p>
+                )}
               </li>
             );
           })}
