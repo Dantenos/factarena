@@ -102,6 +102,84 @@ def _refusal_stream():
     yield _sse("done", {})
 
 
+class SecondAvisRequest(BaseModel):
+    # Le texte de l'affirmation. On ne reçoit JAMAIS le truthLabel : tout
+    # l'intérêt est que le modèle se prononce sans connaître la réponse.
+    claim: str = Field(min_length=10, max_length=1000)
+
+    # URL de l'article de fact-check dont la claim est issue, à EXCLURE de la
+    # recherche. Sans cette exclusion, l'avis n'a aucune valeur : le corpus
+    # contient l'article lui-même, et le modèle se contente d'y lire le verdict
+    # (« explicitement jugée Vrai dans le passage [1] »). En l'écartant, il doit
+    # raisonner sur d'autres sources — exactement ce que fait un joueur.
+    exclure_url: str | None = Field(default=None, max_length=500)
+
+
+CONSIGNE_SECOND_AVIS = (
+    "Tu donnes ton avis sur une affirmation, comme le ferait un joueur attentif. "
+    "Appuie-toi UNIQUEMENT sur les passages fournis. Si tu n'as pas d'élément, "
+    "dis-le franchement plutôt que d'inventer.\n"
+    "Réponds exactement ainsi :\n"
+    "AVIS: VRAI | FAUX | INCERTAIN\n"
+    "POURQUOI: <une seule phrase>"
+)
+
+
+@router.post("/second-avis")
+async def second_avis(req: SecondAvisRequest, request: Request):
+    """L'IA se prononce sur une affirmation SANS connaître la clé de réponse.
+
+    POURQUOI CET ENDPOINT : à la révélation, on affiche le verdict éditorial —
+    celui qui décide du score — puis, à côté, ce que l'IA aurait répondu. Quand
+    elle se trompe, ça ne coûte rien au jeu (le score ne dépend pas d'elle) et
+    ça montre honnêtement les limites d'une IA face au fact-checking. C'est un
+    argument solide en évaluation, et c'est exactement le rôle que la décision
+    d'architecture n°1 lui assigne : commenter, jamais arbitrer.
+
+    Le modèle ne reçoit que l'affirmation et les passages du corpus. Il ignore
+    le truthLabel, sinon son « avis » n'aurait aucune valeur.
+    """
+    if not limiter.allow(request.client.host):
+        raise HTTPException(status_code=429, detail="Trop de requêtes.")
+
+    try:
+        # On demande plus de passages que nécessaire : certains seront écartés.
+        passages = await search_similar(req.claim, k=TOP_K + 4)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service RAG indisponible (recherche).")
+
+    if req.exclure_url:
+        cible = req.exclure_url.rstrip("/")
+        passages = [p for p in passages if (p.get("url") or "").rstrip("/") != cible]
+    passages = passages[:TOP_K]
+
+    contexte = "\n\n".join(f"[{i + 1}] {p['content']}" for i, p in enumerate(passages))
+    messages = [
+        {"role": "system", "content": CONSIGNE_SECOND_AVIS},
+        {"role": "user", "content": f"Passages :\n\n{contexte}\n\nAffirmation : « {req.claim} »"},
+    ]
+
+    try:
+        morceaux = [m async for m in chat_stream(messages)]
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service LLM indisponible.")
+    texte = "".join(morceaux).strip()
+
+    # On extrait l'avis pour que le back n'ait pas à analyser du texte libre.
+    avis = "INCERTAIN"
+    for candidat in ("VRAI", "FAUX", "INCERTAIN"):
+        if f"AVIS: {candidat}" in texte.upper():
+            avis = candidat
+            break
+    pourquoi = texte.split("POURQUOI:", 1)[-1].strip() if "POURQUOI:" in texte else texte
+
+    return {
+        "avis": avis,
+        "pourquoi": pourquoi,
+        "citations": [{"title": p["title"], "url": p["url"]} for p in passages],
+    }
+
+
 @router.post("/ask")
 async def ask(req: AskRequest, request: Request):
     # Rate limiting : au-delà de la limite, 429 avant tout appel à Mistral.

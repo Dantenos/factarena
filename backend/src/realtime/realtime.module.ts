@@ -9,9 +9,10 @@ import { ChatModule } from '../chat/chat.module';
 import { AiModule } from '../ai/ai.module';
 import { RealtimeGateway } from './realtime.gateway';
 import { GameLoopService } from './game-loop.service';
+import { BotsService } from './bots.service';
 
 @Module({
   imports: [AuthModule, LedgerModule, BetsModule, ClipVotesModule, RoomsModule, RoundsModule, ChatModule, AiModule],
-  providers: [RealtimeGateway, GameLoopService],
+  providers: [RealtimeGateway, GameLoopService, BotsService],
 })
 export class RealtimeModule {}

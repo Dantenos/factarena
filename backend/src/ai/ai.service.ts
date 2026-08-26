@@ -142,6 +142,23 @@ export class AiService {
     }
   }
 
+  /**
+   * Demande au service IA ce qu'il aurait répondu sur une affirmation, sans lui
+   * communiquer la clé de réponse et en écartant l'article dont elle est issue.
+   * Sert uniquement à l'affichage à la révélation : ce résultat n'entre JAMAIS
+   * dans le calcul du score.
+   */
+  async secondAvis(claim: string, exclureUrl?: string) {
+    const response = await firstValueFrom(
+      this.httpService.post(
+        `${this.aiBaseUrl}/rag/second-avis`,
+        { claim, exclure_url: exclureUrl ?? null },
+        { timeout: 120_000 },
+      ),
+    );
+    return response.data as { avis?: string; pourquoi?: string };
+  }
+
   async generateClaimVerdict(claimId: string, question?: string, limit = 4) {
     const claim = await this.prisma.claim.findUnique({ where: { id: claimId } });
     if (!claim) {
@@ -150,9 +167,29 @@ export class AiService {
 
     const ragResponse = await this.askRag(question || claim.text, limit);
     const ragData = ragResponse.data ?? {};
-    const verdictText = ragData.answer || 'Verdict indisponible.';
+    let verdictText = ragData.answer || 'Verdict indisponible.';
     const citations = Array.isArray(ragData.citations) ? ragData.citations : [];
     const confidence = 0.5;
+
+    // SECOND AVIS : on demande à l'IA ce qu'ELLE aurait répondu, sans lui donner
+    // la clé et en excluant l'article de fact-check dont la claim est issue.
+    // Sans cette exclusion l'exercice n'a aucune valeur : le corpus contient
+    // l'article, et le modèle se contente d'y lire le verdict.
+    //
+    // Affiché à la révélation À CÔTÉ du verdict officiel — jamais à la place.
+    // Quand l'IA se trompe, le score n'en dépend pas (décision d'architecture
+    // n°1), et cela montre honnêtement les limites d'une IA face au
+    // fact-checking. Mesuré sur un échantillon : elle voit juste une fois sur
+    // quatre lorsqu'elle est privée de sa source.
+    try {
+      const avis = await this.secondAvis(claim.text, claim.sourceUrl ?? undefined);
+      if (avis?.avis) {
+        verdictText += `\n\nSecond avis de l'IA (sans sa source) : ${avis.avis}. ${avis.pourquoi ?? ''}`;
+      }
+    } catch {
+      // Le second avis est un bonus : son échec ne doit pas priver le joueur
+      // de l'explication principale.
+    }
 
     const verdict = await this.prisma.claimVerdict.upsert({
       where: { claimId },

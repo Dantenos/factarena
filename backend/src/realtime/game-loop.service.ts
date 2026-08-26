@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { RoundsService } from '../rounds/rounds.service';
 import { RealtimeGateway } from './realtime.gateway';
+import { BotsService } from './bots.service';
 import { AiService } from '../ai/ai.service';
 
 /**
@@ -22,6 +23,7 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
     private readonly roundsService: RoundsService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly aiService: AiService,
+    private readonly botsService: BotsService,
   ) {}
 
   onModuleInit() {
@@ -51,6 +53,12 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
           if (!opened) continue;
           status = 'OPEN';
           await this.realtimeGateway.publishRoundState(candidate.roomId, 'round:open', candidate.id);
+          // Les faux joueurs commentent la manche pendant qu'elle est ouverte.
+          // Voir bots.service.ts : deux trompent, un meuble. Leurs messages sont
+          // éphémères et n'entrent jamais dans l'historique du salon.
+          void this.botsService.animer(candidate.roomId, candidate.id, (message) =>
+            this.realtimeGateway.diffuserMessageBot(candidate.roomId, message),
+          );
           if (opened.locksAt > new Date()) continue;
         }
 
@@ -60,6 +68,8 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
           if (!locked) continue;
           status = 'LOCKED';
           await this.realtimeGateway.publishRoundState(candidate.roomId, 'round:locked', candidate.id);
+          // Manche verrouillée : les bots n'ont plus rien à influencer.
+          this.botsService.arreter(candidate.roomId);
         }
 
         if (status === 'REVEALED') {

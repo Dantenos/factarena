@@ -245,6 +245,29 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
+  /**
+   * Diffuse un message d'un faux joueur dans le chat d'un salon.
+   *
+   * Le format imite exactement celui d'un vrai message (enveloppe
+   * { action, message }) pour que le front n'ait aucun cas particulier à
+   * traiter. Mais rien n'est écrit en base et la modération n'est pas
+   * sollicitée : ces messages sont éphémères, ils animent la manche et
+   * disparaissent. Ils ne doivent pas polluer l'historique du salon.
+   */
+  diffuserMessageBot(roomId: string, message: { author: string; content: string }): void {
+    this.server.to(this.roomChannel(roomId)).emit('chat:message', {
+      action: 'allow',
+      message: {
+        id: `bot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        content: message.content,
+        createdAt: new Date().toISOString(),
+        // On expose un pseudo d'apparence ordinaire : côté joueur, rien ne
+        // distingue ces intervenants des autres participants (c'est le but).
+        user: { email: `${message.author}@factarena.local` },
+      },
+    });
+  }
+
   /** Used by the server game loop to publish transitions that were not caused by a client event. */
   async publishRoundState(roomId: string, event: string, roundId?: string) {
     const state = await this.roomsService.getState(roomId, roundId);
