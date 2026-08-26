@@ -34,33 +34,38 @@ from app.db import connect
 API = "https://commons.wikimedia.org/w/api.php"
 ENTETES = {"User-Agent": "FactArena-42-project/0.1 (ft_transcendence; educational)"}
 
+# ⚠️ FORMULATION NEUTRE OBLIGATOIRE. La première version écrivait « une
+# VÉRITABLE éruption », « une VRAIE tornade », « authentique »... ce qui
+# annonçait la réponse : 18 claims vraies se devinaient sans regarder la vidéo.
+# Une affirmation doit se lire exactement comme une intox potentielle.
+#
 # (affirmation en français, catégorie Commons). La catégorie EST le garde-fou :
 # son contenu est vérifié par des contributeurs, pas par un moteur approximatif.
 # Une catégorie inexistante ou vide est simplement ignorée à l'exécution.
 THEMES = [
-    ("Cette vidéo montre une véritable éruption volcanique.",
+    ("Cette vidéo montre une éruption volcanique.",
      "Category:Videos of volcanic eruptions"),
-    ("Cette vidéo montre une véritable tornade.",
+    ("Cette vidéo montre une tornade.",
      "Category:Videos of tornadoes"),
-    ("Cette vidéo montre de la foudre filmée en conditions réelles.",
+    ("Cette vidéo montre un impact de foudre.",
      "Category:Videos of lightning"),
-    ("Cette vidéo montre une éclipse solaire authentique.",
+    ("Cette vidéo montre une éclipse solaire.",
      "Category:Videos of solar eclipses"),
-    ("Cette vidéo montre un vrai lancement de fusée.",
+    ("Cette vidéo montre un lancement de fusée.",
      "Category:Videos of rocket launches"),
-    ("Cette vidéo montre une avalanche réelle.",
+    ("Cette vidéo montre une avalanche.",
      "Category:Videos of avalanches"),
-    ("Cette vidéo montre un geyser en éruption, un phénomène naturel réel.",
+    ("Cette vidéo montre un geyser en éruption.",
      "Category:Videos of geysers"),
     ("Cette vidéo montre une baleine filmée en mer.",
      "Category:Videos of whales"),
-    ("Cette vidéo montre une trombe marine, un phénomène météorologique réel.",
+    ("Cette vidéo montre une trombe marine.",
      "Category:Videos of waterspouts"),
-    ("Cette vidéo montre un séisme enregistré en conditions réelles.",
+    ("Cette vidéo montre les secousses d'un séisme.",
      "Category:Videos of earthquakes"),
-    ("Cette vidéo montre une véritable aurore polaire.",
+    ("Cette vidéo montre une aurore polaire.",
      "Category:Videos of auroras"),
-    ("Cette vidéo montre une éruption solaire observée depuis l'espace.",
+    ("Cette vidéo montre une éruption solaire vue depuis l'espace.",
      "Category:Videos of solar flares"),
 ]
 
