@@ -44,7 +44,18 @@ export class RoundsService {
     });
     const exclues = new Set(dejaJouees.map((rc: { claimId: string }) => rc.claimId));
 
-    const toutes = await tx.claim.findMany({ select: { id: true, truthLabel: true } });
+    // On PRIVILÉGIE les claims qui ont une vidéo : le jeu consiste à juger un
+    // extrait, une manche sans vidéo se réduit à lire du texte. On ne les exige
+    // pas pour autant — s'il n'y en a pas assez, on complète avec les autres
+    // plutôt que de refuser la partie.
+    const avecVideo = await tx.claim.findMany({
+      where: { mediaRef: { not: null } },
+      select: { id: true, truthLabel: true },
+    });
+    const toutes =
+      avecVideo.length >= nombre
+        ? avecVideo
+        : await tx.claim.findMany({ select: { id: true, truthLabel: true } });
     if (toutes.length < nombre) {
       throw new BadRequestException(
         `Pas assez de claims en base pour une manche de ${nombre} (${toutes.length} disponibles)`,

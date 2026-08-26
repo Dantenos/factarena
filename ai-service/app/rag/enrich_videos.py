@@ -122,10 +122,19 @@ def _integrable(client: httpx.Client, video_id: str) -> bool:
 
 def main() -> None:
     with connect() as conn, conn.cursor() as cur:
+        # VIDEO_ENRICH_ONLY=TRUE permet de ne traiter que les claims vraies.
+        # Utile parce qu'elles sont rares et que ce sont elles qui manquent :
+        # sans claims vraies EN VIDÉO, la présence d'un extrait devient un
+        # indice et le joueur gagne en répondant « fake » à chaque vidéo.
+        seulement = os.getenv("VIDEO_ENRICH_ONLY", "").upper()
+        filtre = ' AND "truthLabel" = %s' if seulement in ("TRUE", "FALSE") else ""
+        params: tuple = (seulement, LIMITE) if filtre else (LIMITE,)
         cur.execute(
             'SELECT id, "sourceUrl" FROM "Claim" '
-            'WHERE "mediaRef" IS NULL AND "sourceUrl" IS NOT NULL LIMIT %s',
-            (LIMITE,),
+            'WHERE "mediaRef" IS NULL AND "sourceUrl" IS NOT NULL'
+            + filtre
+            + " LIMIT %s",
+            params,
         )
         claims = cur.fetchall()
 

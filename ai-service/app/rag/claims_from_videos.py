@@ -22,6 +22,7 @@ de claims du back.
 Lancer :
     docker compose exec ai-service python -m app.rag.claims_from_videos
 """
+import os
 import re
 import unicodedata
 from pathlib import Path
@@ -29,7 +30,12 @@ from urllib.parse import quote
 
 from app.db import connect
 
-TSV = Path(__file__).resolve().parents[2] / "data" / "video_candidates.tsv"
+DATA = Path(__file__).resolve().parents[2] / "data"
+# extract_videos.py RÉÉCRIT video_candidates.tsv à chaque exécution. On lit donc
+# tous les fichiers de candidats présents (dont les sauvegardes d'anciens
+# passages), sinon relancer l'extraction sur un nouveau thème ferait perdre les
+# vidéos trouvées précédemment.
+TSV_FILES = sorted(DATA.glob("video_candidates*.tsv"))
 
 YOUTUBE_RE = re.compile(
     r"https?://(?:www\.)?(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([\w-]{6,})",
@@ -88,20 +94,22 @@ def _embed(blob: str) -> str | None:
 
 
 def main() -> None:
-    if not TSV.exists():
-        print(f"{TSV} introuvable — lancer d'abord extract_videos.py.")
+    if not TSV_FILES:
+        print(f"Aucun fichier de candidats dans {DATA} — lancer extract_videos.py.")
         return
 
-    # article -> vidéo embarquable
+    # article -> vidéo embarquable, agrégé sur tous les fichiers de candidats
     videos: dict[str, str] = {}
-    for ligne in TSV.read_text(encoding="utf-8").splitlines()[1:]:
-        colonnes = ligne.split("\t")
-        if len(colonnes) < 3:
-            continue
-        embed = _embed(" ".join(colonnes[2:]))
-        if embed:
-            videos[colonnes[1].strip().rstrip("/")] = embed
-    print(f"{len(videos)} articles avec une vidéo embarquable.")
+    for fichier in TSV_FILES:
+        for ligne in fichier.read_text(encoding="utf-8").splitlines()[1:]:
+            colonnes = ligne.split("\t")
+            if len(colonnes) < 3:
+                continue
+            embed = _embed(" ".join(colonnes[2:]))
+            if embed:
+                videos[colonnes[1].strip().rstrip("/")] = embed
+    print(f"{len(videos)} articles avec une vidéo embarquable "
+          f"({len(TSV_FILES)} fichier(s) de candidats).")
 
     with connect() as conn, conn.cursor() as cur:
         cur.execute("SELECT url, content FROM documents WHERE source = 'factcheck';")
@@ -109,11 +117,22 @@ def main() -> None:
         cur.execute('SELECT "sourceUrl" FROM "Claim" WHERE "sourceUrl" IS NOT NULL;')
         deja = {r[0].rstrip("/") for r in cur.fetchall()}
 
+    # Par défaut on n'accepte que les articles ayant une vidéo. Mais les
+    # verdicts « vrai » en ont rarement une (l'extracteur tire au hasard et
+    # tombe surtout sur des articles « faux »), et sans claims vraies le jeu
+    # devient devinable. On peut donc lever l'exigence :
+    #     CLAIMS_REQUIRE_VIDEO=0 python -m app.rag.claims_from_videos
+    # Les claims créées sans vidéo pourront en recevoir une plus tard via
+    # enrich_videos.py.
+    exige_video = os.getenv("CLAIMS_REQUIRE_VIDEO", "1") != "0"
+
     nouvelles = []
     vus: set[str] = set()
     for url, contenu in documents:
         cle = (url or "").rstrip("/")
-        if cle in deja or cle in vus or cle not in videos:
+        if cle in deja or cle in vus:
+            continue
+        if exige_video and cle not in videos:
             continue
         affirmation = AFFIRMATION_RE.search(contenu)
         verdict = VERDICT_RE.search(contenu)
@@ -129,7 +148,7 @@ def main() -> None:
         # sourceKey doit respecter le motif imposé par l'importeur du back.
         import hashlib
         cle_source = "video:" + hashlib.sha1(cle.encode()).hexdigest()[:16]
-        nouvelles.append((cle_source, texte, label, "viral_debunk", url, videos[cle]))
+        nouvelles.append((cle_source, texte, label, "viral_debunk", url, videos.get(cle)))
 
     if not nouvelles:
         print("Aucune claim nouvelle à créer.")
