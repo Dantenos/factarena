@@ -11,7 +11,7 @@ KIBANA_DIR="${CERT_DIR}/kibana"
 LOGSTASH_DIR="${CERT_DIR}/logstash"
 NGINX_DIR="${CERT_DIR}/nginx"
 
-CA_KEY="${CA_DIR}/ca.key"
+CA_KEY="${CERT_DIR}/ca_key/ca.key"
 CA_CERT="${CA_DIR}/ca.crt"
 
 CA_SUBJECT="/C=FR/ST=Hauts-de-France/L=Calais/O=FactArena/OU=ELK/CN=FactArena ELK CA"
@@ -28,7 +28,8 @@ mkdir -p \
     "$HEALTH_DIR" \
     "$KIBANA_DIR" \
     "$LOGSTASH_DIR" \
-    "$NGINX_DIR"
+    "$NGINX_DIR" \
+    "certs/ca_key/"
 
 # ============================================================
 # CA
