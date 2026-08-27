@@ -5,13 +5,14 @@ set -euo pipefail
 CERT_DIR="/certs"
 
 CA_DIR="${CERT_DIR}/ca"
+CA_KEY_DIR="${CERT_DIR}/ca_key"
 ES_DIR="${CERT_DIR}/elasticsearch"
 HEALTH_DIR="${CERT_DIR}/healthchecker"
 KIBANA_DIR="${CERT_DIR}/kibana"
 LOGSTASH_DIR="${CERT_DIR}/logstash"
 NGINX_DIR="${CERT_DIR}/nginx"
 
-CA_KEY="${CA_DIR}/ca.key"
+CA_KEY="${CA_KEY_DIR}/ca.key"
 CA_CERT="${CA_DIR}/ca.crt"
 
 CA_SUBJECT="/C=FR/ST=Hauts-de-France/L=Calais/O=FactArena/OU=ELK/CN=FactArena ELK CA"
@@ -28,7 +29,8 @@ mkdir -p \
     "$HEALTH_DIR" \
     "$KIBANA_DIR" \
     "$LOGSTASH_DIR" \
-    "$NGINX_DIR"
+    "$NGINX_DIR" \
+    "$CA_KEY_DIR"
 
 # ============================================================
 # CA
@@ -247,16 +249,16 @@ rm -f "${CA_DIR}/ca.srl"
 echo "[+] Setting certificate permissions..."
 
 # Elasticsearch / Elastic images use UID 1000 and group 0
-chown -R 1000:0 "$CERT_DIR"
+# chown -R 1000:0 "$CERT_DIR"
 
 # Directories
-find "$CERT_DIR" -type d -exec chmod 750 {} \;
+find "$CERT_DIR" -type d -exec chmod 755 {} \;
 
 # Certificates
-find "$CERT_DIR" -type f -name "*.crt" -exec chmod 640 {} \;
+find "$CERT_DIR" -type f -name "*.crt" -exec chmod 644 {} \;
 
 # Private keys
-find "$CERT_DIR" -type f -name "*.key" -exec chmod 640 {} \;
+find "$CERT_DIR" -type f -name "*.key" -exec chmod 644 {} \;
 
 # ============================================================
 # Verification

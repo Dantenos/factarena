@@ -203,9 +203,8 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
       - elasticsearch_snapshots:/snapshots
-      - ./devops/elk/certs/ca/ca.crt:/usr/share/elasticsearch/config/certs/ca/ca.crt:ro
-      - ./devops/elk/certs/elasticsearch/elasticsearch.crt:/usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.crt:ro
-      - ./devops/elk/certs/elasticsearch/elasticsearch.key:/usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.key:ro
+      - ./devops/elk/certs/ca:/usr/share/elasticsearch/config/certs/ca:ro
+      - ./devops/elk/certs/elasticsearch:/usr/share/elasticsearch/config/certs/elasticsearch:ro
       - ./devops/elk/certs/healthchecker:/usr/share/elasticsearch/config/certs/healthchecker:ro
     expose:
       - "9200"
@@ -245,9 +244,8 @@ services:
     volumes:
       - ./devops/elk/logstash/init-logstash.sh:/usr/local/bin/init-logstash.sh:ro
       - ./devops/elk/elasticsearch/security/logstash-role.json:/usr/local/share/logstash/logstash-role.json:ro
-      - ./devops/elk/certs/ca/ca.crt:/usr/share/logstash/config/certs/ca/ca.crt:ro
-      - ./devops/elk/certs/logstash/logstash.crt:/usr/share/logstash/config/certs/logstash/logstash.crt:ro
-      - ./devops/elk/certs/logstash/logstash.pkcs8.key:/usr/share/logstash/config/certs/logstash/logstash.pkcs8.key:ro
+      - ./devops/elk/certs/ca:/usr/share/logstash/config/certs/ca:ro
+      - ./devops/elk/certs/logstash:/usr/share/logstash/config/certs/logstash:ro
     expose:
       - "12201/tcp"
       - "9600"
@@ -289,11 +287,8 @@ services:
       SERVER_REWRITEBASEPATH: "true"
     volumes:
       - ./devops/elk/elasticsearch/security/kibana-user-role.json:/usr/local/share/kibana/kibana-user-role.json:ro
-      - ./devops/elk/certs/ca/ca.crt:/usr/share/kibana/config/certs/ca/ca.crt:ro
-      - ./devops/elk/certs/kibana/kibana-server.crt:/usr/share/kibana/config/certs/kibana/kibana-server.crt:ro
-      - ./devops/elk/certs/kibana/kibana-server.key:/usr/share/kibana/config/certs/kibana/kibana-server.key:ro
-      - ./devops/elk/certs/kibana/kibana-client.crt:/usr/share/kibana/config/certs/kibana/kibana-client.crt:ro
-      - ./devops/elk/certs/kibana/kibana-client.key:/usr/share/kibana/config/certs/kibana/kibana-client.key:ro
+      - ./devops/elk/certs/ca:/usr/share/kibana/config/certs/ca:ro
+      - ./devops/elk/certs/kibana:/usr/share/kibana/config/certs/kibana:ro
       - ./devops/elk/certs/healthchecker:/usr/share/kibana/config/certs/healthchecker:ro
     depends_on:
       elasticsearch:
@@ -339,16 +334,13 @@ services:
       kibana:
         condition: service_healthy
     ports:
-      - "443:443"
+      - "8443:443"
     # Idem : nginx aussi écoute en 0.0.0.0:80, donc IPv4. On sonde 127.0.0.1.
     # C'est la sonde /healthz du bloc « server » sur le port 80 (voir nginx.conf) :
     # elle répond en clair, sans redirection, uniquement pour Docker.
     volumes:
-      - ./devops/elk/certs/ca/ca.crt:/etc/nginx/certs/ca/ca.crt:ro
-      - ./devops/elk/certs/nginx/nginx-server.crt:/etc/nginx/certs/nginx/nginx-server.crt:ro
-      - ./devops/elk/certs/nginx/nginx-server.key:/etc/nginx/certs/nginx/nginx-server.key:ro
-      - ./devops/elk/certs/nginx/nginx-client.crt:/etc/nginx/certs/nginx/nginx-client.crt:ro
-      - ./devops/elk/certs/nginx/nginx-client.key:/etc/nginx/certs/nginx/nginx-client.key:ro
+      - ./devops/elk/certs/ca:/etc/nginx/certs/ca:ro
+      - ./devops/elk/certs/nginx:/etc/nginx/certs/nginx:ro
     logging:
       driver: gelf
       options:
@@ -357,7 +349,7 @@ services:
         gelf-tcp-reconnect-delay: "1"
         tag: "{{.Name}}"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider https://127.0.0.1/healthz || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -387,6 +379,4 @@ volumes:
   postgres_data:
   elasticsearch_data:
   elasticsearch_snapshots:
-  prometheus_data:
-  grafana_data:
   backend_uploads:
