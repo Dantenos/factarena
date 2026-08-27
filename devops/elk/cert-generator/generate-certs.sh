@@ -5,13 +5,14 @@ set -euo pipefail
 CERT_DIR="/certs"
 
 CA_DIR="${CERT_DIR}/ca"
+CA_KEY_DIR="${CERT_DIR}/ca_key"
 ES_DIR="${CERT_DIR}/elasticsearch"
 HEALTH_DIR="${CERT_DIR}/healthchecker"
 KIBANA_DIR="${CERT_DIR}/kibana"
 LOGSTASH_DIR="${CERT_DIR}/logstash"
 NGINX_DIR="${CERT_DIR}/nginx"
 
-CA_KEY="${CERT_DIR}/ca_key/ca.key"
+CA_KEY="${CA_KEY_DIR}/ca.key"
 CA_CERT="${CA_DIR}/ca.crt"
 
 CA_SUBJECT="/C=FR/ST=Hauts-de-France/L=Calais/O=FactArena/OU=ELK/CN=FactArena ELK CA"
@@ -29,7 +30,7 @@ mkdir -p \
     "$KIBANA_DIR" \
     "$LOGSTASH_DIR" \
     "$NGINX_DIR" \
-    "certs/ca_key/"
+    "$CA_KEY_DIR"
 
 # ============================================================
 # CA
