@@ -387,6 +387,4 @@ volumes:
   postgres_data:
   elasticsearch_data:
   elasticsearch_snapshots:
-  prometheus_data:
-  grafana_data:
   backend_uploads:

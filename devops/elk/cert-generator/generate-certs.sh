@@ -247,16 +247,16 @@ rm -f "${CA_DIR}/ca.srl"
 echo "[+] Setting certificate permissions..."
 
 # Elasticsearch / Elastic images use UID 1000 and group 0
-chown -R 1000:0 "$CERT_DIR"
+# chown -R 1000:0 "$CERT_DIR"
 
 # Directories
-find "$CERT_DIR" -type d -exec chmod 750 {} \;
+find "$CERT_DIR" -type d -exec chmod 755 {} \;
 
 # Certificates
-find "$CERT_DIR" -type f -name "*.crt" -exec chmod 640 {} \;
+find "$CERT_DIR" -type f -name "*.crt" -exec chmod 644 {} \;
 
 # Private keys
-find "$CERT_DIR" -type f -name "*.key" -exec chmod 640 {} \;
+find "$CERT_DIR" -type f -name "*.key" -exec chmod 644 {} \;
 
 # ============================================================
 # Verification
