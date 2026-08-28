@@ -1,25 +1,10 @@
-// Connexion temps réel au salon (Socket.IO).
+// Connexion temps réel au salon (Socket.IO), côté client de
+// backend/src/realtime/realtime.gateway.ts.
 //
-// Côté back, la gateway (backend/src/realtime/realtime.gateway.ts) écoute
-// room:join, room:leave, bet:place, clip-vote:submit, chat:send... et diffuse
-// room:state, chat:message, bet:updated, round:locked, round:revealed, etc.
-//
-// Trois points méritent l'attention, et ce sont eux qui coûtent du temps si on
-// les découvre tard :
-//
-// 1. AUTHENTIFICATION — la gateway lit le JWT dans handshake.auth.token et
-//    déconnecte immédiatement si absent ou invalide. Sans jeton, la socket se
-//    ferme en boucle et la console se remplit d'erreurs (rédhibitoire).
-//
-// 2. RECONNEXION — la gateway sait restaurer un joueur grâce à
-//    handshake.auth.roomId (voir restoreRoom côté back). On le transmet donc,
-//    sinon un joueur qui perd le réseau dix secondes revient hors du salon.
-//    Le sujet exige explicitement une gestion propre des déconnexions.
-//
-// 3. DÉCALAGE D'HORLOGE — le back renvoie serverTime dans chaque état. Si on
-//    faisait confiance à l'horloge du navigateur, un joueur dont la machine
-//    avance de dix secondes voterait dans une fenêtre décalée : le PvP ne
-//    serait plus équitable. On mesure donc l'écart et on l'applique.
+// Trois pièges : la gateway coupe la socket sans JWT dans handshake.auth, elle
+// a besoin de roomId pour restaurer un joueur qui se reconnecte, et elle
+// renvoie serverTime — on s'en sert plutôt que de l'horloge du navigateur,
+// sinon la fenêtre de vote n'est pas la même pour tout le monde.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { getToken } from '../api/client';
@@ -68,9 +53,19 @@ export function useSocket(roomId: string | null) {
       }
       setEtat(nouvel);
     };
-    socket.on('room:state', majEtat);
-    socket.on('room:joined', majEtat);
-    socket.on('room:reconnected', majEtat);
+    // ⚠️ Écouter « room:state » seul ne suffit PAS. La gateway diffuse les
+    // transitions de manche via publishRoundState, qui émet l'événement
+    // concerné (round:open, round:locked...) ET « round:state » — mais jamais
+    // « room:state ». Une page déjà ouverte quand la manche démarrait restait
+    // donc bloquée sur « en attente », clip 0/0, sans la moindre erreur.
+    //
+    // Tous ces événements transportent le MÊME état complet du salon, on les
+    // traite donc identiquement.
+    const EVENEMENTS_ETAT = [
+      'room:state', 'room:joined', 'room:reconnected',
+      'round:state', 'round:open', 'round:locked', 'round:revealed', 'round:finished',
+    ];
+    EVENEMENTS_ETAT.forEach((evenement) => socket.on(evenement, majEtat));
 
     // On NE met PAS de console.error sur l'événement d'erreur : une coupure
     // réseau est un cas normal, et le sujet interdit toute erreur en console.

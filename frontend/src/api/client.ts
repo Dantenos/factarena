@@ -1,15 +1,11 @@
-// Client HTTP unique de l'application.
-//
-// POURQUOI centraliser : sans ce fichier, chaque composant referait son propre
-// fetch, oublierait la moitié du temps d'ajouter le jeton, et traiterait les
-// erreurs différemment. Ici on a un seul endroit qui sait parler au back.
-//
-// POURQUOI des URL RELATIVES (/api/...) et pas une URL complète : le navigateur
-// ne parle QU'À nginx, qui proxifie /api vers NestJS. Une URL en dur du type
-// http://backend:3000 ne marcherait que dans Docker et casserait dans le
-// navigateur. En relatif, ça fonctionne partout sans configuration.
+// Client HTTP unique : un seul endroit qui sait ajouter le jeton et traiter
+// les erreurs. URL relatives (/api/...) parce que le navigateur ne parle qu'à
+// nginx — une URL en dur type http://backend:3000 ne marcherait que dans Docker.
 
 const TOKEN_KEY = 'factarena.token';
+
+/** Émis quand le back refuse le jeton : le contexte d'auth s'y abonne. */
+export const SESSION_EXPIREE = 'factarena:session-expiree';
 
 /** Erreur enrichie du code HTTP, pour que l'appelant puisse réagir au 401. */
 export class ApiError extends Error {
@@ -65,9 +61,13 @@ export async function api<T = unknown>(
     } catch {
       /* corps vide ou non JSON : on garde le message générique */
     }
-    // Le jeton dure 1 h. Passé ce délai le back répond 401 : on nettoie, sinon
-    // l'application continuerait d'envoyer un jeton mort à chaque requête.
-    if (reponse.status === 401) clearToken();
+    // Jeton expiré (il dure 1 h). L'effacer ne suffit pas : AuthContext garde
+    // l'utilisateur en mémoire et la page reste affichée comme connectée, en
+    // empilant des « Missing bearer token ». On le prévient.
+    if (reponse.status === 401) {
+      clearToken();
+      window.dispatchEvent(new Event(SESSION_EXPIREE));
+    }
     throw new ApiError(reponse.status, message);
   }
 

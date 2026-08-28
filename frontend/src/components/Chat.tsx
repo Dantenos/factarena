@@ -78,13 +78,22 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Ecris un message..."
+          // L'assistant ne se déclenche que sur le préfixe @bot (ou /ask), et
+          // rien ne l'indiquait : on pouvait lui écrire sans jamais obtenir de
+          // réponse, en croyant qu'il était cassé. Le placeholder le dit.
+          placeholder="Écris un message… ou @bot pour interroger l'IA"
           className="flex-1 bg-noir-krystal text-white text-sm rounded-lg px-3 py-2 outline-none placeholder:text-white/30"
         />
         <button onClick={handleSend} className="button-blue-d px-4 py-2 text-sm">
           envoyer
         </button>
       </div>
+      {/* Rappel discret : l'assistant cite ses sources et refuse de répondre
+          sur les clips de la manche en cours (garde-fou anti-spoil). Le dire
+          évite qu'on prenne son refus pour un bug. */}
+      <p className="text-white/30 text-xs mt-2">
+        @bot répond en citant ses sources, mais refuse de parler des clips de la manche en cours.
+      </p>
     </div>
   );
 }

@@ -18,19 +18,12 @@ interface VideoPlayerProps {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
-// Reconnaît une URL à embarquer dans une iframe (lecteur de la plateforme)
-// plutôt qu'à lire avec la balise <video>.
+// URL à embarquer en iframe plutôt qu'à lire avec <video>. On n'héberge rien,
+// les extraits restent chez leur plateforme. L'iframe est pure : le bruit
+// console qu'elle produit est attribué à Google, pas à notre domaine.
 //
-// POURQUOI DEUX MODES : on n'héberge aucune vidéo, les extraits restent chez
-// leur plateforme d'origine. YouTube s'embarque dans une iframe PURE — le bruit
-// console qu'elle produit est attribué aux domaines Google, jamais au nôtre, ce
-// qui protège la contrainte « zéro erreur console » du sujet. La balise <video>
-// et ses contrôles custom (tout le code plus bas) restent utiles pour un fichier
-// vidéo direct, en développement ou si on héberge un jour un extrait.
-//
-// ⚠️ Ne pas étendre ça à X, Instagram ou TikTok : ces plateformes exigent de
-// charger LEUR script dans notre page, et une erreur de leur code deviendrait
-// une erreur sous notre domaine — éliminatoire.
+// Ne pas étendre à X, Instagram ou TikTok : eux exigent leur script dans notre
+// page, et leurs erreurs deviendraient les nôtres.
 function estEmbarquable(url: string): boolean {
   return (
     /(?:youtube-nocookie\.com|youtube\.com)\/embed\//i.test(url) ||
@@ -77,6 +70,26 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
       if (hideControlsTimeout.current) clearTimeout(hideControlsTimeout.current);
     };
   }, []);
+
+  // Au changement de clip, React se contente de réécrire l'attribut src d'une
+  // balise <video> déjà montée : l'élément garde le média précédent en tampon
+  // et ne relit rien. Seule la première vidéo se lançait, les suivantes
+  // restaient noires sans erreur en console.
+  //
+  // load() relance le chargement sur la nouvelle URL. On repart aussi d'un
+  // état vierge, sinon la barre de progression affiche la durée du clip
+  // précédent tant que les métadonnées ne sont pas arrivées.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    setCurrentTime(0);
+    setDuration(0);
+    setAspectRatio(null);
+    setIsPlaying(false);
+    setIsBuffering(false);
+    setShowControls(true);
+    video.load();
+  }, [src]);
 
   // Récupère la durée ET le ratio réel de la vidéo dès que ses métadonnées
   // sont disponibles. Le ratio sert à adapter dynamiquement le conteneur

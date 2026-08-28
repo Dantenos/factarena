@@ -19,6 +19,7 @@ import {
 } from 'react';
 import {
   clearToken,
+  SESSION_EXPIREE,
   connexion as apiConnexion,
   getToken,
   inscription as apiInscription,
@@ -66,6 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       annule = true;
     };
+  }, []);
+
+  // Expiration en cours de session : le client HTTP nous prévient dès qu'un
+  // appel revient en 401. Sans cet abonnement, l'interface continuait
+  // d'afficher le joueur comme connecté alors que plus rien ne passait.
+  useEffect(() => {
+    const surExpiration = () => setUtilisateur(null);
+    window.addEventListener(SESSION_EXPIREE, surExpiration);
+    return () => window.removeEventListener(SESSION_EXPIREE, surExpiration);
   }, []);
 
   const seConnecter = useCallback(async (email: string, motDePasse: string) => {
