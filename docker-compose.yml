@@ -150,7 +150,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "443:443"
+      - "8443:443"
     # Idem : nginx aussi écoute en 0.0.0.0:80, donc IPv4. On sonde 127.0.0.1.
     # C'est la sonde /healthz du bloc « server » sur le port 80 (voir nginx.conf) :
     # elle répond en clair, sans redirection, uniquement pour Docker.
