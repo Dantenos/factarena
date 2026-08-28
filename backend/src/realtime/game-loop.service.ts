@@ -102,8 +102,12 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
 
   private async publishVerdicts(roundId: string, roomId: string) {
     const verdicts = await this.aiService.generateRoundVerdicts(roundId);
+    // Le classement part avec les verdicts : c'est le même écran de fin de
+    // manche côté joueur, deux événements séparés obligeraient le front à les
+    // recoller et à gérer l'ordre d'arrivée.
+    const classement = await this.roundsService.classement(roundId);
     if (verdicts.length > 0) {
-      await this.realtimeGateway.publishRoundVerdicts(roomId, roundId, verdicts);
+      await this.realtimeGateway.publishRoundVerdicts(roomId, roundId, verdicts, classement);
     }
   }
 }

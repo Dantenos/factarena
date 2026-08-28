@@ -171,16 +171,9 @@ export class AiService {
     const citations = Array.isArray(ragData.citations) ? ragData.citations : [];
     const confidence = 0.5;
 
-    // SECOND AVIS : on demande à l'IA ce qu'ELLE aurait répondu, sans lui donner
-    // la clé et en excluant l'article de fact-check dont la claim est issue.
-    // Sans cette exclusion l'exercice n'a aucune valeur : le corpus contient
-    // l'article, et le modèle se contente d'y lire le verdict.
-    //
-    // Affiché à la révélation À CÔTÉ du verdict officiel — jamais à la place.
-    // Quand l'IA se trompe, le score n'en dépend pas (décision d'architecture
-    // n°1), et cela montre honnêtement les limites d'une IA face au
-    // fact-checking. Mesuré sur un échantillon : elle voit juste une fois sur
-    // quatre lorsqu'elle est privée de sa source.
+    // Ce que l'IA aurait répondu sans la clé, en excluant l'article dont la
+    // claim est issue — sinon elle y lit simplement le verdict. Affiché à côté
+    // du verdict officiel, jamais à la place : le score n'en dépend pas.
     try {
       const avis = await this.secondAvis(claim.text, claim.sourceUrl ?? undefined);
       if (avis?.avis) {
@@ -224,28 +217,39 @@ export class AiService {
     });
     if (!round) throw new NotFoundException(`Round ${roundId} not found`);
 
-    const verdicts = await Promise.all(round.roundClaims.filter(({ claim }) => claim.verdicts.length === 0).map(async ({ claim }) => {
+    // Tous les clips, pas seulement ceux qu'il reste à expliquer : filtrer sur
+    // `verdicts.length === 0` rendait un tableau vide quand les explications
+    // existaient déjà, et la manche se terminait sur un écran blanc.
+    const verdicts = await Promise.all(round.roundClaims.map(async ({ claim }) => {
+      const commun = {
+        claimId: claim.id,
+        truthLabel: claim.truthLabel,
+        text: claim.text,
+        sourceUrl: claim.sourceUrl ?? '',
+      };
+      // Explication déjà en base : on la sert telle quelle, sans rappeler le
+      // service IA — c'est autant de latence en moins à la révélation.
+      if (claim.verdicts.length > 0) {
+        return { ...commun, verdictText: claim.verdicts[0].verdictText };
+      }
       try {
-        return await this.generateClaimVerdict(claim.id);
+        const genere = await this.generateClaimVerdict(claim.id);
+        return { ...commun, verdictText: genere.data.verdictText };
       } catch (error) {
         this.logger.warn(`Verdict generation failed for claim ${claim.id}: ${String(error)}`);
-        return { success: false, data: { claimId: claim.id, verdictText: 'Verdict indisponible.', citations: [], confidence: 0 } };
+        return { ...commun, verdictText: 'Explication indisponible.' };
       }
     }));
     return verdicts;
   }
 
   /**
-   * Variante RAG de `streamChat` : même streaming SSE, mais vers /rag/ask.
+   * Variante RAG de `streamChat`, vers /rag/ask : le bot passait par /llm/chat
+   * et répondait donc sans source. On garde le streaming et on récupère en plus
+   * l'événement `sources`.
    *
-   * POURQUOI cette méthode existe : le bot du chat passait par /llm/chat, donc
-   * il répondait SANS source. Or c'est justement la citation de sources qui
-   * démontre le module RAG. Ici on garde le streaming (exigé par le module LLM)
-   * ET on récupère l'événement `sources`.
-   *
-   * `live` porte le contexte de la manche en cours jusqu'au garde-fou anti-spoil
-   * du service IA (docs/AI.md §9) : c'est lui qui refuse de répondre si la
-   * question porte sur un clip en jeu.
+   * `live` porte le contexte de la manche jusqu'au garde-fou anti-spoil
+   * (docs/AI.md §9), qui refuse de répondre sur un clip en jeu.
    */
   async *streamRag(
     prompt: string,

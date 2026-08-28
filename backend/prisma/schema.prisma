@@ -79,6 +79,7 @@ model User {
   friends      Friend[]      @relation("Friendships")
   friendOf     Friend[]      @relation("FriendTargets")
   messages     Message[]
+  clipReports  ClipReport[]
   createdClaims Claim[]    @relation("ClaimCreator")
 
   @@unique([oauthProvider, oauthProviderId])
@@ -166,6 +167,7 @@ model Claim {
   roundClaims RoundClaim[]
   clipVotes   ClipVote[]
   verdicts    ClaimVerdict[]
+  reports     ClipReport[]
   creator    User?           @relation("ClaimCreator", fields: [createdBy], references: [id])
 
   @@index([createdBy])
@@ -181,6 +183,30 @@ model RoundClaim {
   claim Claim @relation(fields: [claimId], references: [id])
 
   @@unique([roundId, orderIndex])
+}
+
+/// Signalement d'un clip par un joueur en cours de partie.
+///
+/// Le corpus est constitué automatiquement à partir d'articles de fact-check,
+/// et la vidéo rattachée ne correspond pas toujours à l'affirmation. Plutôt
+/// que de tout revérifier à la main, on laisse les joueurs remonter les cas
+/// douteux : c'est eux qui les voient en premier, et un clip signalé plusieurs
+/// fois est presque sûrement à écarter.
+model ClipReport {
+  id        String   @id @default(cuid())
+  claimId   String
+  userId    String
+  roundId   String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  claim Claim @relation(fields: [claimId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  // Un joueur ne signale un clip qu'une fois : sans cette contrainte, un clic
+  // répété gonflerait le compteur et fausserait le tri.
+  @@unique([userId, claimId])
+  @@index([claimId])
 }
 
 model ClaimVerdict {
