@@ -45,7 +45,7 @@ COPY package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
-RUN mkdir -p /app/uploads/avatars && chown -R node:node /app/uploads
+RUN mkdir -p /app/uploads/avatars && chown -R node:node /app
 # Utilisateur non-root (sécurité).
 USER node
 EXPOSE 3000

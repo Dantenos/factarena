@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     embedding_model: str = "mistral-embed"          # vectorisation du corpus (1024 dimensions)
     moderation_model: str = "mistral-moderation-latest"  # modération du chat
 
+    # --- Google Fact Check Tools API (ingestion des fact-checks dans le RAG) ---
+    # Clé gratuite (Google Cloud > "Fact Check Tools API"). Secret -> vient du .env.
+    google_api_key: str = ""
+
     # extra="ignore" : on n'échoue pas si l'env contient d'autres variables
     # (POSTGRES_*, JWT_SECRET...) qui ne concernent pas ce service.
     model_config = SettingsConfigDict(extra="ignore")

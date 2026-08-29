@@ -71,9 +71,22 @@ export class ChatService {
 
   async *streamBot(userId: string, roomId: string, prompt: string) {
     await this.assertMember(userId, roomId);
-    const active = await this.prisma.round.findFirst({ where: { roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] } }, select: { id: true } });
-    if (active) throw new ForbiddenException('The bot cannot comment on clips from the current round');
-    yield* this.aiService.streamChat(prompt, userId);
+
+    // Le bot répond via le RAG (réponse SOURCÉE), plus via le LLM nu : c'est ce
+    // qui rend le module RAG démontrable dans le produit.
+    //
+    // Anti-spoil : on ne bloque plus le bot pendant toute la manche. On lui
+    // transmet les affirmations des clips EN JEU, et c'est le garde-fou du
+    // service IA qui refuse au cas par cas si la question porte dessus
+    // (ai-service/app/rag/guardrail.py, cf. docs/AI.md §9). Le joueur peut donc
+    // continuer à poser des questions générales pendant qu'il joue.
+    const active = await this.prisma.round.findFirst({
+      where: { roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] } },
+      select: { roundClaims: { select: { claim: { select: { text: true } } } } },
+    });
+    const liveClaims = active?.roundClaims.map((rc) => rc.claim.text) ?? [];
+
+    yield* this.aiService.streamRag(prompt, userId, { claims: liveClaims });
   }
 
   private async assertMember(userId: string, roomId: string): Promise<void> {

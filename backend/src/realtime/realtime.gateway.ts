@@ -18,6 +18,7 @@ import { RoomsService } from '../rooms/rooms.service';
 import { RoundsService } from '../rounds/rounds.service';
 import { ChatService } from '../chat/chat.service';
 import { AiService } from '../ai/ai.service';
+import { BotsService } from './bots.service';
 import { Server, Socket } from 'socket.io';
 
 type AuthenticatedSocket = Socket & { data: { userId: string; email?: string; roomId?: string } };
@@ -55,6 +56,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     private readonly clipVotesService: ClipVotesService,
     private readonly chatService: ChatService,
     private readonly aiService: AiService,
+    private readonly botsService: BotsService,
   ) {}
 
   async handleConnection(rawSocket: Socket) {
@@ -173,7 +175,44 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     if (typeof body?.isFake !== 'boolean') throw new BadRequestException('Invalid isFake');
     await this.assertInRoom(socket, body.roomId); await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
     const vote = await this.clipVotesService.create({ roundId: body.roundId, claimId: body.claimId, isFake: body.isFake }, socket.data.userId);
-    this.server.to(this.roomChannel(body.roomId)).emit('clip-vote:updated', vote); return vote;
+    this.server.to(this.roomChannel(body.roomId)).emit('clip-vote:updated', vote);
+    // Les faux joueurs rebondissent sur le vote qui vient d'être émis, plutôt
+    // que sur une horloge : c'est le seul moyen qu'ils commentent le clip que
+    // le joueur regarde vraiment, puisque chacun avance à son rythme.
+    void this.botsService.reagirAuVote(body.roomId, body.roundId, body.claimId, body.isFake, (m) =>
+      this.diffuserMessageBot(body.roomId, m),
+    );
+    return vote;
+  }
+
+  /**
+   * Un joueur signale un clip dont la vidéo ne correspond pas à l'affirmation.
+   *
+   * Le corpus étant constitué automatiquement, quelques rattachements sont
+   * mauvais et les joueurs les repèrent avant nous. On enregistre sans rien
+   * diffuser : un signalement visible influencerait le vote des autres.
+   */
+  @SubscribeMessage('clip:report')
+  async reportClip(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: RoomPayload & { claimId: string; roundId?: string; reason?: string }) {
+    this.assertCuid(body?.roomId, 'roomId');
+    this.assertCuid(body?.claimId, 'claimId');
+    if (body.reason !== undefined && (typeof body.reason !== 'string' || body.reason.length > 300)) {
+      throw new BadRequestException('Invalid reason');
+    }
+    await this.assertInRoom(socket, body.roomId);
+    // upsert plutôt que create : recliquer ne doit ni gonfler le compteur ni
+    // renvoyer une erreur au joueur, qui n'y comprendrait rien.
+    await this.prisma.clipReport.upsert({
+      where: { userId_claimId: { userId: socket.data.userId, claimId: body.claimId } },
+      update: { reason: body.reason ?? null },
+      create: {
+        userId: socket.data.userId,
+        claimId: body.claimId,
+        roundId: body.roundId ?? null,
+        reason: body.reason ?? null,
+      },
+    });
+    return { signale: true };
   }
 
   @SubscribeMessage('round:lock')
@@ -221,6 +260,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
     const message = await this.chatService.sendMessage(socket.data.userId, body.roomId, body.content);
     this.server.to(this.roomChannel(body.roomId)).emit('chat:message', message);
+    // Si le joueur a nommé un des faux joueurs, celui-ci répond. Diffusé après
+    // le message d'origine pour que l'ordre d'affichage reste cohérent.
+    this.botsService.interpeller(body.roomId, body.content, (m) =>
+      this.diffuserMessageBot(body.roomId, m),
+    );
     return message;
   }
 
@@ -245,6 +289,29 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
+  /**
+   * Diffuse un message d'un faux joueur dans le chat d'un salon.
+   *
+   * Le format imite exactement celui d'un vrai message (enveloppe
+   * { action, message }) pour que le front n'ait aucun cas particulier à
+   * traiter. Mais rien n'est écrit en base et la modération n'est pas
+   * sollicitée : ces messages sont éphémères, ils animent la manche et
+   * disparaissent. Ils ne doivent pas polluer l'historique du salon.
+   */
+  diffuserMessageBot(roomId: string, message: { author: string; content: string }): void {
+    this.server.to(this.roomChannel(roomId)).emit('chat:message', {
+      action: 'allow',
+      message: {
+        id: `bot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        content: message.content,
+        createdAt: new Date().toISOString(),
+        // On expose un pseudo d'apparence ordinaire : côté joueur, rien ne
+        // distingue ces intervenants des autres participants (c'est le but).
+        user: { email: `${message.author}@factarena.local` },
+      },
+    });
+  }
+
   /** Used by the server game loop to publish transitions that were not caused by a client event. */
   async publishRoundState(roomId: string, event: string, roundId?: string) {
     const state = await this.roomsService.getState(roomId, roundId);
@@ -253,8 +320,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return state;
   }
 
-  async publishRoundVerdicts(roomId: string, roundId: string, verdicts: unknown[]) {
-    this.server.to(this.roomChannel(roomId)).emit('round:verdicts', { roundId, verdicts });
+  async publishRoundVerdicts(roomId: string, roundId: string, verdicts: unknown[], classement: unknown[] = []) {
+    this.server.to(this.roomChannel(roomId)).emit('round:verdicts', { roundId, verdicts, classement });
   }
 
   private liveStats(state: { pot: number; betCount: number }) {

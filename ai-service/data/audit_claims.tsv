@@ -1,0 +1,84 @@
+score	id	label	texte	titre_video	similarite	verdict_llm
+1.95	chbrd4od1iy26wmmx5ryg2g8j	FALSE	Cette vidéo montre de fausses victimes mortes en Ukraine	Хаски — Никогда-нибудь	0.561	MAUVAIS: qualifie déjà contenu
+1.61	co71xscqxxd889yq6ggg50gdy	FALSE	Une vidéo prouve que le vol dans l'espace de Katy Perry est une arnaque	My Blue Origin Flight to Space!	0.628	MAUVAIS: qualifie déjà le contenu
+1.59	cmt8z7g3e0006uddqe2jovxvq	TRUE	Cette vidéo de « duel » entre un « mini-cerf » et un rhinocéros est-elle générée par IA ?	Dog and Capybara	0.633	MAUVAIS: question formulée
+1.48	car0z9lec4s74c7ggk2kql1a5	FALSE	Une vidéo montre "l'ange de la mort" arrivé en Iran pour faire plier les Américains	سمع الله لمن نادئ علي || ملأ مجتبى الكعبي || هيئه الزهراء || ١٤٤٦هـ ٢٠٢٤ _ البصره _ المدينه	0.655	MAUVAIS: qualifie déjà contenu
+1.36	ckx3z0tboox4p11s1mnsb1nn4	FALSE	Cette vidéo montre un incendie volontaire et prouve que le réchauffement climatique n'existe pas	Manœuvre des spécialistes du brûlage dirigé - commune de Lançon-Provence	0.679	MAUVAIS: contient point de vue
+1.24	cifxr7q3p47aompatds3783dy	FALSE	Les vidéos prouvent la mise en scène de faux blessés à Gaza	Dates de législatives en juin: Macron n'aurait pas respecté le code électoral ?	0.702	MAUVAIS: qualifie déjà contenu
+1.11	cmjdz829dahnpyagb8d1oysxs	FALSE	Cette vidéo montre un prêtre mort après avoir été vacciné	Les Parisiennes seraient incitées à accoucher avant le début des Jeux olympiques, le 26 juillet ?	0.728	MAUVAIS: qualifie déjà contenu
+1.00	cmt8z7hp7002yuddq8i8stx72	FALSE	Une vidéo montre un soldat tué par un homme derrière son ordinateur avec une manette de jeu vidéo	La nouvelle création de l’armée pour parer a l'utilisation des drones en temps de guerre.	0.808	MAUVAIS: formulation en question
+1.00	cmqhzevite7bfmar60f6s92ms	FALSE	Vidéo d'un ressortissant étranger au Japon frappant une voiture	Los Angeles Dodgers - World Series Teaser	0.531	OK
+0.89	cg3e28sc9fsbpwircprftymk3	FALSE	Des vidéos et photos montrent un crash de vayageurs Mauritaniens en mer Rouge	Recherche d'image inversée | AFP Fact Check	0.572	
+0.77	c2yqpawr79llss6jvmm2rr1hr	FALSE	La vidéo montre des fraudes pendant l'élection du 28 avril 2025 au Canada	Recherche d'image inversée | AFP Fact Check	0.596	
+0.76	cnf61ptngigymtpafmoui9mev	FALSE	Cette vidéo montre une manifestation contre le gouvernement polonais de fin novembre 2024	Recherche d'image inversée | AFP Fact Check	0.599	OK
+0.73	cjt1feqr7jq7di1zadgy2mh7f	FALSE	Cette vidéo montre le crash du 9 août 2024 au Brésil	Recherche inversée pour la vidéo | AFP Fact Check	0.605	OK
+0.67	c3dec6y8yy054z2dt855hjrwp	FALSE	Les médias russes ont publié une vidéo montrant à quoi ressemblerait une attaque nucléaire contre les Etats-Unis.	The Cylons Attack the Colonies - Battlestar Galactica Reimagined	0.616	OK
+0.62	ct90top3gpf28ljrqg6mdi0sf	FALSE	Une vidéo d'un avion retrouvé 37 ans après sa disparition	Recherche avancée sur internet | AFP Fact Check	0.627	OK
+0.60	cx79wpxnndm49bp7spf9d83yg	FALSE	Une vidéo montre une frappe iranienne sur la centrale nucléaire d'Haïfa	Chinese chemical plant explosion ....	0.630	OK
+0.55	czi0xyoqhyc2a8vvpukeclq1v	FALSE	Des vidéos d’ovnis déclassifiées par Trump	I Received a Creepy E-mail w/ Leaked UFO Footage	0.639	
+0.54	cmt8z7h8s0028uddq2lm827q9	FALSE	La vidéo d'un gigantesque objet noir démontre l'existence du projet HAARP pour dérégler le climat	Dangote Refinery - A Game changer!	0.641	
+0.53	chjin2yivnqm75yqzbwegvlsd	FALSE	Des vidéos montrent la frappe de l'Iran contre un navire escorté par les États-Unis	KARWAR PLUS KONKANI NEWS TODAY 20-07-2024 #konkaninews  #karwarkokaninews By #Karwarpluskonkani	0.645	
+0.45	c162hv5pc1kpsl1vyj2dlg38i	TRUE	Cette vidéo montre une baleine filmée en mer.	Balenoj apud Rejkjaviko 2	0.660	OK
+0.45	ci1gqhjpyrwryazw5r1q3dekv	FALSE	Une vidéo des récentes manifestations à Los Angeles	Retrouver l’origine d’une image sur un ordinateur, PARTIE 1	0.660	OK
+0.45	c0bmllz1no0iu0eou1yqe9svn	TRUE	Cette vidéo montre une tornade.	2011 Smithville tornado Police Station CCTV	0.661	OK
+0.42	c35ed9ls0f4rciw4q1wzr1jc7	FALSE	Cette vidéo montre Giorgia Meloni ignorer Benjamin Netanyahu.	Inside Look at UN General Assembly - 360 Tour by its President	0.667	OK
+0.41	c64305gty93m08dmu1hfrakrj	FALSE	Une vidéo d'agriculteurs manifestant contre la politique migratoire de Joe Biden aux Etats-Unis	Bauernprotest in Forchtenberg	0.668	OK
+0.37	csm0nrc05zi2dy6ex0zysppoq	FALSE	Cette vidéo montre la mairie de Paris colorer la Seine en bleu	Blue pond dye treatment #bluepond #blueponddye #pondtreatments	0.676	OK
+0.33	cfdcw6576siabax5zf9xk1544	TRUE	Cette vidéo montre une baleine filmée en mer.	Balenoj apud Rejkjaviko 3	0.685	OK
+0.32	cxmk9002syf76a0sqwb0wecm6	TRUE	Cette vidéo montre une baleine filmée en mer.	Balenoj apud Rejkjaviko 4	0.686	OK
+0.31	cze99fa3rvt7wuxmc02x88pe9	TRUE	Cette vidéo montre une baleine filmée en mer.	Balenoj apud Rejkjaviko 5	0.688	OK
+0.31	cqq857q97x5wymujdass4dvak	TRUE	La nouvelle loi sur la mobilisation en Ukraine alimente-t-elle la désinformation russe ?	Що буде з економікою у 2024 році? ПРОГНОЗ НБУ. Курс валют та стабільність гривні. РОЖКОВА	0.688	
+0.30	c65lumkrcssbwpz1zuic67ij0	FALSE	Des vidéos de sauvetage d'orques montrent comment les libérer des bernacles			
+0.30	csdos2f2ovyals3ihqyrj3uiw	FALSE	Une vidéo de manifestation d'Américains contre les frappes américaines en Iran			OK
+0.30	c5pvm2eytkibc2e5v4uv357m6	FALSE	Une vidéo de récentes manifestations à Lomé, au Togo			OK
+0.29	cgjzbshxb7h74a1jx34n2iqw1	TRUE	Cette vidéo montre une éruption volcanique.	15 January 2022 Hunga Tonga–Hunga Ha'apai tsunami	0.691	OK
+0.29	c1yvbgkhjotds0e7w9qwf20iq	FALSE	Un tableau de Cézanne dérobé il y a un mois dans un musée en Italie a été aperçu dans une vidéo postée par Zelensky.	Буде новий підхід до застосування ППО Повітряними силами	0.691	OK
+0.28	cb8g5551rzj7p9s1wacn5wob8	FALSE	Dans une vidéo d'une visite d'hôpital publiée le 13 mars, Volodymyr Zelensky est accompagné d'Inna Derusova, décédée le 26 février	Діяльність Міністерства оборони України за останні 4 дні. УКМЦ, 16.08.2016	0.695	OK
+0.25	c8giliccko06t0w7xhnn15meb	FALSE	Des vidéos d'agriculteurs en larmes après l'abattage de leurs bêtes	Dermatose: des agriculteurs mobilisés en Ariège | AFP Images	0.699	OK
+0.25	cs8qam28ytn91zgq14gujgoan	FALSE	Cette vidéo montre comment des gens ont profité des incendies de Los Angeles pour piller des maisons.	KTLA Wildfire Coverage	0.701	OK
+0.22	ctr358vya08t3t6116igwayz6	FALSE	Cette vidéo montre une activiste européenne arrêtée à Gaza	Retrouver l’origine d’une image sur un ordinateur, PARTIE 1	0.706	OK
+0.21	cvnandhy4o3w8im3onzjo0wt6	TRUE	Cette vidéo montre une tornade.	1991 Andover Tornado Police Dashcam footage	0.707	OK
+0.21	cdpq46y4pwrwc4v6n7iygcoko	FALSE	Cette vidéo montre des rafales de tirs en Ukraine	A-10 Warthog Missile Gun Run - C-RAM - Military Simulation - ArmA 3 #Shorts	0.708	OK
+0.21	c5lkfuvpenrdbq2kmn3d8lq6h	FALSE	Cette vidéo montre un biscuit Oreo parasité par une substance organique	Cute Cannibal Cookie	0.708	OK
+0.19	cov4gph6jhx2tpypeln0ydkyh	FALSE	Cette vidéo montre un raid de l'ICE dans une école	Comment effectuer une recherche avancée sur internet ?	0.712	OK
+0.16	cghvt8ladcctclzwwwj2qeikj	FALSE	Cette vidéo montre l'armée israélienne détruire un camp à Gaza	جرافة تجرف عشرات من جثث ضحايا مجزرة رابعة	0.718	OK
+0.11	c3fhe0zt39a0tld2oghf1fe4l	FALSE	Une vidéo démontre la présence d'une caméra espion dans les iPhone d'Apple	iPhone 15 Pro Max Teardown: Big Phone, Microscopic Scratches	0.728	OK
+0.10	cuka3ee07a5jupp9dtvtri36u	TRUE	Cette vidéo montre une tornade.	2019 Bnei Ayish IF2 tornado security camera video	0.729	OK
+0.09	c7sxiv1gm3dsooua16g2r4cu1	FALSE	Le Monde a réalisé une vidéo sur un jeu-concours organisé par Promovacances permettant de gagner un tour du monde en photographiant des portraits de soldats ukrainiens morts	Le journal d'Anne Frank serait faux car écrit au stylo-bille ?	0.732	
+0.08	cj34l0w3b2lnbwm6f2fuzp962	TRUE	Cette vidéo montre une tornade.	2002 Van Wert Tornado Dashcam	0.735	OK
+0.07	cvagqlftimff0kxql7595vdmf	FALSE	Cette vidéo montre Kamala Harris prendre la pose à côté du rappeur américain Sean Diddy Combs	Comment retrouver l'origine d'une vidéo sur internet	0.736	OK
+0.07	cvbolskuy0ybhm2tjvyqa21b6	TRUE	Cette vidéo montre les secousses d'un séisme.	1964 Quake - The Great Alaska Earthquake - Good Friday Earthquake	0.737	OK
+0.07	cqycdwehsc0yuv3gaawvugpf4	TRUE	Cette vidéo montre une tornade.	1 April 2025 Rhodes IF1 tornado	0.737	OK
+0.06	crc4cir5z239pjao38q8bvvdn	FALSE	Cette vidéo montre un Ovni abattu en Pologne	미확인 비행체 전국 하늘서 발견 #고체추진_우주발사체#shorts	0.739	OK
+0.06	cwgggf7nyw8sps3capzlbe9f6	TRUE	Cette vidéo montre un lancement de fusée.	2020年5月5日 长征五号B火箭首飞成功 拉开中国空间站在轨建造任务序幕	0.739	OK
+0.05	ctm1x8sko7azoqm3fdunac2cy	TRUE	Cette vidéo montre une éclipse solaire.	2016 Total Solar Eclipse Palu in Indonesia	0.740	OK
+0.04	c7kqyvrv0u476k6w5sej49zsl	FALSE	Une vidéo virale montre Jeffrey Epstein en vie, en train de conduire une voiture en Floride	'Palm Beach Pete' Says He Won't Change His Style to Look Less Like Jeffrey Epstein | TMZ	0.743	OK
+0.03	c8c253wdlbqcjdl5zatnma78n	TRUE	Cette vidéo montre une éclipse solaire.	Annular Solar Eclipse 2010 Lake Nakuru, Kenya	0.744	OK
+0.03	cqw1ccqdav7kfua5ziypvp9g6	TRUE	Cette vidéo montre les secousses d'un séisme.	10 February 2023, nr Gaziantepm, Turkey. Video b-roll showing blankets from the UK arriving in Turkey this morning, to help protect victims of the earthquakes earlier this week from the freezing cold temperatures (52680845648)	0.744	OK
+0.02	ciuygr8xfbqhran7vq0qk3f69	TRUE	Cette vidéo montre une avalanche.	Kurzerklärt – So entstehen Lawinen (Tagesschau)	0.745	OK
+0.01	c7rpuaie0t83aie9kwyosglvl	TRUE	Cette vidéo montre les secousses d'un séisme.	1964 Quake- The Great Alaska Earthquake	0.749	OK
+0.00	c2vco7ti24h4uh171xwk1s0lh	FALSE	Cette vidéo montre des migrants en train d’attaquer des marines américains	Migrants Ambush Border Patrol… Get Deported Instantly	0.765	OK
+0.00	caw4j53azgq71eozq0x8l7xw9	FALSE	Cette vidéo montre le raid israélien dans l'hôpital al-Chifa à Gaza	رصد | اطلاق نار كثيف على المحتجزين بمستشفى رابعة يوم المجزرة	0.766	OK
+0.00	ccep4gu6h52beksz2wlzm3eit	TRUE	Cette vidéo montre une avalanche.	Avalanche on Mount Rainier	0.775	OK
+0.00	cmptko4a4aq3kfppwwgfmrqkk	TRUE	Cette vidéo montre une avalanche.	Everest April 18th 2014 Massive Avalanche Sweeps	0.763	OK
+0.00	ccejg4s5vzsog421xszbud5aj	TRUE	Cette vidéo montre une baleine filmée en mer.	Antarctic Blue Whales	0.758	OK
+0.00	cajppvab0m7teni4s7zb5ctfo	TRUE	Cette vidéo montre une éclipse solaire.	2023.4.20 Total Solar Eclipse ～西オーストラリアでの金環皆既日食 ~	0.753	OK
+0.00	c1qtom5ve676ic81u2ndg3rhr	TRUE	Cette vidéo montre une éclipse solaire.	7 panel solar eclipe 1854	0.765	OK
+0.00	cv8zwf1y4d23lvvpbovtsdqbg	TRUE	Cette vidéo montre une éruption volcanique.	007 Volcano eruption of Litli-Hrútur in Iceland in 2023 Video by Giles Laurent	0.778	OK
+0.00	ccb8elyvm6clhizc0feqlikw4	TRUE	Cette vidéo montre une éruption volcanique.	A Six Day Time-lapse of Mauna Loa Erupting (CIRA 2022-12-04 - nolabels-1)	0.767	OK
+0.00	c4crc8okhitzxcs5vfws5c314	TRUE	Cette vidéo montre une éruption volcanique.	A Six Day Time-lapse of Mauna Loa Erupting (CIRA 2022-12-04 - labels-1)	0.756	OK
+0.00	c3r923w5fdtjh4h7t3wregryq	TRUE	Cette vidéo montre un geyser en éruption.	Clepsydra geyser 20190715 111455 VID	0.789	OK
+0.00	cn6schznh8jw4kwtaibjqac1p	TRUE	Cette vidéo montre un geyser en éruption.	Cliff geyser 20190714 135421 VID	0.792	OK
+0.00	c6j9kqcdu1gvr5vv4cc0xfm8w	TRUE	Cette vidéo montre un geyser en éruption.	Castle geyser 20190714 072044 VID	0.783	OK
+0.00	cubow155hqvpzjkhflznga1ca	TRUE	Cette vidéo montre un lancement de fusée.	(4K) 시험발사체 발사 미공개 영상 공개	0.763	OK
+0.00	ctgocexobmahiq9rhhhx3ngia	FALSE	Cette vidéo montre un tsunami après le séisme du 1er janvier 2024	2011 Japan Tsunami - Kamaishi City. (Redacted) (GettyImages Source)	0.773	OK
+0.00	csfx87e9cx1ntss21j7koa8vt	FALSE	Emmanuel Macron se fait humilier en direct par une IA	"Comment tu peux aider à réformer l'État?": Emmanuel Macron dialogue avec une IA au salon Vivatech	0.860	
+0.00	clmzbj4rpqy2l0jcp00ea033t	FALSE	La vidéo montre une frappe israélienne sur des enfants palestiniens faisant la queue à un réservoir d'eau à Gaza	Gaza :  un tunnel découvert entre Rafah et l'Egypte ?	0.788	
+0.00	cssklea2ncsaggja9mpc6mqq4	FALSE	Le ministre nigérien de la Justice détaille les circonstances de l'attaque à l'aéroport de Niamey dans une vidéo	Le Niger va poursuivre ORANO en Justice : Point de Presse du Ministre de la Justice 	0.830	
+0.00	cmt8z7ghc000suddqv9yhh8ys	TRUE	"Les chats sont une catastrophe pour la biodiversité. Les chiens sont une catastrophe pour le climat."	"Le chat est une catastrophe pour la biodiversité, le chien est une catastrophe pour le climat"	0.973	OK
+0.00	cqcex0qgalvxj07kvossvh59c	FALSE	Une vidéo d'une formation nuageuse singulière en lien avec l'ouragan Milton et le projet HAARP	Comment retrouver l'origine d'une vidéo sur internet	0.756	OK
+0.00	ct9rh68eiuwwxlk2ezcordi5t	FALSE	Une vidéo montrant 600 missiles tirés sur Israël	Ukraine, Mali, Gaza: images réelles ou jeu vidéo ?	0.787	OK
+0.00	c55zf8dtep3o7icvfmlnpx6nc	FALSE	Une vidéo montrant de recentes manifestations à Madagascar ou Abidjan	Miles de haitianos protestan en las calles de Haití	0.773	OK
+0.00	caz185vtyznzuz5uh00cr0u2o	FALSE	Une vidéo montre des manifestants pro-Palestiniens s'en prendre violemment à la police barcelonaise.	Violent clashes in Barcelona at protest over virus restrictions | AFP	0.778	OK
+0.00	c3h4meo8htaei8w1zoq8d4i8a	FALSE	Une vidéo montre le passage à tabac d'un membre du gouvernement Bazoum	EXCLUSIF : "Mohamed Bazoum se porte bien", affirme le Premier ministre nigérien après le coup d’État	0.828	OK
+0.00	cz1amkrobnpn2xswkp3efe24f	FALSE	Une vidéo montrerait un atelier d'effets spéciaux du Hamas à Gaza	الخدع السينمائية فن ينقل غزة بصورة مغايرة للعالم	0.802	OK

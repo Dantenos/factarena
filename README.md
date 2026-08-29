@@ -1,15 +1,16 @@
-*This project has been created as part of the 42 curriculum by <login1>, <login2>, <login3>, <login4>, <login5>.*
+*This project has been created as part of the 42 curriculum by `<login-devops>`, `alaroque`, `<login-ai>`, `<login-front-ui>`, `oztozdem`.*
 
-# FactArena — Live Fake-News Prediction Arena
+# FactArena — Live Fake-News Fact-Checking Arena
 
-> TODO before first evaluation: replace every `<login>` and every TODO block.
+> TODO before first evaluation: replace the three remaining `<login-...>` placeholders
+> with the real 42 logins, and fill in the per-member sections at the end.
 > The subject requires this README to be complete, honest and written in English.
 
 ## Team — start here
 
 The infrastructure is done and it works. `docker compose up --build` brings up the five
 services (nginx, frontend, backend, AI service, PostgreSQL+pgvector) and serves the app over
-HTTPS at **https://localhost** — nothing to install, nothing to configure by hand. Clone the
+HTTPS at **https://localhost:8443** — nothing to install, nothing to configure by hand. Clone the
 repo, copy `.env.example` to `.env`, run the command, and you have a working stack.
 
 So you can start on your own scope right away:
@@ -30,22 +31,22 @@ the subject rejects a project on either one. Everything else, we can discuss.
 
 ## Description
 
-**FactArena** is a real-time multiplayer prediction game about misinformation. Players
-join a live room, are shown a short curated **claim-set** (text/images — optionally a
-video clip) containing *N* factual claims, and — competing against each other — **predict
-how many claims are fake** while staking **virtual credits** (no real money, ever) at live
-pari-mutuel odds. A countdown locks all predictions; then an AI bot **streams** a sourced
-verdict for each claim (true/false + confidence + citations). The prediction closest to the
-true fake-count wins the shared pot; players climb a global leaderboard.
+**FactArena** is a real-time multiplayer fact-checking game about misinformation. Players
+join a live room and watch a **compilation of ~10 short viral video clips** play in sequence;
+for each clip, competing against each other, they call it **"good news" or "fake news"** in a
+server-synchronized vote window, having staked **virtual credits** (no real money, ever). When
+the compilation ends, an AI bot **streams** a sourced verdict for each clip (true/false +
+confidence + citations). Scoring is an **accuracy race**: whoever correctly judged the most
+clips wins the shared pot; players climb a global leaderboard.
 
-**Key design decision:** the true fake-count that decides the winners comes from a
+**Key design decision:** the verdict of each clip that decides the winners comes from a
 **pre-labeled editorial answer key** stored in the database, **not** from the live LLM.
 Scoring is deterministic; the RAG/LLM layer only *explains* the pre-known verdict — it never
 adjudicates the game. Real-time "sync" is a server-authoritative round state machine
 (countdown → lock → reveal) over WebSocket, not frame-accurate video streaming.
 
 Key features:
-- Real-time prediction rooms with live odds/pot, countdown and locked bets (WebSockets)
+- Real-time rooms: a viral-clip compilation plays; per-clip good/fake voting with live pot, synchronized vote windows and locked votes (WebSockets)
 - AI fact-checking bot: streamed LLM explanations grounded by a RAG vector database
 - A standalone "ask a claim → sourced answer" Q&A surface (reuses the RAG engine)
 - User accounts (email/password + 42 OAuth), profiles, avatars, friends, online status
@@ -66,7 +67,7 @@ git clone <repo-url> ft_transcendence && cd ft_transcendence
 cp .env.example .env   # then edit the values
 docker compose up --build
 ```
-The application is served by nginx at **https://localhost**. The development certificate is
+The application is served by nginx at **https://localhost:8443**. The development certificate is
 self-signed, so Chrome shows a warning once: click *Advanced → Proceed*. This is expected.
 
 The first build takes a few minutes (it installs every dependency and builds the SPA).
@@ -74,8 +75,8 @@ Once every service reports `healthy`, the stack is ready:
 
 | Check | Expected |
 |---|---|
-| `https://localhost/` | the SPA loads |
-| `https://localhost/api/health` | `{"status":"ok"}` |
+| `https://localhost:8443/` | the SPA loads |
+| `https://localhost:8443/api/health` | `{"status":"ok"}` |
 | `docker compose ps` | 5 services, all `healthy` |
 
 ### Run (development — hot reload, for daily work)
@@ -86,7 +87,7 @@ Same URL, same nginx, same TLS — but your local code is mounted into the conta
 file and the browser reloads on its own (React), or the API restarts on its own (NestJS).
 See `docker-compose.dev.yml` for the details.
 
-> Only nginx publishes a port (443). Every other service talks over the private Docker
+> Only nginx publishes a port (8443 on the host, 443 inside). Every other service talks over the private Docker
 > network, which is why `docker compose ps` shows no host ports for them — that is intended,
 > not a bug.
 
@@ -98,25 +99,28 @@ docker compose down             # stop everything (keeps the database)
 docker compose down -v          # stop AND wipe the database volume
 ```
 
-TODO: keep this section updated (seed data, test accounts).
+Demo accounts are created automatically when `SEED_DEMO_DATA=true` in your `.env`
+(admin, host, player and viewer). Their passwords are the ones you set in `.env` — they
+are never committed. Use two different browsers, or a private window, to demonstrate
+several players in the same room.
 
 ## Team Information
 
 | Login | Role(s) | Responsibilities |
 |---|---|---|
-| `<login1>` | DevOps — **PM / Scrum Master** | Docker, nginx/HTTPS, CI, meetings, deadlines |
-| `<login2>` | **Back-end Core** | NestJS, auth, WebSockets, round state machine, credits, PostgreSQL |
-| `<login3>` | **Tech Lead / Architect** — AI (Python) | FastAPI, RAG corpus, LLM streaming, moderation |
-| `<login4>` | Front-end UI & Access — **Product Owner** | Product vision, backlog, React UI, WCAG, legal pages |
-| `<login5>` | Front-end Real-time & UX | Room/betting UI, chat integration, live odds |
+| `<login-devops>` | DevOps — **PM / Scrum Master** | Docker, nginx/HTTPS, CI, meetings, deadlines |
+| `alaroque` | **Back-end Core** | NestJS, auth, WebSockets, round state machine, credits, PostgreSQL |
+| `<login-ai>` | **Tech Lead / Architect** — AI (Python) | FastAPI, RAG corpus, LLM streaming, moderation |
+| `<login-front-ui>` | Front-end UI & Access — **Product Owner** | Product vision, backlog, React UI, WCAG, legal pages |
+| `oztozdem` | Front-end Real-time & UX | Room/betting UI, chat integration, live vote tally |
 
 All members are **Developers**: they write code, review each other's PRs, test and document
 their scope.
 
 ## Project Management
 
-- **Task tracking**: GitHub Issues + Projects board (TODO: link)
-- **Communication**: Discord server, weekly sync meeting (TODO: day/time)
+- **Task tracking**: GitHub Issues + Projects board — TODO: paste the board link
+- **Communication**: Discord server, weekly sync meeting — TODO: state the day and time
 - **Workflow**: feature branches `feat/<scope>-<desc>`, PR review by at least one other
   member before merge into `main`
 
@@ -131,18 +135,77 @@ their scope.
 | Database | PostgreSQL + pgvector | Relational data + vector search for RAG |
 | Containers | Docker Compose | One-command deployment (subject requirement) |
 
-TODO: full justification of major technical choices.
+### Why these choices
+
+**Two backends instead of one.** The game logic (auth, rooms, credits, WebSocket state
+machine) and the AI layer (embeddings, retrieval, LLM streaming) have nothing in common
+except the database. Splitting them lets the AI service be written in Python — where the
+ecosystem actually lives — while the game keeps NestJS's structure and typing. The front
+never talks to the AI service directly: NestJS relays every call, so authentication and
+rate limiting stay in one place.
+
+**PostgreSQL with pgvector, not a separate vector database.** Adding a dedicated vector
+store would mean a second database to deploy, back up and keep consistent. pgvector keeps
+the 72 000 corpus passages next to the relational data, in one container. The boundary is
+logical: Prisma owns the `public` schema, the AI service owns the `rag` schema — Prisma
+handles the `vector` type poorly, so it never sees it.
+
+**Mistral as the single AI provider.** One API key covers all three needs: embeddings
+(`mistral-embed`, 1024 dimensions), streaming chat, and a model-based moderation endpoint.
+The subject requires moderation to be decided by a model, not a word list, and Mistral
+exposes exactly that. Being a French company processing data in the EU also keeps the
+privacy policy simple.
+
+**Deterministic answer key, never the LLM.** The verdict that decides who wins comes from
+a pre-labelled editorial `truthLabel` stored in the database. The RAG/LLM layer only
+*explains* a verdict that is already known. Scoring is reproducible, and a model
+hallucination can never change a game's outcome.
 
 ## Database Schema
 
-TODO: diagram. Core tables: User, Friendship, Room/Match, Round, Claim (with editorial
-`truthLabel` answer key), RoundClaim, Prediction, Transaction (credit ledger), ClaimVerdict
-(AI explanation, display-only), Stat/Leaderboard, and the FastAPI-managed Document table
-(pgvector embeddings). See `docs/ARCHITECTURE.md` for relations.
+Twelve relational tables managed by Prisma, plus one vector table owned by the AI service.
+
+```
+User ──1─N── Bet              one stake per player per round
+User ──1─N── ClipVote         one good/fake vote per clip
+User ──1─N── Transaction      virtual-credit ledger
+User ──N─N── User (Friend)    friendship + online status
+User ──1─N── Message          room chat
+
+Room ──1─N── Round            a room chains rounds
+Round ──N─N── Claim (via RoundClaim, ordered)
+Round ──1─N── Bet / ClipVote
+Claim ──1─1── ClaimVerdict    AI explanation — display only
+Room ──1─N── RoomPresence     who is connected, by socket
+```
+
+Key fields. **Claim** carries `truthLabel` (TRUE/FALSE), the editorial answer key, plus
+`mediaRef`, `videoStartS`/`videoEndS`, `sourceUrl` and `sourceKey` (unique, makes imports
+idempotent). **Round** moves through `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`.
+**Bet** holds the stake and the payout; **ClipVote** holds one `isFake` per claim, unique
+per `(user, round, claim)`. **Transaction** records every credit movement with a
+`referenceId` that makes payouts idempotent.
+
+Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `content`,
+`chunk_index`, `embedding vector(1024)`) with an HNSW cosine index.
 
 ## Features List
 
-TODO: complete list — feature, description, author(s).
+| Feature | Description |
+|---|---|
+| Account & authentication | Sign-up and sign-in by email and password (bcrypt, salted), plus 42 OAuth; JWT issued for both the REST API and the WebSocket |
+| Live rooms | Create or join a room, see members appear and leave in real time, presence persisted server-side so a reconnection restores the player |
+| Round state machine | Server-authoritative `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`, driven by a 250 ms server loop that advances rounds even with no client connected |
+| Clip drafting | The server draws the round's clips itself, balanced at roughly 60 % false and excluding clips already played in that room |
+| Good/fake voting | One vote per clip while the round is open, one stake per round |
+| Accuracy-race scoring | Whoever judges the most clips correctly takes the shared pot, split on a tie; settlement is a single atomic PostgreSQL transaction |
+| Virtual credit ledger | Every debit and payout is journalled with the resulting balance; payouts are idempotent |
+| Room chat | Send and receive messages in real time |
+| AI moderation | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
+| Questionable AI bot | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
+| Sourced fact-check corpus | 72 000 passages across six sources: French Wikipedia, political Wikipedia, published fact-checks, and live figures from INSEE, Eurostat and the World Bank |
+| Profile & stats | Profile editing, avatar upload, friends with online status, leaderboard and match history |
+| Observability | Application logs shipped to Elasticsearch through Logstash, browsable in Kibana |
 
 ## Modules
 
@@ -158,24 +221,79 @@ for the audited rationale and per-module subject references.
 | Standard user management | Major | 2 | | Not started |
 | Complete RAG system | Major | 2 | | Not started |
 | LLM interface (streaming) | Major | 2 | | Not started |
-| Web-based game (prediction arena) | Major | 2 | | Not started — **needs staff validation** |
+| Web-based game (live fact-check arena) | Major | 2 | | Not started — **needs staff validation** |
 | ORM (Prisma) | Minor | 1 | | Not started |
 | OAuth 2.0 (42) | Minor | 1 | | Not started |
 | AI content moderation | Minor | 1 | | Not started |
 | Game statistics & match history | Minor | 1 | | Not started (depends on the game module) |
 
-TODO: justification of each choice + how it was implemented + author(s).
+### How each module is implemented
+
+**Framework front + back.** React with Vite and Tailwind on the front, NestJS with Prisma
+on the back — both explicitly accepted by the subject.
+
+**Real-time via WebSockets.** A Socket.IO gateway authenticated by JWT, exposing nine
+events (`room:join`, `bet:place`, `clip-vote:submit`, `chat:send`, `ai:chat`…) and
+broadcasting round transitions. Presence is stored in the database rather than in memory,
+so a reconnection restores the player into their room. Every state message carries the
+server clock, which the client uses to correct its own drift — otherwise a player whose
+machine runs ten seconds fast would vote in a shifted window.
+
+**User interaction.** Room chat as the core deliverable, with profile and friends
+alongside.
+
+**Standard user management.** Profile editing, avatar upload, friends list and online
+status — distinct from the basic authentication required by the subject.
+
+**Complete RAG system.** 72 000 embedded passages across six sources, cosine search over
+pgvector, answers grounded in retrieved passages and always citing their URL. The corpus
+mixes general knowledge (Wikipedia), published fact-checks (AFP, franceinfo, TF1, dpa) and
+live official indicators (INSEE, Eurostat, World Bank), which lets the bot answer national,
+European and international claims with a dated, sourced figure.
+
+**LLM interface.** Streaming generation from free user input, with retrieval switched off —
+this is what makes it demonstrably distinct from the RAG surface — plus a server-side rate
+limiter on top of the provider's own 429 handling.
+
+**AI moderation.** Every chat message goes through Mistral's moderation endpoint; the
+policy that turns categories into an action (allow, warn, delete) is ours and is the part
+worth explaining.
+
+**Web-based game.** Rounds run live, players compete against each other, rules are written
+and the win condition is deterministic because it comes from the editorial answer key.
+
+**ORM, OAuth 2.0, game statistics.** Prisma with five versioned migrations; 42 login in
+addition to — never instead of — email and password; wins, losses, ranking and match
+history computed from the bet ledger.
 
 ## Individual Contributions
 
-TODO: per member — what was built, challenges faced, how they were solved.
+TODO for each member: what you built, the problems you hit, and how you solved them. This
+section is graded and cannot be written by anyone else — fill in your own paragraph.
 
 ## Resources
 
 - Project subject: `docs/subject.pdf` (source of truth)
 - Architecture & module rationale: `docs/ARCHITECTURE.md`
-- TODO: docs, articles and tutorials actually used
-- **AI usage**: AI assistants (Claude Code) were used for scaffolding, boilerplate and
-  documentation drafts. Every AI-assisted change was reviewed, understood and tested by the
-  member who committed it, in line with the subject's AI instructions. TODO: detail per
-  task/part.
+- AI service roadmap and decisions: `docs/AI.md`
+- Game content specification: `docs/CLAIMS.md`
+
+External services and data sources actually used:
+
+- Mistral AI — embeddings (`mistral-embed`), streaming chat, moderation endpoint
+- Google Fact Check Tools API — structured ClaimReview data feeding both the RAG corpus and
+  the game's answer key
+- INSEE (Banque de données macroéconomiques, SDMX) — French national indicators
+- Eurostat REST API — French and EU-wide indicators, used for comparative claims
+- World Bank (World Development Indicators) — international comparisons
+- French Wikipedia — general-knowledge corpus
+
+**AI usage.** AI assistants (Claude Code) were used for scaffolding, boilerplate,
+documentation drafts and reviewing data-ingestion edge cases. Every AI-assisted change was
+read, understood and tested by the member who committed it, as the subject requires. Where
+generated output was wrong it was corrected and the reason recorded in the commit — for
+instance, an early verdict-mapping heuristic labelled a demonstrably false claim as true
+because the fact-checker's rating was written as prose containing the word "confirmed"; the
+mapper now accepts only short verdict labels and discards ambiguous ones.
+
+TODO for each member: add the parts where you used AI and what you changed afterwards.

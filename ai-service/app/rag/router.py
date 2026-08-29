@@ -19,6 +19,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.mistral_client import chat_stream
+from app.rag.guardrail import is_blocked
 from app.rag.search import search_similar
 from app.rate_limit import RateLimiter
 
@@ -42,6 +43,15 @@ class AskRequest(BaseModel):
     # et de taille raisonnable. FastAPI renvoie automatiquement un 422 clair si
     # ce n'est pas respecté — le back ne fait jamais confiance à l'entrée.
     question: str = Field(min_length=3, max_length=1000)
+
+    # Contexte de la manche EN COURS, fourni par le Back Core (lui seul tient
+    # l'état de la partie). Sert au garde-fou anti-spoil (cf. guardrail.py, AI.md
+    # §9). Absents/vides hors manche -> le bot répond librement.
+    #   - live_topics : les MOTS-THÈMES des clips en jeu (couche 1, thématique) ;
+    #   - live_claims : les TEXTES des affirmations en jeu (couche 2, juge LLM).
+    # Bornés (une manche ~10 clips) pour ne pas gonfler la requête.
+    live_topics: list[str] = Field(default_factory=list, max_length=100)
+    live_claims: list[str] = Field(default_factory=list, max_length=20)
 
 
 def _build_messages(question: str, passages: list[dict]) -> list[dict]:
@@ -73,6 +83,103 @@ def _sse(event: str, data) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+# Message renvoyé quand le garde-fou bloque (question à propos d'un clip vivant).
+_REFUS = (
+    "Je ne commente pas les clips de la manche en cours 🤐 — repose-moi la "
+    "question après la révélation, ou demande-moi autre chose."
+)
+
+
+def _refusal_stream():
+    """Sert le refus dans le MÊME format SSE qu'une réponse normale.
+
+    Le front n'a donc RIEN de spécial à gérer : sources vides + un message +
+    done, exactement comme une réponse du bot (mais sans citation). C'est un
+    générateur synchrone (aucun await) — StreamingResponse l'accepte tel quel.
+    """
+    yield _sse("sources", [])
+    yield _sse("token", {"text": _REFUS})
+    yield _sse("done", {})
+
+
+class SecondAvisRequest(BaseModel):
+    # Le texte de l'affirmation. On ne reçoit JAMAIS le truthLabel : tout
+    # l'intérêt est que le modèle se prononce sans connaître la réponse.
+    claim: str = Field(min_length=10, max_length=1000)
+
+    # URL de l'article de fact-check dont la claim est issue, à EXCLURE de la
+    # recherche. Sans cette exclusion, l'avis n'a aucune valeur : le corpus
+    # contient l'article lui-même, et le modèle se contente d'y lire le verdict
+    # (« explicitement jugée Vrai dans le passage [1] »). En l'écartant, il doit
+    # raisonner sur d'autres sources — exactement ce que fait un joueur.
+    exclure_url: str | None = Field(default=None, max_length=500)
+
+
+CONSIGNE_SECOND_AVIS = (
+    "Tu donnes ton avis sur une affirmation, comme le ferait un joueur attentif. "
+    "Appuie-toi UNIQUEMENT sur les passages fournis. Si tu n'as pas d'élément, "
+    "dis-le franchement plutôt que d'inventer.\n"
+    "Réponds exactement ainsi :\n"
+    "AVIS: VRAI | FAUX | INCERTAIN\n"
+    "POURQUOI: <une seule phrase>"
+)
+
+
+@router.post("/second-avis")
+async def second_avis(req: SecondAvisRequest, request: Request):
+    """L'IA se prononce sur une affirmation SANS connaître la clé de réponse.
+
+    POURQUOI CET ENDPOINT : à la révélation, on affiche le verdict éditorial —
+    celui qui décide du score — puis, à côté, ce que l'IA aurait répondu. Quand
+    elle se trompe, ça ne coûte rien au jeu (le score ne dépend pas d'elle) et
+    ça montre honnêtement les limites d'une IA face au fact-checking. C'est un
+    argument solide en évaluation, et c'est exactement le rôle que la décision
+    d'architecture n°1 lui assigne : commenter, jamais arbitrer.
+
+    Le modèle ne reçoit que l'affirmation et les passages du corpus. Il ignore
+    le truthLabel, sinon son « avis » n'aurait aucune valeur.
+    """
+    if not limiter.allow(request.client.host):
+        raise HTTPException(status_code=429, detail="Trop de requêtes.")
+
+    try:
+        # On demande plus de passages que nécessaire : certains seront écartés.
+        passages = await search_similar(req.claim, k=TOP_K + 4)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service RAG indisponible (recherche).")
+
+    if req.exclure_url:
+        cible = req.exclure_url.rstrip("/")
+        passages = [p for p in passages if (p.get("url") or "").rstrip("/") != cible]
+    passages = passages[:TOP_K]
+
+    contexte = "\n\n".join(f"[{i + 1}] {p['content']}" for i, p in enumerate(passages))
+    messages = [
+        {"role": "system", "content": CONSIGNE_SECOND_AVIS},
+        {"role": "user", "content": f"Passages :\n\n{contexte}\n\nAffirmation : « {req.claim} »"},
+    ]
+
+    try:
+        morceaux = [m async for m in chat_stream(messages)]
+    except Exception:
+        raise HTTPException(status_code=503, detail="Service LLM indisponible.")
+    texte = "".join(morceaux).strip()
+
+    # On extrait l'avis pour que le back n'ait pas à analyser du texte libre.
+    avis = "INCERTAIN"
+    for candidat in ("VRAI", "FAUX", "INCERTAIN"):
+        if f"AVIS: {candidat}" in texte.upper():
+            avis = candidat
+            break
+    pourquoi = texte.split("POURQUOI:", 1)[-1].strip() if "POURQUOI:" in texte else texte
+
+    return {
+        "avis": avis,
+        "pourquoi": pourquoi,
+        "citations": [{"title": p["title"], "url": p["url"]} for p in passages],
+    }
+
+
 @router.post("/ask")
 async def ask(req: AskRequest, request: Request):
     # Rate limiting : au-delà de la limite, 429 avant tout appel à Mistral.
@@ -81,6 +188,21 @@ async def ask(req: AskRequest, request: Request):
             status_code=429,
             detail=f"Trop de requêtes (max {_RATE_MAX} par {int(_RATE_WINDOW)}s). Réessayez dans un instant.",
         )
+
+    # 0. Garde-fou anti-spoil, AVANT toute récupération (AI.md §9, décision n°1).
+    #    Cascade : couche 1 thématique (mots-thèmes, déterministe, sans API) ;
+    #    « sinon » couche 2 juge LLM (rattrape les reformulations). On ne l'exécute
+    #    que s'il y a une manche à protéger (hors manche -> les listes sont vides).
+    if req.live_topics or req.live_claims:
+        try:
+            blocked = await is_blocked(req.question, req.live_topics, req.live_claims)
+        except Exception:
+            # Fail-closed : si le juge LLM ne peut pas trancher (Mistral en panne),
+            # on refuse plutôt que de risquer un spoil. La couche 1, elle, ne tombe
+            # jamais en panne (pur Python).
+            raise HTTPException(status_code=503, detail="Garde-fou indisponible, réessayez.")
+        if blocked:
+            return StreamingResponse(_refusal_stream(), media_type="text/event-stream")
 
     # 1. Récupération. Si Mistral (embed) ou la base est en panne, ça échoue ICI,
     #    AVANT le streaming : on peut donc renvoyer un vrai code HTTP propre.

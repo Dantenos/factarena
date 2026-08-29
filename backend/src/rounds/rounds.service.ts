@@ -26,10 +26,137 @@ export class RoundsService {
     }
   }
 
-  async create(data: { roomId: string; claimIds: string[]; durationSeconds: number }, createdById: string) {
-    const distinctClaimIds = [...new Set(data.claimIds)];
-    if (distinctClaimIds.length === 0) throw new BadRequestException('A round must contain at least one claim');
-    if (distinctClaimIds.length !== data.claimIds.length) throw new BadRequestException('A claim may appear only once in a round');
+  /**
+   * Tire au sort les claims d'une manche, en respectant deux règles.
+   *
+   * ÉQUILIBRAGE (docs/CLAIMS.md §5) : on vise environ 60 % de fausses. Si le lot
+   * ne contenait que des fausses, répondre « fake » à tout suffirait à gagner et
+   * le jeu n'aurait plus d'intérêt.
+   *
+   * PAS DE RÉPÉTITION : on écarte les claims déjà jouées dans ce salon, sinon
+   * les habitués reverraient les mêmes extraits et connaîtraient les réponses.
+   * Si le stock est épuisé, on rouvre tout plutôt que de refuser la partie.
+   */
+  private async tirerClaims(tx: Prisma.TransactionClient, roomId: string, nombre: number) {
+    const dejaJouees = await tx.roundClaim.findMany({
+      where: { round: { roomId } },
+      select: { claimId: true },
+    });
+    const exclues = new Set(dejaJouees.map((rc: { claimId: string }) => rc.claimId));
+
+    // On privilégie les claims avec vidéo, sans les exiger : s'il n'y en a pas
+    // assez on complète, plutôt que de refuser la partie.
+    //
+    // Et seulement les trois formes que le lecteur sait afficher. Le reste
+    // (liens morts, Theora que Chrome ne décode plus) donnait un cadre noir
+    // sans erreur en console, donc indétectable.
+    const lisibles = [
+      { mediaRef: { contains: 'upload.wikimedia.org' } },
+      { mediaRef: { contains: 'facebook.com/plugins/video.php' } },
+      { mediaRef: { contains: '/embed/' } },
+    ];
+    const cures = await tx.claim.findMany({
+      where: { AND: [{ mediaRef: { not: null } }, { OR: lisibles }] },
+      select: { id: true, truthLabel: true, category: true },
+    });
+    const avecVideo =
+      cures.length >= nombre
+        ? cures
+        : await tx.claim.findMany({
+            where: { mediaRef: { not: null } },
+            select: { id: true, truthLabel: true, category: true },
+          });
+    const toutes =
+      avecVideo.length >= nombre
+        ? avecVideo
+        : await tx.claim.findMany({ select: { id: true, truthLabel: true, category: true } });
+    if (toutes.length < nombre) {
+      throw new BadRequestException(
+        `Pas assez de claims en base pour une manche de ${nombre} (${toutes.length} disponibles)`,
+      );
+    }
+    const inedites = toutes.filter((c: { id: string }) => !exclues.has(c.id));
+    const vivier = inedites.length >= nombre ? inedites : toutes;
+
+    const melanger = <T>(liste: T[]): T[] => {
+      // Fisher-Yates : mélange uniforme, contrairement à un sort() aléatoire
+      // qui biaise la distribution.
+      const copie = [...liste];
+      for (let i = copie.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copie[i], copie[j]] = [copie[j], copie[i]];
+      }
+      return copie;
+    };
+
+    const fausses = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'FALSE'));
+    const vraies = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'TRUE'));
+
+    // Un quart de la manche par thème, au maximum.
+    //
+    // Le corpus est déséquilibré thème par thème — sur l'immigration ou Trump,
+    // presque tout est faux. Sans plafond, le joueur apprend à répondre « fake »
+    // au sujet plutôt qu'au contenu.
+    const plafondTheme = Math.max(2, Math.ceil(nombre / 4));
+    const comptes = new Map<string, number>();
+    const prendre = (source: Array<{ id: string; truthLabel: string; category: string | null }>, combien: number) => {
+      const pris: typeof source = [];
+      for (const claim of source) {
+        if (pris.length >= combien) break;
+        const theme = claim.category ?? 'inconnu';
+        const dejaPris = comptes.get(theme) ?? 0;
+        if (dejaPris >= plafondTheme) continue;
+        comptes.set(theme, dejaPris + 1);
+        pris.push(claim);
+      }
+      return pris;
+    };
+
+    const cibleFausses = Math.round(nombre * 0.6);
+    const choisies = [
+      ...prendre(fausses, cibleFausses),
+      ...prendre(vraies, nombre - cibleFausses),
+    ];
+    // Une catégorie à court : on complète avec l'autre, en respectant d'abord
+    // le plafond. On ne le dépasse qu'en dernier recours — sinon ce chemin, qui
+    // sert souvent, contournait le garde-fou posé plus haut.
+    if (choisies.length < nombre) {
+      const disponibles = melanger(vivier.filter((c: { id: string }) => !choisies.some((x) => x.id === c.id)));
+      choisies.push(...prendre(disponibles, nombre - choisies.length));
+      if (choisies.length < nombre) {
+        const derniers = disponibles.filter((c) => !choisies.some((x) => x.id === c.id));
+        choisies.push(...derniers.slice(0, nombre - choisies.length));
+      }
+    }
+    // Mélange, puis entrelacement des thèmes : le plafond empêche qu'un sujet
+    // domine, mais un tirage au hasard peut encore en aligner trois à la suite.
+    // On prend le premier clip dont le thème diffère du précédent.
+    const restant = melanger(choisies);
+    const ordonnees: typeof restant = [];
+    let themePrecedent: string | null = null;
+    while (restant.length > 0) {
+      let index = restant.findIndex((c) => (c.category ?? 'inconnu') !== themePrecedent);
+      if (index === -1) index = 0;
+      const [claim] = restant.splice(index, 1);
+      themePrecedent = claim.category ?? 'inconnu';
+      ordonnees.push(claim);
+    }
+    return ordonnees.map((c: { id: string }) => c.id);
+  }
+
+  async create(
+    data: { roomId: string; claimIds?: string[]; claimCount?: number; durationSeconds: number },
+    createdById: string,
+  ) {
+    // Liste imposée : on la valide comme avant. Sinon on tirera au sort dans la
+    // transaction (il faut y être pour lire les claims déjà jouées du salon).
+    const imposees = data.claimIds ? [...new Set(data.claimIds)] : null;
+    if (imposees && imposees.length !== data.claimIds!.length) {
+      throw new BadRequestException('A claim may appear only once in a round');
+    }
+    if (imposees && imposees.length === 0) {
+      throw new BadRequestException('A round must contain at least one claim');
+    }
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const room = await tx.room.findUnique({ where: { id: data.roomId } });
       if (!room) throw new NotFoundException(`Room ${data.roomId} not found`);
@@ -37,6 +164,9 @@ export class RoundsService {
       if (room.status === 'FINISHED') throw new BadRequestException('Cannot add rounds to a finished room');
       const activeRound = await tx.round.findFirst({ where: { roomId: data.roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] as any } } });
       if (activeRound) throw new ConflictException('This room already has an active round');
+      // Soit la liste imposée, soit un tirage automatique (8 clips par défaut,
+      // ce qui donne une manche d'une durée raisonnable).
+      const distinctClaimIds = imposees ?? (await this.tirerClaims(tx, data.roomId, data.claimCount ?? 8));
       const claims = await tx.claim.findMany({ where: { id: { in: distinctClaimIds } }, select: { id: true } });
       if (claims.length !== distinctClaimIds.length) throw new BadRequestException('One or more claims do not exist');
       const opensAt = new Date(Date.now() + 3_000);
@@ -156,5 +286,60 @@ export class RoundsService {
       return tx.round.findUniqueOrThrow({ where: { id }, include: { bets: true, clipVotes: true } });
     });
     return finished;
+  }
+
+  /**
+   * Classement d'une manche : qui a vu juste, et combien il gagne ou perd.
+   *
+   * Calculé à la lecture, pas stocké : votes et mises sont déjà en base, un
+   * score dupliqué finirait par diverger.
+   */
+  async classement(roundId: string) {
+    const round = await this.prisma.round.findUnique({
+      where: { id: roundId },
+      select: {
+        clipVotes: { select: { userId: true, claimId: true, isFake: true } },
+        bets: { select: { userId: true, stake: true, payout: true } },
+        roundClaims: { select: { claim: { select: { id: true, truthLabel: true } } } },
+      },
+    });
+    if (!round) return [];
+
+    // Un vote est juste si « c'est un fake » coïncide avec un verdict FALSE.
+    const estFausse = new Map(
+      round.roundClaims.map(({ claim }) => [claim.id, claim.truthLabel === 'FALSE']),
+    );
+
+    const parJoueur = new Map<string, { correctCount: number; creditsChange: number }>();
+    const entree = (userId: string) => {
+      if (!parJoueur.has(userId)) parJoueur.set(userId, { correctCount: 0, creditsChange: 0 });
+      return parJoueur.get(userId)!;
+    };
+
+    for (const vote of round.clipVotes) {
+      const attendu = estFausse.get(vote.claimId);
+      if (attendu === undefined) continue;
+      if (vote.isFake === attendu) entree(vote.userId).correctCount += 1;
+    }
+
+    // payout est null tant que la manche n'est pas réglée : dans ce cas le
+    // joueur a engagé sa mise sans retour, donc la variation vaut -stake.
+    for (const pari of round.bets) {
+      entree(pari.userId).creditsChange += (pari.payout ?? 0) - pari.stake;
+    }
+
+    if (parJoueur.size === 0) return [];
+    const utilisateurs = await this.prisma.user.findMany({
+      where: { id: { in: [...parJoueur.keys()] } },
+      select: { id: true, displayName: true, email: true },
+    });
+    const nom = new Map(
+      utilisateurs.map((u) => [u.id, u.displayName || u.email.split('@')[0]]),
+    );
+
+    return [...parJoueur.entries()]
+      .map(([userId, valeurs]) => ({ userId, username: nom.get(userId) ?? 'joueur', ...valeurs }))
+      // Le plus précis d'abord : c'est le classement que le jeu met en avant.
+      .sort((a, b) => b.correctCount - a.correctCount || b.creditsChange - a.creditsChange);
   }
 }

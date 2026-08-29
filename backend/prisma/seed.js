@@ -1,5 +1,10 @@
 const { PrismaClient, ClaimTruthLabel } = require('@prisma/client');
 const crypto = require('node:crypto');
+// Import manquant : la ligne `bcrypt.hash(...)` plus bas plantait sur un
+// « ReferenceError: bcrypt is not defined », ce qui rendait tout le seed
+// inutilisable. Le paquet installé est bcryptjs (cf. package.json), qui expose
+// la même API que bcrypt.
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
