@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException
 # On importe la config au démarrage : cela déclenche la lecture des variables
 # d'environnement (et échouerait tôt si une valeur requise manquait plus tard).
 from app.config import settings
-from app.db import connect
+from app.db import connect, ensure_schema
 from app.rag.router import router as rag_router
 from app.llm.router import router as llm_router
 from app.moderation.router import router as moderation_router
@@ -25,6 +25,29 @@ if not settings.llm_api_key:
     )
 
 app = FastAPI(title="FactArena AI Service")
+
+
+@app.on_event("startup")
+def preparer_base() -> None:
+    """Crée le schéma vectoriel s'il n'existe pas encore.
+
+    Il n'était créé que par les scripts d'ingestion. Sur une machine qui vient
+    de cloner le dépôt, la table n'existait donc pas : la recherche levait une
+    exception et /rag/ask répondait 503, ce qui faisait croire à une panne du
+    service alors qu'il lui manquait seulement sa base.
+
+    L'index reste vide tant qu'on n'a pas lancé une ingestion, mais une
+    recherche sans résultat vaut mieux qu'une erreur.
+    """
+    try:
+        ensure_schema()
+    except Exception as erreur:
+        # Le service doit démarrer même si Postgres n'est pas encore prêt :
+        # le healthcheck et la modération n'ont pas besoin du vectoriel.
+        logging.getLogger("uvicorn.error").warning(
+            "Schéma vectoriel non créé au démarrage (%s). Il le sera à la première ingestion.",
+            erreur,
+        )
 
 # Module RAG : les routes vivent sous /rag (ex. POST /rag/ask). Le backend
 # appellera http://ai-service:8000/rag/ask.
