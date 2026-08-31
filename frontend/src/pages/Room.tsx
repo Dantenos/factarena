@@ -26,6 +26,12 @@ interface ClipEnJeu {
   };
 }
 
+// Longueur d'une manche. Assez long pour que le classement départage vraiment
+// les joueurs plutôt que de récompenser un coup de chance. La constante sert
+// aussi au libellé du bouton, qui annonçait un chiffre différent de celui
+// réellement demandé au serveur.
+const CLIPS_PAR_MANCHE = 10;
+
 export default function Room() {
   const { roomId } = useParams<{ roomId: string }>();
   const { connecte, etat, emettre, ecouter } = useSocket(roomId ?? null);
@@ -217,10 +223,7 @@ export default function Room() {
     try {
       await api('/rounds', {
         method: 'POST',
-        // 10 clips par manche : c'est le format de compilation décrit dans nos
-        // documents, assez long pour que le classement départage vraiment les
-        // joueurs plutôt que de récompenser un coup de chance sur six clips.
-        body: { roomId, claimCount: 10, durationSeconds: 300 },
+        body: { roomId, claimCount: CLIPS_PAR_MANCHE, durationSeconds: 300 },
       });
       // Pas besoin de recharger : le serveur diffuse le nouvel état par
       // WebSocket, la page se met à jour toute seule.
@@ -296,7 +299,7 @@ export default function Room() {
                 disabled={lancement || !connecte}
                 className="button-blue-d px-4 py-3 disabled:opacity-40"
               >
-                {lancement ? 'Lancement...' : 'Lancer une manche (6 clips)'}
+                {lancement ? 'Lancement...' : `Lancer une manche (${CLIPS_PAR_MANCHE} clips)`}
               </button>
               {erreurManche && (
                 <p role="alert" className="text-red-l text-sm">{erreurManche}</p>

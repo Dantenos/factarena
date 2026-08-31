@@ -32,6 +32,9 @@ export class StatsService {
 
   async getLeaderboard() {
     const users = await this.prisma.user.findMany({
+      // Les faux joueurs du chat votent et misent : sans ce filtre ils
+      // apparaissaient sur le podium à côté des vrais joueurs.
+      where: { role: { not: 'BOT' } },
       select: {
         ...this.userSelect(),
         virtualBalance: true,
