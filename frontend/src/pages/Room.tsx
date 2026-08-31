@@ -390,10 +390,13 @@ export default function Room() {
       </div>
 
       {/* Résultats : affichés seulement après la révélation, plus en permanence. */}
+      {/* Le total vient des résultats reçus, pas des clips en mémoire : une
+          fois la manche finie le serveur ne renvoie plus de manche active,
+          clips retombe à zéro et le score s'affichait « 3/0 ». */}
       {resultats && (
         <ResultsReveal
           correctCount={bonnesReponses}
-          totalClips={clips.length}
+          totalClips={resultats.length}
           clipResults={resultats}
           leaderboard={classement}
         />

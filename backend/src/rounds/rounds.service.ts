@@ -329,10 +329,15 @@ export class RoundsService {
     }
 
     if (parJoueur.size === 0) return [];
+    // Les faux joueurs du chat votent aussi. Ils n'ont rien à faire dans le
+    // classement d'une partie entre humains, et ils y noyaient les vrais.
     const utilisateurs = await this.prisma.user.findMany({
-      where: { id: { in: [...parJoueur.keys()] } },
+      where: { id: { in: [...parJoueur.keys()] }, role: { not: 'BOT' } },
       select: { id: true, displayName: true, email: true },
     });
+    for (const id of [...parJoueur.keys()]) {
+      if (!utilisateurs.some((u) => u.id === id)) parJoueur.delete(id);
+    }
     const nom = new Map(
       utilisateurs.map((u) => [u.id, u.displayName || u.email.split('@')[0]]),
     );
