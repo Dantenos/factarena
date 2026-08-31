@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import Friends from './pages/Friends';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Play from './pages/Play';
@@ -27,6 +28,7 @@ export default function App() {
             tapant l'URL : la « connexion » n'était qu'un drapeau localStorage. */}
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="/friends" element={<Friends />} />
           <Route path="/play" element={<Play />} />
           {/* Le salon a besoin de SON identifiant : sans lui la page ne peut ni
               rejoindre le bon canal WebSocket, ni charger la manche en cours.

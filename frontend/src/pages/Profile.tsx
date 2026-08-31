@@ -3,7 +3,7 @@
 // déjà côté back (backend/src/stats/).
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../api/client';
+import { api, envoyerAvatar, modifierProfil } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
 /** Profil réduit renvoyé par le back à l'intérieur des statistiques. */
@@ -33,9 +33,14 @@ interface LigneClassement extends Stats {
 }
 
 export default function Profile() {
-  const { utilisateur } = useAuth();
+  const { utilisateur, rafraichir } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [podium, setPodium] = useState<LigneClassement[]>([]);
+  // Édition du pseudo : fermée par défaut, pour que la page reste une fiche
+  // qu'on lit plutôt qu'un formulaire.
+  const [edition, setEdition] = useState(false);
+  const [nouveauPseudo, setNouveauPseudo] = useState('');
+  const [messageProfil, setMessageProfil] = useState<string | null>(null);
 
   useEffect(() => {
     // Pas de console.error dans les catch : une statistique indisponible n'est
@@ -50,6 +55,41 @@ export default function Profile() {
   const nomDe = (profil?: ProfilJoueur | null, secours?: string) =>
     profil?.displayName || profil?.email?.split('@')[0] || secours || 'joueur';
   const pseudo = nomDe(stats?.user, utilisateur?.displayName || utilisateur?.email?.split('@')[0]);
+
+  // Le back borne déjà le pseudo, on applique la même règle ici : la
+  // validation est double, formulaire et serveur.
+  async function enregistrerPseudo(event: React.FormEvent) {
+    event.preventDefault();
+    setMessageProfil(null);
+    const valeur = nouveauPseudo.trim();
+    if (valeur.length < 2 || valeur.length > 30) {
+      setMessageProfil('Le pseudo doit faire entre 2 et 30 caractères.');
+      return;
+    }
+    try {
+      await modifierProfil({ displayName: valeur });
+      await rafraichir();
+      setEdition(false);
+    } catch (e) {
+      setMessageProfil(e instanceof Error ? e.message : 'Modification impossible');
+    }
+  }
+
+  async function choisirAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    const fichier = event.target.files?.[0];
+    if (!fichier) return;
+    setMessageProfil(null);
+    try {
+      await envoyerAvatar(fichier);
+      await rafraichir();
+    } catch (e) {
+      setMessageProfil(e instanceof Error ? e.message : 'Envoi impossible');
+    } finally {
+      // On vide le champ, sinon resélectionner le même fichier ne déclenche
+      // aucun événement.
+      event.target.value = '';
+    }
+  }
 
   // Hauteur des marches : la première est la plus haute. On garde les
   // positions de la maquette, seul le contenu change.
@@ -71,11 +111,51 @@ export default function Profile() {
               {pseudo.charAt(0).toUpperCase()}
             </span>
           )}
-          <div className="min-w-0">
-            <p className="font-semibold truncate">{pseudo}</p>
+          <div className="min-w-0 flex-1">
+            {edition ? (
+              <form onSubmit={enregistrerPseudo} className="flex gap-2 items-center">
+                <label htmlFor="pseudo" className="sr-only">Nouveau pseudo</label>
+                <input
+                  id="pseudo"
+                  type="text"
+                  value={nouveauPseudo}
+                  onChange={(e) => setNouveauPseudo(e.target.value)}
+                  minLength={2}
+                  maxLength={30}
+                  required
+                  className="bg-grisclair-krystal rounded-lg px-2 py-1 text-sm outline-none min-w-0 flex-1"
+                />
+                <button type="submit" className="text-xs text-bleu-l hover:underline shrink-0">ok</button>
+                <button
+                  type="button"
+                  onClick={() => { setEdition(false); setMessageProfil(null); }}
+                  className="text-xs text-white/30 hover:text-white shrink-0"
+                >
+                  annuler
+                </button>
+              </form>
+            ) : (
+              <p className="font-semibold truncate flex items-center gap-2">
+                {pseudo}
+                <button
+                  type="button"
+                  onClick={() => { setNouveauPseudo(pseudo); setEdition(true); }}
+                  className="text-xs text-white/30 hover:text-white font-normal"
+                >
+                  modifier
+                </button>
+              </p>
+            )}
             <p className="text-white/40 text-sm">
               {stats ? `${stats.virtualBalance} crédits` : '—'}
             </p>
+            {/* L'envoi part dès la sélection du fichier : un bouton « envoyer »
+                séparé n'apporterait rien pour un seul champ. */}
+            <label className="text-xs text-white/30 hover:text-white cursor-pointer">
+              changer d'avatar
+              <input type="file" accept="image/*" className="hidden" onChange={choisirAvatar} />
+            </label>
+            {messageProfil && <p className="text-red-l text-xs mt-1">{messageProfil}</p>}
           </div>
         </div>
 

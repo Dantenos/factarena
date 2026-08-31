@@ -89,6 +89,17 @@ export default function Login() {
 
           {/* role="alert" : le message est annoncé aux lecteurs d'écran
               (accessibilité demandée par le sujet). */}
+          {/* Connexion 42 (module OAuth du sujet). Un lien, pas un fetch : le
+              back redirige vers 42, qui redirige à son tour vers le callback.
+              Une requête XHR ne peut pas suivre ce parcours. On sort donc du
+              routeur React avec une navigation complète. */}
+          <a
+            href="/api/auth/42"
+            className="mt-3 button-blue-l px-4 py-2 text-sm block text-center"
+          >
+            Se connecter avec 42
+          </a>
+
           {erreur && (
             <p role="alert" className="mt-4 text-red-l text-sm">{erreur}</p>
           )}

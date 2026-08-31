@@ -203,9 +203,10 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 | Room chat | Send and receive messages in real time |
 | AI moderation | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
 | Questionable AI bot | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
-| Sourced fact-check corpus | 72 000 passages across six sources: French Wikipedia, political Wikipedia, published fact-checks, and live figures from INSEE, Eurostat and the World Bank |
-| Profile & stats | Profile editing, avatar upload, friends with online status, leaderboard and match history |
-| Observability | Application logs shipped to Elasticsearch through Logstash, browsable in Kibana |
+| Sourced fact-check corpus | 1 559 passages shipped with the repository (published fact-checks plus INSEE, Eurostat and World Bank figures), loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run. The ingestion scripts can grow it further — our own working index holds 72 000 passages including French Wikipedia. |
+| Profile & stats | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload |
+| Friends | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
+| Playable clip corpus | 87 clips with a playable video, 72 of them with their reveal explanation, all shipped in the seed |
 
 ## Modules
 

@@ -28,15 +28,28 @@ export default function Home() {
 		</div>
 
 		<div className="p-8 grid grid-cols-2 grid-row-3 gap-4 text-white h-[80%] bg-gris-krystal rounded-xl mb-2">
-			<p className="col-start-1 row-start-1 text-white bg-noir-krystal rounded-xl">
-				regle 1
-			</p>
-			<p className="col-start-2 row-start-2 text-white bg-noir-krystal rounded-xl">
-				regle 2
-			</p>
-			<p className="col-start-1 row-start-3 text-white bg-noir-krystal rounded-xl">
-				regle 3
-			</p>
+			<div className="col-start-1 row-start-1 bg-noir-krystal rounded-xl p-5">
+				<h2 className="font-semibold mb-1">Regarde, puis tranche</h2>
+				<p className="text-white/60 text-sm">
+					Dix extraits s'enchaînent. Pour chacun, un seul choix : l'information
+					est authentique, ou c'est une intox.
+				</p>
+			</div>
+			<div className="col-start-2 row-start-2 bg-noir-krystal rounded-xl p-5">
+				<h2 className="font-semibold mb-1">Ne suis pas le chat</h2>
+				<p className="text-white/60 text-sm">
+					D'autres joueurs commentent en direct, et certains se trompent avec
+					aplomb. L'assistant, lui, cite ses sources — mais il refuse de parler
+					des clips en cours.
+				</p>
+			</div>
+			<div className="col-start-1 row-start-3 bg-noir-krystal rounded-xl p-5">
+				<h2 className="font-semibold mb-1">Le pot va au plus juste</h2>
+				<p className="text-white/60 text-sm">
+					À la révélation, chaque verdict est expliqué et sourcé. Celui qui a vu
+					juste le plus souvent remporte la mise commune.
+				</p>
+			</div>
 		</div>
 
     </section>

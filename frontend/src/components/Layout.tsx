@@ -34,6 +34,7 @@ export default function Layout() {
             <>
               <Link to="/play" className="text-lg button-blue-d px-5 py-1">Jouer</Link>
               <Link to="/profile" className="text-lg button-blue-d px-5 py-1">Profil</Link>
+              <Link to="/friends" className="text-lg button-blue-d px-5 py-1">Amis</Link>
               {/* On affiche qui est connecté : utile en soutenance pour
                   démontrer plusieurs comptes simultanés dans deux navigateurs. */}
               <span className="absolute right-48 text-sm text-gray-300">

@@ -121,3 +121,66 @@ export function solde() {
 export function listeSalons() {
   return api<unknown[]>('/rooms');
 }
+
+// --- Amis (module « User interaction » du sujet) ---
+
+/** Un ami, tel que /friends/presence le renvoie. */
+export interface Ami {
+  id: string;
+  email: string;
+  displayName?: string | null;
+  avatarUrl: string | null;
+  status: string;
+  currentRoomId?: string | null;
+}
+
+/** On demande /presence plutôt que /friends : même liste, plus le salon en
+ *  cours de chacun. Le sujet demande de voir la présence des amis. */
+export function listeAmis() {
+  return api<Ami[]>('/friends/presence');
+}
+
+export function ajouterAmi(friendId: string) {
+  return api<unknown>('/friends', { method: 'POST', body: { friendId } });
+}
+
+export function retirerAmi(friendId: string) {
+  return api<unknown>(`/friends/${friendId}`, { method: 'DELETE' });
+}
+
+/** Cherche des joueurs par e-mail ou pseudo. Le back exige deux caractères. */
+export function chercherJoueurs(texte: string) {
+  return api<Ami[]>(`/users?recherche=${encodeURIComponent(texte)}`);
+}
+
+// --- Profil ---
+
+export function modifierProfil(champs: { displayName?: string }) {
+  return api<Utilisateur>('/users/me', { method: 'PATCH', body: champs });
+}
+
+/** L'avatar part en multipart, pas en JSON : on court-circuite donc `api`,
+ *  qui impose Content-Type application/json. Le navigateur doit poser lui-même
+ *  la frontière multipart, on ne fixe surtout aucun en-tête de contenu. */
+export async function envoyerAvatar(fichier: File): Promise<Utilisateur> {
+  const corps = new FormData();
+  corps.append('avatar', fichier);
+  const reponse = await fetch('/api/users/me/avatar', {
+    method: 'POST',
+    headers: { ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) },
+    body: corps,
+  });
+  if (!reponse.ok) {
+    let message = `Erreur ${reponse.status}`;
+    try {
+      const d = await reponse.json();
+      if (d?.message) message = Array.isArray(d.message) ? d.message.join(', ') : d.message;
+    } catch { /* corps vide */ }
+    if (reponse.status === 401) {
+      clearToken();
+      window.dispatchEvent(new Event(SESSION_EXPIREE));
+    }
+    throw new ApiError(reponse.status, message);
+  }
+  return reponse.json() as Promise<Utilisateur>;
+}
