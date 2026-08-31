@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException
 # d'environnement (et échouerait tôt si une valeur requise manquait plus tard).
 from app.config import settings
 from app.db import connect, ensure_schema
+from app.rag.charger_noyau import charger_si_vide
 from app.rag.router import router as rag_router
 from app.llm.router import router as llm_router
 from app.moderation.router import router as moderation_router
@@ -29,18 +30,27 @@ app = FastAPI(title="FactArena AI Service")
 
 @app.on_event("startup")
 def preparer_base() -> None:
-    """Crée le schéma vectoriel s'il n'existe pas encore.
+    """Prépare la base vectorielle : schéma, puis noyau de passages.
 
-    Il n'était créé que par les scripts d'ingestion. Sur une machine qui vient
-    de cloner le dépôt, la table n'existait donc pas : la recherche levait une
-    exception et /rag/ask répondait 503, ce qui faisait croire à une panne du
-    service alors qu'il lui manquait seulement sa base.
+    Le schéma n'était créé que par les scripts d'ingestion. Sur une machine qui
+    venait de cloner le dépôt la table n'existait pas, la recherche levait une
+    exception et /rag/ask répondait 503 — ce qui ressemblait à une panne alors
+    qu'il manquait seulement la base.
 
-    L'index reste vide tant qu'on n'a pas lancé une ingestion, mais une
-    recherche sans résultat vaut mieux qu'une erreur.
+    On charge ensuite le noyau livré avec le dépôt, vecteurs déjà calculés :
+    le bot peut citer ses sources dès le premier démarrage, sans appel à
+    Mistral ni attente.
     """
     try:
         ensure_schema()
+        # Noyau livré avec le dépôt : sans lui l'index est vide et le bot
+        # répond sans jamais citer de source. Ne fait rien si la table est
+        # déjà peuplée, donc sans effet sur une machine qui a ingéré.
+        inseres = charger_si_vide()
+        if inseres:
+            logging.getLogger("uvicorn.error").info(
+                "Index vectoriel initialisé avec %d passages livrés.", inseres
+            )
     except Exception as erreur:
         # Le service doit démarrer même si Postgres n'est pas encore prêt :
         # le healthcheck et la modération n'ont pas besoin du vectoriel.
