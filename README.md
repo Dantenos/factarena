@@ -282,56 +282,51 @@ history computed from the bet ledger.
 
 ## Individual Contributions
 
-Reconstructed from the git history of `main` (`git shortlog -sn origin/main`, and
-`git log --author=… --name-only` per scope). Each member should extend their own paragraph
-with the parts a diff cannot show.
+Written from the git history of `main`; every difficulty mentioned is traceable in the
+repository. Each member should extend their own paragraph with what a diff cannot show.
 
-### `slario` — DevOps, PM
-27 commits. Owns `docker-compose.yml`, the nginx configuration and TLS certificates, the
-GitHub Actions workflows and the container entrypoints. Built the ELK logging stack
-(Elasticsearch, Logstash, Kibana with its certificate generator and security settings),
-then removed it once we established that `podman`, which the school machines use, refuses
-to *create* a container declaring the `gelf` log driver — the stack could not start at all
-during an evaluation. Also solved two problems specific to the 42 machines: the `chown` in
-the images failed on the school's filesystem, and port 443 is not available to a student, so
-nginx publishes 8443 instead. Reverted PR #6 when it broke the stack for everyone.
+**`slario` — DevOps, PM · 27 commits.** Owns `docker-compose.yml`, nginx and its TLS
+certificates, the container entrypoints and the GitHub Actions workflows. Built the complete
+ELK logging stack over two weeks — Logstash, index retention, automatic certificate
+generation, SSL between every component — then removed it by pull request once we established
+that `podman`, which the school machines run, refuses to even *create* a container declaring
+the `gelf` log driver: the stack could not have started during an evaluation. Also fixed two
+problems specific to the 42 machines, in three successive attempts: the `chown` in the images
+fails on the school filesystem, and port 443 is privileged, so nginx publishes 8443.
 
-### `alaroque` — Back-end core
-13 commits, the largest single addition to `backend/`. Wrote almost the whole NestJS
-application: Prisma schema and its six migrations, email/password authentication with bcrypt
-and the JWT strategy, the 42 OAuth strategy, rooms and their server-side presence, the
-round state machine, the betting and clip-vote modules, the accuracy-race settlement as one
-atomic transaction, the idempotent credit ledger, the statistics and leaderboard module, the
-claims CRUD, the Socket.IO gateway and its ten events, and the backend test suite. Also
-wrote the relay that lets the front reach the AI service through NestJS only, so
-authentication and rate limiting stay in one place.
+**`alaroque` — Back-end core · 13 commits.** Wrote essentially the whole NestJS application:
+database schema and migrations, email/password authentication, 42 OAuth, the
+server-authoritative game loop and the JWT-authenticated Socket.IO gateway, rooms and
+presence, the betting module with server-side stake and balance validation, the atomic
+settlement, the credit ledger, statistics and leaderboard, and the relay that keeps every AI
+call behind NestJS so authentication and rate limiting stay in one place. Two commits are
+explicit security-hardening passes after review. Also the person who merged most pull
+requests into `main`.
 
-### `elanteno` — Tech Lead / Architect, AI service
-38 commits, the largest contributor by volume, mostly under `ai-service/app/rag/`. Built the
-FastAPI service: the pgvector schema and its HNSW index, embedding through `mistral-embed`,
-retrieval, SSE streaming for both the RAG and the free-form LLM surfaces, the moderation
-policy on top of Mistral's endpoint, and the rate limiter. Assembled the game's content: the
-ingestion pipelines from the Google Fact Check Tools API, INSEE, Eurostat, the World Bank
-and Wikipedia, plus the hand-written claim sets, and the curation loop (in-game reporting,
-sorting rounds, duration filtering, Theora-to-WebM conversion after Chrome dropped Theora in
-v123). Exported the corpus and the pre-computed vector index into the repository so a fresh
-clone plays and cites sources without any ingestion run. On the front, wired the pages to the
-real API (auth context, HTTP client, room screen, video player), added the friends screen and
-the responsive pass.
+**`elanteno` — Tech Lead / Architect, AI · 38 commits.** Built the FastAPI service: pgvector
+schema and HNSW index, embeddings, retrieval, SSE streaming for the RAG and free-form LLM
+surfaces, the moderation policy on top of Mistral, and the rate limiter. Assembled and
+curated the game's content from the Google Fact Check Tools API, INSEE, Eurostat, the World
+Bank and Wikipedia. Three problems shaped that work: Chrome dropped Theora in v123, silently
+breaking every Wikimedia `.ogv` clip; Facebook embeds render `/videos/` but not `/posts/`;
+and the corpus lived only in a local database, so a fresh clone had nothing to play — it is
+now exported to the repository with its pre-computed vectors. On the front, wired the pages
+to the real API and added the friends screen, the match history, the OAuth callback and the
+responsive pass.
 
-### `krfranco` — Front-end UI, Product Owner
-13 commits. Owns the visual identity: the Tailwind theme and colour tokens in `index.css`,
-the shared layout, and the layouts of the home, login, profile and lobby pages. Defined the
-component vocabulary (`button-blue-d`, `button-red-l`, the card and panel shapes) that the
-rest of the front reuses, which is why later screens could be added without inventing new
-styles.
+**`krfranco` — Front-end UI, Product Owner · 13 commits.** Owns the visual identity: the
+Tailwind theme and colour tokens, the shared layout, and the home, login, profile and lobby
+pages. Defined the component vocabulary — the button, card and panel classes — that every
+screen added later reuses, which is why the friends page, the match history and the OAuth
+callback needed no new styles. The visual pass was delivered before the API existed, with the
+buttons left to be wired with the back-end.
 
-### `oztozdem` — Front-end real-time and UX
-8 commits on the feature branch, one merged into `main`. Built the room screen and its
-components from the design mock-up: the chat panel with per-author colouring and the
+**`oztozdem` — Front-end real-time and UX · 8 commits.** Built the room screen and its
+components from the design mock-up: the chat panel with per-author colouring and its
 moderation badge, the betting panel, the statistics bar, the clip progress bar, the results
-reveal, and the video player. Also wrote `mocks/gameData.ts`, the shared data shapes that
-let the room UI be built and reviewed before the WebSocket contract was final.
+reveal and the video player. Also wrote `mocks/gameData.ts`, the shared data shapes — a
+deliberate call that let the room UI be built and reviewed before the WebSocket contract was
+settled, at the cost of a long-lived branch that had to absorb `main` repeatedly.
 
 ## Resources
 
