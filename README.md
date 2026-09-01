@@ -56,6 +56,12 @@ Key features:
   everything (build included) happens inside the containers.
 - A `.env` file at the root — copy `.env.example` and fill in the values
   (never commit `.env`, it is git-ignored)
+- For the 42 login button: an OAuth application created on
+  `profile.intra.42.fr/oauth/applications/new`, with `public` as its only scope and
+  `https://localhost:8443/api/auth/42/callback` as its redirect URI — it must match to the
+  character, port included. Its UID and secret go into `FORTYTWO_CLIENT_ID` and
+  `FORTYTWO_CLIENT_SECRET`. Without them the button answers a clean 503 and the rest of the
+  application keeps working.
 
 ### Run (production — this is what a grader runs)
 ```bash
@@ -228,7 +234,7 @@ for the audited rationale and per-module subject references.
 | LLM interface (streaming) | Major | 2 | elanteno | Done |
 | Web-based game (live fact-check arena) | Major | 2 | alaroque, oztozdem, elanteno | Done — **needs staff validation** |
 | ORM (Prisma) | Minor | 1 | alaroque | Done |
-| OAuth 2.0 (42) | Minor | 1 | alaroque | Code done — needs the 42 API credentials in `.env` |
+| OAuth 2.0 (42) | Minor | 1 | alaroque, elanteno | Done |
 | AI content moderation | Minor | 1 | elanteno, alaroque | Done |
 | Game statistics & match history | Minor | 1 | alaroque, elanteno | Done |
 
