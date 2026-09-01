@@ -207,6 +207,7 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 | Profile & stats | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload |
 | Friends | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
 | Playable clip corpus | 87 clips with a playable video, 72 of them with their reveal explanation, all shipped in the seed |
+| Responsive layout | Every page adapts from 320 px upwards: the multi-column grids stack, the navigation wraps, and the room's chat moves below the video. Verified with no element overflowing the viewport at 320, 390, 768 and 1024 px. |
 
 ## Modules
 

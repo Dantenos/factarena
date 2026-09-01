@@ -206,7 +206,167 @@ Le `-v` supprime les volumes : comptes, salons **et corpus de clips**. Il faut
 ensuite relancer les scripts d'ingestion. À n'utiliser qu'en connaissance de
 cause.
 
-Pour ne vider que les parties en gardant le corpus :
+Pour ne vider que les parties en gardant le corpus (voir plus bas).
+
+---
+
+## Vérifications d'évaluation
+
+Les commandes qui prouvent chaque exigence du sujet, dans l'ordre où on les
+passe. Chacune indique ce qu'elle doit renvoyer.
+
+### Démarrage et services
+
+```bash
+docker compose down -v && docker compose up --build   # départ à froid, efface la base
+docker compose ps                                     # 5 services, tous healthy
+```
+
+### HTTPS et points d'entrée
+
+```bash
+curl -sk -o /dev/null -w '%{http_code}\n' https://localhost:8443/            # 200
+curl -sk https://localhost:8443/api/health                                   # {"status":"ok"}
+curl -s  -o /dev/null -w '%{http_code}\n' http://localhost:8443/ 2>/dev/null # rien en clair
+```
+
+### Validation des entrées
+
+Côté back, en contournant le front. Doit répondre 400 sans créer le compte :
+
+```bash
+curl -sk -X POST https://localhost:8443/api/auth/register \
+  -H 'Content-Type: application/json' -d '{"email":"pasunemail","password":"a"}'
+```
+
+Le `ValidationPipe` global est en `whitelist` + `forbidNonWhitelisted` : un champ
+non déclaré dans le DTO fait aussi échouer la requête.
+
+```bash
+curl -sk -X POST https://localhost:8443/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"a@b.co","password":"Password123!","role":"ADMIN"}'   # 400
+```
+
+Les événements WebSocket ne passent pas par ce pipe : ils sont validés à la main
+dans `backend/src/realtime/realtime.gateway.ts` (longueur du message, type du
+vote, format CUID des identifiants).
+
+### Mots de passe
+
+```bash
+docker compose exec -T backend node -e '
+const {PrismaClient}=require("@prisma/client");const p=new PrismaClient();
+p.user.findFirst({select:{passwordHash:true}}).then(u=>{
+  console.log(u.passwordHash);                    // $2b$12$... sel inclus
+}).finally(()=>p.$disconnect());'
+```
+
+### Services IA
+
+```bash
+docker compose exec -T ai-service python -c "
+import httpx
+print(httpx.post('http://localhost:8000/moderation/check',
+      json={'message':'Bonjour'}, timeout=60).json()['action'])          # allow
+print(httpx.post('http://localhost:8000/moderation/check',
+      json={'message':'I will find you and kill you'}, timeout=60).json()['action'])  # delete
+"
+```
+
+RAG : la réponse commence par un événement `sources` contenant des URL, puis les
+tokens arrivent un par un.
+
+```bash
+docker compose exec -T ai-service python -c "
+import httpx
+r=httpx.post('http://localhost:8000/rag/ask',
+             json={'question':'Quelle est la population de la France ?'}, timeout=90)
+print(r.text[:400])"
+```
+
+LLM libre, même protocole SSE sans récupération de sources. Le limiteur est à 5
+appels par 30 s (`LLM_RATE_MAX`, `LLM_RATE_WINDOW`) : six appels d'affilée
+déclenchent un 429.
+
+```bash
+docker compose exec -T ai-service python -c "
+import httpx
+for i in range(6):
+    r=httpx.post('http://localhost:8000/llm/chat', json={'message':'test'}, timeout=60)
+    print(i, r.status_code)"
+```
+
+### Deux joueurs simultanés
+
+Deux navigateurs (ou une fenêtre privée), deux comptes, le même salon. Voter en
+sens opposé sur chaque clip.
+
+L'invariant à vérifier : chaque clip n'ayant qu'une bonne réponse, la somme des
+deux scores doit valoir exactement le nombre de clips, et le pot doit être
+conservé — ce que l'un perd, l'autre le gagne. Un écart signalerait une
+condition de course dans le règlement de la manche.
+
+Après la manche, le grand livre le confirme :
+
+```bash
+docker compose exec -T backend node -e '
+const {PrismaClient}=require("@prisma/client");const p=new PrismaClient();
+p.transaction.findMany({orderBy:{createdAt:"desc"},take:6,
+  select:{amount:true,kind:true,referenceId:true}})
+ .then(t=>{console.log(t); console.log("somme:",t.reduce((a,b)=>a+b.amount,0));})
+ .finally(()=>p.$disconnect());'
+```
+
+### Responsive
+
+`resize_window` est sans effet si la fenêtre est maximisée. On charge chaque
+route dans une iframe étroite de la même origine — les media queries y répondent
+à la largeur de l'iframe — et on compare le bord droit de chaque élément au
+viewport. Le `overflow-x: hidden` du `body` fausse `scrollWidth`, d'où la mesure
+élément par élément. Dans la console Chrome :
+
+```js
+const f = document.createElement('iframe');
+f.width = 320; f.height = 800; f.src = '/'; document.body.appendChild(f);
+await new Promise(r => f.onload = r);
+const d = f.contentDocument, W = d.documentElement.clientWidth;
+[...d.querySelectorAll('body *')]
+  .filter(e => { const r = e.getBoundingClientRect(); return r.width && r.right > W + 1; })
+  .map(e => e.tagName + ' ' + e.className);        // doit être vide
+```
+
+### Console
+
+Parcourir `/`, `/login`, `/play`, `/profile`, `/friends`, `/privacy`, `/terms`
+et un salon, onglet Console ouvert, en incluant les états : recherche d'ami,
+ajout, vote, fin de manche. Rien ne doit s'afficher.
+
+### Git
+
+```bash
+git shortlog -sn origin/main        # commits par auteur
+```
+
+### Corpus livré avec le dépôt
+
+Une base fraîchement clonée doit contenir les clips et l'index RAG sans lancer
+le moindre script d'ingestion.
+
+```bash
+docker compose exec -T ai-service python - <<'EOF'
+from app.db import connect
+with connect() as c, c.cursor() as cur:
+    cur.execute('SELECT count(*) FROM "Claim" WHERE "mediaRef" IS NOT NULL')
+    print("clips avec vidéo :", cur.fetchone()[0])
+    cur.execute("SELECT count(*) FROM rag.documents")
+    print("passages RAG     :", cur.fetchone()[0])
+EOF
+```
+
+---
+
+## Vider les parties en gardant le corpus
 
 ```bash
 docker compose exec -T ai-service python - <<'EOF'
