@@ -13,6 +13,11 @@ interface ChatProps {
   onSendMessage?: (content: string) => void;
 }
 
+// Longueur maximale d'un message, alignée sur la limite du serveur. Le sujet
+// exige que toute saisie soit validée des deux côtés : sans borne ici, un
+// message trop long partait et se faisait refuser sans que rien ne l'indique.
+const MAX_MESSAGE = 1000;
+
 // Palette cyclique utilisée pour distinguer visuellement les auteurs.
 const AUTHOR_COLORS = ["text-blue-400", "text-emerald-400", "text-amber-400", "text-pink-400", "text-purple-400"];
 
@@ -34,8 +39,13 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
   // Envoie le message tapé au parent (via onSendMessage) et vide le champ.
   // Ignore les messages vides ou uniquement composés d'espaces.
   function handleSend() {
-    if (!draft.trim()) return;
-    onSendMessage?.(draft.trim());
+    const contenu = draft.trim();
+    // Même borne que le gateway (realtime.gateway.ts) : au-delà il rejette le
+    // message, et le joueur n'en verrait rien. On teste ici aussi plutôt que de
+    // se reposer sur le seul maxLength, qui ne couvre pas un collage tronqué
+    // suivi d'un envoi programmatique.
+    if (!contenu || contenu.length > MAX_MESSAGE) return;
+    onSendMessage?.(contenu);
     setDraft("");
   }
 
@@ -81,6 +91,7 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
           // L'assistant ne se déclenche que sur le préfixe @bot (ou /ask), et
           // rien ne l'indiquait : on pouvait lui écrire sans jamais obtenir de
           // réponse, en croyant qu'il était cassé. Le placeholder le dit.
+          maxLength={MAX_MESSAGE}
           placeholder="Écris un message… ou @bot pour interroger l'IA"
           // min-w-0 : un champ texte a une largeur intrinsèque d'environ 220 px
           // que flex-1 seul ne fait pas céder. Sur un écran de 320 px, le bouton
