@@ -43,6 +43,26 @@ docker compose logs backend --since 3m | grep -iE "error TS|Nest can't resolve"
 > `https://localhost:8443`. Le certificat est auto-signé : Chrome affiche un
 > avertissement, c'est normal en local.
 
+Après avoir modifié le `.env` :
+
+```bash
+docker compose up -d --force-recreate backend
+```
+
+`restart` ne suffit pas. Les variables d'environnement sont figées à la création
+du conteneur : un simple redémarrage relance l'ancienne configuration, et on
+cherche longtemps pourquoi la nouvelle valeur n'est pas prise en compte. Pour
+vérifier qui a raison du fichier ou du conteneur :
+
+```bash
+stat -c '%y' .env
+docker inspect -f '{{.Created}}' "$(docker compose ps -q backend)"
+```
+
+Trois variables se réfèrent à l'URL publique et doivent toutes porter le port
+8443 : `FORTYTWO_CALLBACK_URL`, `FRONTEND_URL`, et le « Redirect URI » déclaré
+sur l'intranet 42.
+
 ---
 
 ## Vérifier les points d'entrée
