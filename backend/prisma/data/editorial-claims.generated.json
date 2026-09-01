@@ -1,81 +1,5 @@
 [
   {
-    "sourceKey": "snopes:b4e70530e10c",
-    "text": "A video authentically shows intensive care unit nurse Alex Pretti reading a final salute at a hospital for a veteran who just died.",
-    "truthLabel": "TRUE",
-    "category": "confirme_viral",
-    "sourceUrl": "https://www.snopes.com/fact-check/alex-pretti-veteran-video/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fcnn%2Fvideos%2Fminneapolis-resident-mac-randolph-tells-cnns-anderson-cooper-why-he-posted-the-n&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne une vidéo montrant Alex Pretti, une infirmière de soins intensifs, lisant un dernier salut dans un hôpital pour un vétéran décédé. La réponse est donc : **Impossible à vérifier avec les passages fournis**.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.20minutes.fr/monde/3252807-20220315-guerre-ukraine-zelensky-publie-video-truquee-visite-soldats-blesses-non",
-          "title": "Dans une vidéo d'une visite d'hôpital publiée le 13 mars, Volodymyr Zelensky est accompagné d'Inna Derusova, décédée le 26 février"
-        },
-        {
-          "url": "https://www.tf1info.fr/international/guerre-en-ukraine-cette-video-montre-t-elle-des-soldats-russes-piller-le-corps-d-un-blesse-2257507.html",
-          "title": "Cette vidéo montre des soldats russes piller le corps d'un blessé"
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/240719-99-785012",
-          "title": "Une immense armée de vétérans est en train de se constituer aux Etats-Unis face à d’éventuels troubles civils après la tentative d’assassinat de Trump."
-        },
-        {
-          "url": "https://www.tf1info.fr/international/video-guerre-ukraine-russie-fake-news-non-cette-video-ne-montre-pas-un-faux-cadavre-fumer-une-cigarette-2243154.html",
-          "title": "Cette vidéo montre de fausses victimes mortes en Ukraine"
-        },
-        {
-          "url": "https://factuel.afp.com/doc.afp.com.326Q7U2",
-          "title": "La vidéo du président ukrainien Volodymyr Zelensky dans un hôpital avec des soldats blessés, diffusée le 13 mars, a été pré-enregistrée, puisqu'on y voit une médecin décédée le 26 février"
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/220421-99-988242/",
-          "title": "Une vidéo montre des personnes faisant semblant d'être mortes en Ukraine."
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "snopes:3a6d8f38e80a",
-    "text": "A video clip shows a wind turbine exploding during high winds.",
-    "truthLabel": "TRUE",
-    "category": "confirme_viral",
-    "sourceUrl": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/sbCs7ZQDKoM",
-    "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne une vidéo montrant une éolienne explosant lors de vents violents. Je ne peux donc pas confirmer ou infirmer cette affirmation.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne traite de cette affirmation spécifique concernant une éolienne explosant par grand vent.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
-          "title": "Attentats du 11 septembre 2001"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
-          "title": "Attentats du 11 septembre 2001"
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/230215-99-603149",
-          "title": "Cette vidéo montre un objet dans le ciel juste avant les tremblements de terre en Turquie."
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/230221-99-682622",
-          "title": "Cette vidéo montre une expérience américaine sur le tremblement de terre avec des bombes à fosse."
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
-          "title": "Attentats du 11 septembre 2001"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
-          "title": "Attentats du 11 septembre 2001"
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "snopes-com:3a6d8f38e80a",
     "text": "A video clip shows a wind turbine exploding during high winds.",
     "truthLabel": "TRUE",
@@ -114,77 +38,39 @@
     }
   },
   {
-    "sourceKey": "snopes:d94cb0a33f20",
-    "text": "A video recorded in February 2022 shows a snake slithering in an overhead light above passengers on an AirAsia flight over Malaysia.",
+    "sourceKey": "snopes:3a6d8f38e80a",
+    "text": "A video clip shows a wind turbine exploding during high winds.",
     "truthLabel": "TRUE",
     "category": "confirme_viral",
-    "sourceUrl": "https://www.snopes.com/fact-check/snake-on-plane-airasia/",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/ubLRB7tb78Q",
+    "sourceUrl": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/sbCs7ZQDKoM",
     "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne une vidéo de serpent dans une lumière de plafond d'un vol AirAsia en février 2022. Je ne peux donc pas confirmer ou infirmer cette affirmation.",
+      "verdictText": "Aucun des passages fournis ne mentionne une vidéo montrant une éolienne explosant lors de vents violents. Je ne peux donc pas confirmer ou infirmer cette affirmation.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne traite de cette affirmation spécifique concernant une éolienne explosant par grand vent.",
       "confidence": 0.5,
       "citations": [
         {
-          "url": "https://www.snopes.com/fact-check/kindersnatchen/",
-          "title": "Golden Eagle Snatches Kid | Snopes.com"
+          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
+          "title": "Attentats du 11 septembre 2001"
         },
         {
-          "url": "https://www.vice.com/en/article/military-sim-developer-tired-of-its-game-being-used-to-fake-war-footage/",
-          "title": "Military Sim Developer Tired of Its Game Being Used to Fake War Footage"
+          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
+          "title": "Attentats du 11 septembre 2001"
         },
         {
           "url": "https://dpa-factchecking.com/belgium/230215-99-603149",
           "title": "Cette vidéo montre un objet dans le ciel juste avant les tremblements de terre en Turquie."
         },
         {
-          "url": "https://www.vice.com/en/article/military-sim-developer-tired-of-its-game-being-used-to-fake-war-footage/",
-          "title": "Military Sim Developer Tired of Its Game Being Used to Fake War Footage"
+          "url": "https://dpa-factchecking.com/belgium/230221-99-682622",
+          "title": "Cette vidéo montre une expérience américaine sur le tremblement de terre avec des bombes à fosse."
         },
         {
-          "url": "https://www.snopes.com/fact-check/kindersnatchen/",
-          "title": "Golden Eagle Snatches Kid | Snopes.com"
+          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
+          "title": "Attentats du 11 septembre 2001"
         },
         {
-          "url": "https://factuel.afp.com/doc.afp.com.36EG4DK",
-          "title": "Cette vidéo montre le crash du 9 août 2024 au Brésil"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "snopes:eb7c1c1559c4",
-    "text": "A video shared on social media genuinely showed a once-captive bear that continued to walk in a circle shaped like its former pen even after it was released.",
-    "truthLabel": "TRUE",
-    "category": "confirme_viral",
-    "sourceUrl": "https://www.snopes.com/fact-check/bear-circling-imaginary-cage/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fm.facebook.com%2FThe-Lab-114802393726584%2Fvideos%2Fwhy-is-this-bear-walking-in-circles-even-though-he-has-all-of-this-land-to-roam-&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Les passages fournis ne contiennent aucune information concernant une vidéo montrant un ours captif qui continue à marcher en cercle après sa libération. Je ne peux donc pas confirmer ou infirmer cette affirmation.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.snopes.com/fact-check/kindersnatchen/",
-          "title": "Golden Eagle Snatches Kid | Snopes.com"
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/230705-99-297262",
-          "title": "En France, des manifestants ont relâché des animaux sauvages d'un zoo."
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Domestication",
-          "title": "Domestication"
-        },
-        {
-          "url": "https://www.tf1info.fr/environnement-ecologie/verif-attention-a-ces-videos-de-sauvetages-d-orques-qui-cartonnent-sur-tiktok-2348856.html",
-          "title": "Des vidéos de sauvetage d'orques montrent comment les libérer des bernacles"
-        },
-        {
-          "url": "https://www.tf1info.fr/sciences-et-innovation/verif-video-intelligence-artificielle-des-animaux-geles-ont-ils-ete-sauves-a-coups-de-marteau-2417277.html",
-          "title": "Des animaux gelés sont libérés à coups de marteau"
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/250729-99-588898",
-          "title": "Des milliers d'animaux fuient soudainement le parc Yellowstone."
+          "url": "https://fr.wikipedia.org/wiki/Attentats_du_11_septembre_2001",
+          "title": "Attentats du 11 septembre 2001"
         }
       ]
     }
@@ -299,44 +185,6 @@
         {
           "url": "https://www.vice.com/en/article/military-sim-developer-tired-of-its-game-being-used-to-fake-war-footage/",
           "title": "Military Sim Developer Tired of Its Game Being Used to Fake War Footage"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "snopes-com:74e410dc7d3f",
-    "text": "A video shows a sick, possibly starving polar bear on Baffin Island in the Canadian Arctic.",
-    "truthLabel": "TRUE",
-    "category": "confirme_viral",
-    "sourceUrl": "https://www.snopes.com/fact-check/starving-polar-bear-viral/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fpaulnicklenphoto%2Fvideos%2F10155204590778364&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Les passages fournis ne mentionnent pas Baffin Island ni de cas spécifique de ours polaire malade ou affamé sur cette île. Je ne peux donc pas confirmer ou infirmer le contenu de cette vidéo.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inuits",
-          "title": "Inuits"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inuits",
-          "title": "Inuits"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Islande",
-          "title": "Islande"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inuits",
-          "title": "Inuits"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inuits",
-          "title": "Inuits"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inuits",
-          "title": "Inuits"
         }
       ]
     }
@@ -608,82 +456,6 @@
     }
   },
   {
-    "sourceKey": "le-monde:c62166035e98",
-    "text": "Cette vidéo montre-t-elle une \"invasion de migrants\" dans une gare de Paris ?",
-    "truthLabel": "FALSE",
-    "category": "societe_fr",
-    "sourceUrl": "https://www.lemonde.fr/les-decodeurs/article/2018/03/05/un-clip-anti-immigration-diffuse-dans-le-monde-entier-manipule-des-images-tournees-a-paris_5265980_4355770.html",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2F737557252966261%2Fvideos%2F1616530531735591&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Les passages fournis ne mentionnent pas cette affirmation. Je ne peux donc pas confirmer ou infirmer cette affirmation.\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo a été vérifiée et jugée fausse par TF1 Info le 2025-09-22.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.tf1info.fr/societe/attention-a-cette-video-detournee-qui-pretend-montrer-une-femme-harcelee-par-des-migrants-en-france-2320730.html",
-          "title": "Une vidéo virale montrerait une jeune femme en France, harcelée dans un parc par deux étrangers"
-        },
-        {
-          "url": "https://defacto-observatoire.fr/Medias/Factuel/Fact-checks/Non-cette-attaque-d-un-commissariat-de-police-n-a-pas-ete-commise-par-des-migrants-a-Marseille/",
-          "title": "Cette vidéo montre des migrants qui attaquent la police à Marseille"
-        },
-        {
-          "url": "https://www.20minutes.fr/societe/4152392-20250510-video-montre-migrants-train-attaquer-marines-americains",
-          "title": "Cette vidéo montre des migrants en train d’attaquer des marines américains"
-        },
-        {
-          "url": "https://www.tf1info.fr/societe/verif-cette-video-virale-montre-t-elle-vraiment-un-delinquant-se-faire-humilier-dans-le-metro-parisien-2356790.html",
-          "title": "Une vidéo virale sur X montre une \"racaille\" se faire \"humilier\", éjectée à coup de pied d'un wagon du métro parisien"
-        },
-        {
-          "url": "https://www.20minutes.fr/societe/4173993-20250922-video-migrants-clandestins-musulmans-propalestiniens-menacant-france-authentique",
-          "title": "Cette vidéo de migrants clandestins musulmans et propalestiniens menaçant la France est-elle authentique ?"
-        },
-        {
-          "url": "https://www.tf1info.fr/international/verif-cette-video-montre-t-elle-vraiment-un-afflux-de-refugies-palestiniens-arrivant-en-france-au-titre-du-droit-d-asile-guerre-israel-hamas-gaza-2383421.html",
-          "title": "Cette vidéo montre l'afflux de réfugiés gazaouis vers la France au titre du droit d'asile."
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "le-monde:99d2c1986998",
-    "text": "Le « pacte mondial pour des migrations sûres » va-t-il « vendre la France à l’ONU » ?",
-    "truthLabel": "FALSE",
-    "category": "societe_fr",
-    "sourceUrl": "https://www.lemonde.fr/les-decodeurs/article/2018/12/06/vendre-la-france-a-l-onu-de-donald-trump-aux-gilets-jaunes-l-itineraire-mondial-d-une-intox_5393268_4355770.html",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/1pqpP2pnDGM",
-    "verdict": {
-      "verdictText": "Les passages fournis ne mentionnent pas le « pacte mondial pour des migrations sûres » ni ne font référence à une éventuelle vente de la France à l'ONU. Je ne peux donc pas répondre à cette question avec les informations disponibles.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne le \"pacte mondial pour des migrations sûres\" ni ne permet d'évaluer son impact sur la souveraineté française.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/Organisation_des_Nations_unies",
-          "title": "Organisation des Nations unies"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Conseil_de_sécurité_des_Nations_unies",
-          "title": "Conseil de sécurité des Nations unies"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Rassemblement_national",
-          "title": "Rassemblement national"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Sénégal",
-          "title": "Sénégal"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/France",
-          "title": "France"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Organisation_des_Nations_unies",
-          "title": "Organisation des Nations unies"
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "dpa-factchecking:81b97bac121b",
     "text": "Une église au Pays de Galles a été incendiée par deux migrants pakistanais.",
     "truthLabel": "FALSE",
@@ -760,82 +532,6 @@
     }
   },
   {
-    "sourceKey": "factcheck-org:91dc267624af",
-    "text": "During President Donald Trump's recent visit to London, a video clip with this caption was posted online: \"This massive pro-Trump rally happened today but the mainstream media won't report on it.\"",
-    "truthLabel": "FALSE",
-    "category": "trump_media",
-    "sourceUrl": "https://www.factcheck.org/2019/06/video-of-we-love-trump-chant-is-from-2018/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fjamesjohnson391%2Fvideos%2Fvb.100000392694057&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Les passages fournis ne contiennent aucune information concernant une visite récente de Donald Trump à Londres ou une vidéo d'un rassemblement pro-Trump dans cette ville. Je ne peux donc pas vérifier cette affirmation.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.tf1info.fr/international/verif-venezuela-donald-trump-relaie-une-fausse-video-de-foule-celebrant-la-chute-de-maduro-2417453.html",
-          "title": "Une vidéo de manifestations de Vénézuéliens partagée par Donald Trump"
-        },
-        {
-          "url": "https://www.tf1info.fr/international/verif-donald-trump-a-t-il-humilie-emmanuel-macron-devant-le-monde-entier-lors-du-sommet-sur-gaza-2400522.html",
-          "title": "Une vidéo montre Donald Trump humilier publiquement Emmanuel Macron lors du sommet sur Gaza"
-        },
-        {
-          "url": "https://factuel.afp.com/doc.afp.com.36DZ64T",
-          "title": "Des milliers de britanniques se sont réunis à Londres en soutien à Trump après son échange sur X avec Elon Musk"
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/250910-99-981933",
-          "title": "Donald Trump a déclaré que les personnes trans n'existent pas."
-        },
-        {
-          "url": "https://www.20minutes.fr/societe/4140873-20250227-oui-fausse-video-trump-train-embrasser-pieds-musk-projetee-administration-us",
-          "title": "Une fausse vidéo de Trump en train d’embrasser les pieds de Musk diffusée dans les locaux du HUD"
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/241104-99-924520",
-          "title": "Voilà ce que l'on peut voir comme affiches à New York après les commentaires de Joe Biden sur les électeurs de Donald Trump."
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "factly:7eecfc375c7a",
-    "text": "The viral video shows a recent attack Donald Trump during a public gathering, where he is slapped by a man.",
-    "truthLabel": "FALSE",
-    "category": "trump_media",
-    "sourceUrl": "https://factly.in/the-viral-video-of-trump-getting-slapped-in-a-public-event-is-edited-and-based-on-a-2016-rally-clip/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2F100015035859304%2Fvideos%2F600048993195985&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne une vidéo récente d'une attaque contre Donald Trump lors d'une manifestation publique où il aurait été giflé. La réponse ne peut donc pas être déterminée à partir des éléments donnés.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne cette vidéo spécifique ou son authenticité.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.tf1info.fr/international/verif-donald-trump-a-t-il-humilie-emmanuel-macron-devant-le-monde-entier-lors-du-sommet-sur-gaza-2400522.html",
-          "title": "Une vidéo montre Donald Trump humilier publiquement Emmanuel Macron lors du sommet sur Gaza"
-        },
-        {
-          "url": "https://www.20minutes.fr/societe/4140873-20250227-oui-fausse-video-trump-train-embrasser-pieds-musk-projetee-administration-us",
-          "title": "Une fausse vidéo de Trump en train d’embrasser les pieds de Musk diffusée dans les locaux du HUD"
-        },
-        {
-          "url": "https://www.tf1info.fr/international/verif-venezuela-donald-trump-relaie-une-fausse-video-de-foule-celebrant-la-chute-de-maduro-2417453.html",
-          "title": "Une vidéo de manifestations de Vénézuéliens partagée par Donald Trump"
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/240719-99-785012",
-          "title": "Une immense armée de vétérans est en train de se constituer aux Etats-Unis face à d’éventuels troubles civils après la tentative d’assassinat de Trump."
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/250910-99-981933",
-          "title": "Donald Trump a déclaré que les personnes trans n'existent pas."
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/250612-99-142247",
-          "title": "Aux Etats-Unis, des militants s'en prennent aux policiers, comme on peut le voir sur cette vidéo."
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "india-today:9b9c75766133",
     "text": "This video shows Donald Trump promising to get former Pakistan PM Imran Khan out of jail after winning the elections.",
     "truthLabel": "FALSE",
@@ -907,82 +603,6 @@
         {
           "url": "https://fr.wikipedia.org/wiki/Greenpeace",
           "title": "Greenpeace"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "boom-fact-check:077f2a3a356d",
-    "text": "Video shows US President Donald Trump alleging that the RSS is inciting violence in Arunachal Pradesh using religion.",
-    "truthLabel": "FALSE",
-    "category": "trump_media",
-    "sourceUrl": "https://www.boomlive.in/fact-check/viral-video-us-president-donald-trump-speech-rss-arunachal-pradesh-riots-claim-fact-check-27982",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Flelien.khongsai.35%2Fvideos%2F591796843862317&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Les passages fournis ne contiennent aucune information concernant une vidéo où Donald Trump affirmerait que le RSS incite à la violence dans l'Arunachal Pradesh en utilisant la religion. Je ne peux donc pas vérifier cette affirmation.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.tf1info.fr/international/verif-venezuela-donald-trump-relaie-une-fausse-video-de-foule-celebrant-la-chute-de-maduro-2417453.html",
-          "title": "Une vidéo de manifestations de Vénézuéliens partagée par Donald Trump"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inde",
-          "title": "Inde"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Inde",
-          "title": "Inde"
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/240719-99-785012",
-          "title": "Une immense armée de vétérans est en train de se constituer aux Etats-Unis face à d’éventuels troubles civils après la tentative d’assassinat de Trump."
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/250910-99-981933",
-          "title": "Donald Trump a déclaré que les personnes trans n'existent pas."
-        },
-        {
-          "url": "https://dpa-factchecking.com/belgium/240322-99-432263",
-          "title": "Les médias russes ont publié une vidéo montrant à quoi ressemblerait une attaque nucléaire contre les Etats-Unis."
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "factly:fce18bc35521",
-    "text": "Viral video shows Donald Trump calling the people belonging to the Knanaya group ‘the smartest people’ he knows",
-    "truthLabel": "FALSE",
-    "category": "trump_media",
-    "sourceUrl": "https://factly.in/a-deepfake-video-of-trump-is-shared-with-false-claims-of-him-calling-the-knanaya-people-smartest/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2F100021462766298%2Fvideos%2F2119103761839080&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne une vidéo virale où Donald Trump qualifierait les membres du groupe Knanaya de « personnes les plus intelligentes » qu'il connaisse. Je ne peux donc pas confirmer ou infirmer cette affirmation.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://www.tf1info.fr/international/verif-venezuela-donald-trump-relaie-une-fausse-video-de-foule-celebrant-la-chute-de-maduro-2417453.html",
-          "title": "Une vidéo de manifestations de Vénézuéliens partagée par Donald Trump"
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/250910-99-981933",
-          "title": "Donald Trump a déclaré que les personnes trans n'existent pas."
-        },
-        {
-          "url": "https://www.20minutes.fr/monde/etats-unis/4214612-20260323-guerre-iran-donald-trump-menace-envahir-groenland-si-europeens-soutiennent-faux",
-          "title": "Donald Trump aurait écrit sur Truth Social : « Si nos soi-disants alliés de l'Otan s'obstinent à refuser d'aider au sujet de l'ouverture du détroit d'Ormuz, ce qu'ils pourraient faire simplement, rapi"
-        },
-        {
-          "url": "https://www.vice.com/en/article/military-sim-developer-tired-of-its-game-being-used-to-fake-war-footage/",
-          "title": "Military Sim Developer Tired of Its Game Being Used to Fake War Footage"
-        },
-        {
-          "url": "https://www.20minutes.fr/societe/4140873-20250227-oui-fausse-video-trump-train-embrasser-pieds-musk-projetee-administration-us",
-          "title": "Une fausse vidéo de Trump en train d’embrasser les pieds de Musk diffusée dans les locaux du HUD"
-        },
-        {
-          "url": "https://www.tf1info.fr/international/verif-donald-trump-a-t-il-humilie-emmanuel-macron-devant-le-monde-entier-lors-du-sommet-sur-gaza-2400522.html",
-          "title": "Une vidéo montre Donald Trump humilier publiquement Emmanuel Macron lors du sommet sur Gaza"
         }
       ]
     }
@@ -1186,44 +806,6 @@
     "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fteakayj%2Fvideos%2F836787905145781&show_text=false&width=560"
   },
   {
-    "sourceKey": "factly:adc4defac932",
-    "text": "Video shows a dog rescuing a baby under rubble.",
-    "truthLabel": "FALSE",
-    "category": "video_ia",
-    "sourceUrl": "https://factly.in/an-ai-generated-video-of-a-dog-rescuing-a-small-baby-affected-by-an-earthquake-is-being-shared-as-a-real-incident/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2F61562605273332%2Fvideos%2F1001961331268000&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne une vidéo montrant un chien sauvant un bébé sous les décombres. Je ne peux donc pas confirmer ou infirmer cette affirmation.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne cette affirmation spécifique.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://dpa-factchecking.com/belgium/241028-99-848753",
-          "title": "Cette vidéo montre en enfant coincé sous les décombres à Gaza."
-        },
-        {
-          "url": "https://www.snopes.com/fact-check/kindersnatchen/",
-          "title": "Golden Eagle Snatches Kid | Snopes.com"
-        },
-        {
-          "url": "https://www.tf1info.fr/international/verif-cette-video-d-une-alpiniste-qui-aurait-perdu-son-bebe-est-elle-credible-2401169.html",
-          "title": "Une vidéo montre une alpiniste creuser la neige après avoir perdu son bébé"
-        },
-        {
-          "url": "https://factuel.afp.com/doc.afp.com.33VH2KZ",
-          "title": "Un bébé sauvé après le tremblement de terre de septembre 2023 au Maroc"
-        },
-        {
-          "url": "https://dpa-factchecking.com/switzerland/230912-99-169283",
-          "title": "Cette vidéo montre un bâtiment s'effondrer suite au récent tremblement de terre au Maroc."
-        },
-        {
-          "url": "https://www.tf1info.fr/environnement-ecologie/verif-face-aux-incendies-des-animaux-en-reelle-detresse-mais-des-images-parfois-fausses-ou-detournees-2456603.html",
-          "title": "Un sauvetage d'un renardeau et sa mère en plein incendie"
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "video:2b40fe5f658eaae3",
     "text": "Cette vidéo montre des rafales de tirs en Ukraine",
     "truthLabel": "FALSE",
@@ -1273,44 +855,6 @@
         {
           "url": "https://www.20minutes.fr/monde/israel/4076370-20240215-guerre-israel-hamas-enfant-faussement-blesse-gaza-non-images-viennent-irak",
           "title": "Cette vidéo montrant la mise en scène d'un enfant blessé a été tournée par des Palestiniens à Gaza"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "video:a7fb39572dd5bc37",
-    "text": "Cette vidéo montre l'arrivée de la flottille pour la liberté à Gaza.",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-la-flottille-pour-gaza-est-elle-vraiment-arrivee-dans-l-enclave-palestinienne-palestine-israel-hamas-guerre-blocus-2397913.html",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FFRANCE24%2Fvideos%2Fjta-la-global-sumud-flottilla-quitte-le-port-de-tunis&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "Les passages fournis ne mentionnent **aucune information** concernant la flottille pour la liberté à Gaza. Je ne peux donc pas répondre à cette question.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne une vidéo ou une flottille pour la liberté à Gaza.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/Yasser_Arafat",
-          "title": "Yasser Arafat"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Yasser_Arafat",
-          "title": "Yasser Arafat"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Yasser_Arafat",
-          "title": "Yasser Arafat"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Appel_pour_une_trêve_civile",
-          "title": "Appel pour une trêve civile"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/1992",
-          "title": "1992"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Yasser_Arafat",
-          "title": "Yasser Arafat"
         }
       ]
     }
@@ -1375,58 +919,34 @@
     "truthLabel": "FALSE",
     "category": "viral_debunk",
     "sourceUrl": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/P9j1fQs0UL4"
-  },
-  {
-    "sourceKey": "video:336d659f779ed7d0",
-    "text": "Des images montrent Donald Trump, Nigel Farage ou les Island Boys avec Jeffrey Epstein",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-ces-fausses-images-generees-par-ia-qui-creent-la-confusion-autour-des-epstein-files-2423212.html",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fnigelfarageofficial%2Fvideos%2F25622897690713032&show_text=false&width=560"
-  },
-  {
-    "sourceKey": "video:58b6a7e6628bf333",
-    "text": "Des robots vont remplacer les policiers ?",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/by-the-web/4036460-20230512-etats-unis-non-robots-vont-encore-remplacer-policiers",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Ftemudjin.khan%2Fvideos%2F1373576583487314&show_text=false&width=560"
-  },
-  {
-    "sourceKey": "video:8845a79e3f99317a",
-    "text": "Des vidéos de sauvetage d'orques montrent comment les libérer des bernacles",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/environnement-ecologie/verif-attention-a-ces-videos-de-sauvetages-d-orques-qui-cartonnent-sur-tiktok-2348856.html",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fjerome.evangelio.984%2Fvideos%2F758754052387013&show_text=false",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/P9j1fQs0UL4",
     "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne des vidéos de sauvetage d'orques ou leur libération des bernacles. Je ne peux donc pas confirmer cette information.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne de vidéos de sauvetage d'orques ou de libération de bernacles.",
+      "verdictText": "D'après les passages fournis, **l'affirmation est fausse**.\n\nVerdict : Faux — jugé par TF1 Info le 2023-02-27.\nSource : [1]\n\nSecond avis de l'IA (sans sa source) : FAUX. Les sources fournies ne mentionnent aucune vidéo d'OVNI abattu en Pologne, et les affirmations similaires sont systématiquement jugées fausses.",
       "confidence": 0.5,
       "citations": [
         {
-          "url": "https://fr.wikipedia.org/wiki/Jacques-Yves_Cousteau",
-          "title": "Jacques-Yves Cousteau"
+          "url": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+          "title": "Cette vidéo montre un Ovni abattu en Pologne"
         },
         {
-          "url": "https://fr.wikipedia.org/wiki/Sommet_mondial_sur_le_développement_durable",
-          "title": "Sommet mondial sur le développement durable"
+          "url": "https://dpa-factchecking.com/belgium/230215-99-603149",
+          "title": "Cette vidéo montre un objet dans le ciel juste avant les tremblements de terre en Turquie."
         },
         {
-          "url": "https://fr.wikipedia.org/wiki/Greenpeace",
-          "title": "Greenpeace"
+          "url": "https://factuel.afp.com/doc.afp.com.36PC8B3",
+          "title": "Cette vidéo montre une manifestation contre le gouvernement polonais de fin novembre 2024"
         },
         {
-          "url": "https://fr.wikipedia.org/wiki/Greenpeace",
-          "title": "Greenpeace"
+          "url": "https://www.20minutes.fr/monde/etats-unis/4220892-20260506-etats-unis-videos-ovnis-elles-declassifiees-donald-trump-tout-fait",
+          "title": "Des vidéos d’ovnis déclassifiées par Trump"
         },
         {
-          "url": "https://fr.wikipedia.org/wiki/Greenpeace",
-          "title": "Greenpeace"
+          "url": "https://www.rtbf.be/article/vagues-de-drones-reperes-dans-le-new-jersey-ces-images-virales-d-ovnis-ne-sont-pas-reelles-11480554",
+          "title": "Plusieurs images représentant des OVNIS sont publiées en lien avec les observations de drones dans le New Jersey."
         },
         {
-          "url": "https://fr.wikipedia.org/wiki/Cuisine_médiévale",
-          "title": "Cuisine médiévale"
+          "url": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/le-vrai-du-faux-que-sont-les-points-lumineux-parfois-visibles-dans-le-ciel-la-nuit_5807483.html",
+          "title": "\"Je viens de voir passer des ovni qui traversaient le ciel. 16 points lumineux parfaitement alignés\""
         }
       ]
     }
@@ -1478,6 +998,14 @@
     }
   },
   {
+    "sourceKey": "video:c30753aef8d2fd93",
+    "text": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Froqia.rennes%2Fvideos%2F1505348536667503&show_text=false&width=560"
+  },
+  {
     "sourceKey": "video:9ae355916e4d689a",
     "text": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac",
     "truthLabel": "FALSE",
@@ -1511,52 +1039,6 @@
         {
           "url": "https://fr.wikipedia.org/wiki/Richard_Stallman",
           "title": "Richard Stallman"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "video:c30753aef8d2fd93",
-    "text": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Froqia.rennes%2Fvideos%2F1505348536667503&show_text=false&width=560"
-  },
-  {
-    "sourceKey": "video:439ed29f851c7fd3",
-    "text": "Le Qatar menace le monde de couper le gaz si les bombardements se poursuivent à Gaza",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/guerre-israel-hamas-le-qatar-menace-t-il-de-stopper-ses-exportations-de-gaz-en-soutien-a-gaza-2273402.html",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/2hR7MRSUprI",
-    "verdict": {
-      "verdictText": "D'après les passages fournis, il n'y a **aucune mention** d'une menace du Qatar de couper le gaz en cas de poursuite des bombardements à Gaza. La réponse est donc : **Non, les passages ne permettent pas de confirmer cette affirmation.**\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne une telle menace de la part du Qatar concernant une coupure de gaz en cas de bombardements à Gaza.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/Qatar",
-          "title": "Qatar"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Qatar",
-          "title": "Qatar"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Organisation_des_pays_exportateurs_de_pétrole",
-          "title": "Organisation des pays exportateurs de pétrole"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Qatar",
-          "title": "Qatar"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Qatar",
-          "title": "Qatar"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Arabie_saoudite",
-          "title": "Arabie saoudite"
         }
       ]
     }
@@ -1598,52 +1080,6 @@
         }
       ]
     }
-  },
-  {
-    "sourceKey": "video:64901b607b84d4dd",
-    "text": "Michel Cymès, Laurent Ournac, Michel Drucker, Faustine Bollaert ou Jean-Michel Cohen font la promotion de produits minceurs",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/societe/verif-des-videos-deepfakes-de-personnalites-promeuvent-des-produits-minceur-sur-facebook-en-toute-illegalite-arnaques-2338923.html",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fregimecohen%2Fvideos%2F1533429214233624&show_text=false&width=560",
-    "verdict": {
-      "verdictText": "D'après les passages fournis, **aucune mention** n'est faite de Michel Cymès, Laurent Ournac, Michel Drucker, Faustine Bollaert ou Jean-Michel Cohen en lien avec la promotion de produits minceurs.\n\n**Réponse :** Les passages ne permettent pas de confirmer ou d'infirmer cette affirmation.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne ces personnalités ni leur éventuelle promotion de produits minceurs.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/Élection_présidentielle_française_de_1974",
-          "title": "Élection présidentielle française de 1974"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Télévision",
-          "title": "Télévision"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Télévision",
-          "title": "Télévision"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Télévision",
-          "title": "Télévision"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Sexisme",
-          "title": "Sexisme"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Cancer",
-          "title": "Cancer"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "video:ed84a62190f49c33",
-    "text": "Plusieurs images représentant des OVNIS sont publiées en lien avec les observations de drones dans le New Jersey.",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.rtbf.be/article/vagues-de-drones-reperes-dans-le-new-jersey-ces-images-virales-d-ovnis-ne-sont-pas-reelles-11480554",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/IX_V-FmeSNA"
   },
   {
     "sourceKey": "video:8e2c61c52b8b5cee",
@@ -1700,58 +1136,12 @@
     "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FGnokobok%2Fvideos%2F1113300040849767&show_text=false"
   },
   {
-    "sourceKey": "video:fa82c854e8c0d302",
-    "text": "Une vidéo montrant de recentes manifestations à Madagascar ou Abidjan",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.78ZE3ZQ",
-    "mediaRef": "https://www.youtube-nocookie.com/embed/7Zja_Qv9ldU",
-    "verdict": {
-      "verdictText": "Aucun des passages fournis ne mentionne de manifestations récentes à Madagascar ou à Abidjan. Je ne peux donc pas confirmer ou infirmer la vidéo.",
-      "confidence": 0.5,
-      "citations": [
-        {
-          "url": "https://fr.wikipedia.org/wiki/1972",
-          "title": "1972"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Hongrie",
-          "title": "Hongrie"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Alger",
-          "title": "Alger"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Chili",
-          "title": "Chili"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Mai_68",
-          "title": "Mai 68"
-        },
-        {
-          "url": "https://fr.wikipedia.org/wiki/Afrique",
-          "title": "Afrique"
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "video:86b9994bf7e5a77b",
     "text": "Une vidéo montre une frappe iranienne sur la centrale nucléaire d'Haïfa",
     "truthLabel": "FALSE",
     "category": "viral_debunk",
     "sourceUrl": "https://factuel.afp.com/doc.afp.com.62UX9G3",
     "mediaRef": "https://www.youtube-nocookie.com/embed/N-0X6pSLs-s"
-  },
-  {
-    "sourceKey": "video:aed73ab1879b74ca",
-    "text": "Vladimir Poutine a insulté les électeurs français dans une vidéo",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Presidentielle-2022-Non-Vladimir-Poutine-n-a-pas-insulte-les-electeurs-francais-dans-cette-video/",
-    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FSPIEF%2Fvideos%2F408592069737967&show_text=false&width=560"
   },
   {
     "sourceKey": "wtf:69dfac6e9c2b162f",
@@ -1772,24 +1162,6 @@
     }
   },
   {
-    "sourceKey": "wtf:4f25f47dacb68a87",
-    "text": "Aucune photographie du site d'alunissage d'Apollo 11 n'a jamais pu être prise depuis l'orbite lunaire.",
-    "truthLabel": "FALSE",
-    "category": "wtf_science",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_New_Look_at_the_Apollo_11_Landing_Site.ogv",
-    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/cc/A_New_Look_at_the_Apollo_11_Landing_Site.ogv/A_New_Look_at_the_Apollo_11_Landing_Site.ogv.480p.vp9.webm",
-    "verdict": {
-      "verdictText": "Le Lunar Reconnaissance Orbiter de la NASA le photographie depuis 2009 : l'étage de descente et les traces au sol y sont identifiables.",
-      "confidence": 1.0,
-      "citations": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/File:A_New_Look_at_the_Apollo_11_Landing_Site.ogv",
-          "titre": "Wikimedia Commons"
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "wtf:9d9935e762074a27",
     "text": "Au moindre contact avec la peau, une goutte d'azote liquide provoque immédiatement une brûlure.",
     "truthLabel": "FALSE",
@@ -1802,24 +1174,6 @@
       "citations": [
         {
           "url": "https://commons.wikimedia.org/wiki/File:Oreo_in_liquid_nitrogen.webm",
-          "titre": "Wikimedia Commons"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "wtf:825008c9c4e479a8",
-    "text": "Ce qu'on prend pour un seul éclair est en réalité plusieurs décharges successives qui empruntent le même canal.",
-    "truthLabel": "TRUE",
-    "category": "wtf_science",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:2010-07-14-Blitze-Zeitlupe-1-32.ogv",
-    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/b/b8/2010-07-14-Blitze-Zeitlupe-1-32.ogv/2010-07-14-Blitze-Zeitlupe-1-32.ogv.480p.vp9.webm",
-    "verdict": {
-      "verdictText": "Filmé au ralenti, un éclair révèle ses coups de retour successifs — d'où le scintillement perçu à l'œil nu.",
-      "confidence": 1.0,
-      "citations": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/File:2010-07-14-Blitze-Zeitlupe-1-32.ogv",
           "titre": "Wikimedia Commons"
         }
       ]
@@ -2150,24 +1504,6 @@
     }
   },
   {
-    "sourceKey": "wtf:05e97d5a1eb52d53",
-    "text": "Pour les 50 ans d'Apollo 11, une pièce de monnaie a été frappée avec une face incurvée en creux.",
-    "truthLabel": "TRUE",
-    "category": "wtf_science",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:50th_anniversary_moon_landing_coin_motion.webm",
-    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/8/8e/50th_anniversary_moon_landing_coin_motion.webm",
-    "verdict": {
-      "verdictText": "La pièce commémorative américaine de 2019 est concave, une forme retenue pour épouser l'image de l'empreinte de botte et du casque.",
-      "confidence": 1.0,
-      "citations": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/File:50th_anniversary_moon_landing_coin_motion.webm",
-          "titre": "Wikimedia Commons"
-        }
-      ]
-    }
-  },
-  {
     "sourceKey": "wtf:c73f359fb57f6fdc",
     "text": "Un appareil conçu en 1891 fait jaillir des éclairs de plusieurs dizaines de centimètres dans l'air libre.",
     "truthLabel": "TRUE",
@@ -2216,24 +1552,6 @@
       "citations": [
         {
           "url": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_leaves_folding_when_touched_3.ogv",
-          "titre": "Wikimedia Commons"
-        }
-      ]
-    }
-  },
-  {
-    "sourceKey": "wtf:fad843f4cdd9e2c9",
-    "text": "Une sonde en orbite autour de la Lune a rephotographié le site d'alunissage d'Apollo 11 : le matériel abandonné et les traces au sol y sont visibles.",
-    "truthLabel": "TRUE",
-    "category": "wtf_science",
-    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_New_Look_at_the_Apollo_11_Landing_Site.webm",
-    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/5/5e/A_New_Look_at_the_Apollo_11_Landing_Site.webm",
-    "verdict": {
-      "verdictText": "Les clichés du Lunar Reconnaissance Orbiter (NASA, 2009 et après) montrent l'étage de descente et les pistes laissées par les astronautes.",
-      "confidence": 1.0,
-      "citations": [
-        {
-          "url": "https://commons.wikimedia.org/wiki/File:A_New_Look_at_the_Apollo_11_Landing_Site.webm",
           "titre": "Wikimedia Commons"
         }
       ]

@@ -92,12 +92,17 @@ export class RoundsService {
     const fausses = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'FALSE'));
     const vraies = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'TRUE'));
 
-    // Un quart de la manche par thème, au maximum.
+    // Un cinquième de la manche par thème, au maximum : sur dix clips, deux du
+    // même sujet, donc cinq thèmes différents au minimum.
     //
     // Le corpus est déséquilibré thème par thème — sur l'immigration ou Trump,
     // presque tout est faux. Sans plafond, le joueur apprend à répondre « fake »
-    // au sujet plutôt qu'au contenu.
-    const plafondTheme = Math.max(2, Math.ceil(nombre / 4));
+    // au sujet plutôt qu'au contenu. Le quart laissait encore trois clips d'un
+    // même thème, ce qui suffit à installer ce réflexe.
+    //
+    // Le repli plus bas dépasse ce plafond en dernier recours, donc resserrer ne
+    // risque pas de produire une manche incomplète.
+    const plafondTheme = Math.max(2, Math.ceil(nombre / 5));
     const comptes = new Map<string, number>();
     const prendre = (source: Array<{ id: string; truthLabel: string; category: string | null }>, combien: number) => {
       const pris: typeof source = [];
