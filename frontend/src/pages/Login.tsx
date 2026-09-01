@@ -52,12 +52,12 @@ export default function Login() {
   }
 
   return (
-    <section className="relative bg-noir-krystal w-full flex-1 flex flex-col items-center">
+    <section className="relative bg-noir-krystal w-full flex-1 flex flex-col items-center px-4">
       <h1 className="text-white font-semibold text-lg mb-2">
         {modeInscription ? 'Inscription' : 'Connexion'}
       </h1>
 
-      <div className="p-5 w-[30%] min-w-[320px] bg-gris-krystal text-white rounded-xl">
+      <div className="p-5 w-full max-w-sm md:w-[30%] md:max-w-none md:min-w-[320px] bg-gris-krystal text-white rounded-xl">
         <form onSubmit={handleSubmit} className="text-white gap-1 items-center">
           <div className="flex mt-6 flex-col">
             <label htmlFor="email" className="font-semibold">Adresse e-mail</label>

@@ -100,9 +100,12 @@ export default function Profile() {
   ];
 
   return (
-    <section className="grid grid-cols-5 p-8 bg-noir-krystal w-full min-h-full">
-      <div className="grid grid-rows-3 col-span-2 col-start-1 gap-4 p-8 bg-gris-krystal text-white rounded-xl">
-        <div className="row-start-1 bg-noir-krystal rounded-xl p-4 flex items-center gap-4">
+    <section className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-0 p-4 sm:p-8 bg-noir-krystal w-full min-h-full">
+      {/* min-w-0 sur les trois cartes : un item de grille a min-width:auto et
+          refuse de descendre sous la largeur intrinsèque de son contenu. Sans
+          ça la fiche débordait de la colonne sur un écran de 320 px. */}
+      <div className="grid gap-4 p-4 sm:p-8 lg:grid-rows-3 lg:col-span-2 lg:col-start-1 bg-gris-krystal text-white rounded-xl">
+        <div className="min-w-0 lg:row-start-1 bg-noir-krystal rounded-xl p-4 flex items-center gap-4">
           {utilisateur?.avatarUrl ? (
             <img src={utilisateur.avatarUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0" />
           ) : (
@@ -135,12 +138,15 @@ export default function Profile() {
                 </button>
               </form>
             ) : (
-              <p className="font-semibold truncate flex items-center gap-2">
-                {pseudo}
+              /* La troncature ne porte que sur le pseudo. Quand elle englobait
+                 aussi le bouton, un pseudo un peu long le rejetait au-delà de
+                 la coupure : invisible, et surtout impossible à cliquer. */
+              <p className="font-semibold flex items-center gap-2 min-w-0">
+                <span className="truncate">{pseudo}</span>
                 <button
                   type="button"
                   onClick={() => { setNouveauPseudo(pseudo); setEdition(true); }}
-                  className="text-xs text-white/30 hover:text-white font-normal"
+                  className="text-xs text-white/30 hover:text-white font-normal shrink-0"
                 >
                   modifier
                 </button>
@@ -159,7 +165,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="row-start-2 bg-noir-krystal rounded-xl p-4">
+        <div className="min-w-0 lg:row-start-2 bg-noir-krystal rounded-xl p-4">
           <p className="text-white/50 text-sm">Taux de réussite</p>
           <p className="text-3xl font-semibold">
             {stats ? `${Math.round(stats.winRate * 100)} %` : '—'}
@@ -171,7 +177,7 @@ export default function Profile() {
           </p>
         </div>
 
-        <div className="row-start-3 bg-noir-krystal rounded-xl p-4">
+        <div className="min-w-0 lg:row-start-3 bg-noir-krystal rounded-xl p-4">
           <p className="text-white/50 text-sm">Manches jouées</p>
           <p className="text-3xl font-semibold">
             {stats ? stats.roundsPlayed : '—'}
@@ -184,17 +190,17 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="grid grid-rows-3 col-span-1 justify-center items-center">
-        <Link to="/play" className="row-start-2 button-blue-d px-15 py-3 text-[30px]">
+      <div className="grid justify-center items-center lg:grid-rows-3 lg:col-span-1">
+        <Link to="/play" className="lg:row-start-2 button-blue-d px-10 sm:px-15 py-3 text-2xl sm:text-[30px]">
           Jouer
         </Link>
       </div>
 
-      <div className="col-span-2 col-start-4">
-        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-[46%] text-white font-semibold rounded-xl">
+      <div className="lg:col-span-2 lg:col-start-4">
+        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-full lg:w-[46%] text-white font-semibold rounded-xl">
           Top players
         </h1>
-        <div className="grid grid-cols-3 grid-rows-5 p-8 gap-2 bg-gris-krystal h-[92%] rounded-xl">
+        <div className="grid grid-cols-3 grid-rows-5 p-4 sm:p-8 gap-2 bg-gris-krystal min-h-[320px] lg:h-[92%] rounded-xl">
           {marches.map((position, index) => {
             const joueur = podium[index];
             return (

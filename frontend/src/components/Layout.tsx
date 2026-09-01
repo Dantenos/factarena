@@ -20,29 +20,29 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="p-8 relative bg-noir-krystal">
-        <nav className="font-semibold text-white flex gap-4 items-center">
-          <Link to="/" className="text-lg button-blue-d px-5 py-1">Accueil</Link>
+      <header className="p-4 sm:p-8 relative bg-noir-krystal">
+        <nav className="font-semibold text-white flex flex-wrap gap-2 sm:gap-4 items-center">
+          <Link to="/" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Accueil</Link>
 
           {!utilisateur && (
-            <Link to="/login" className="text-lg absolute right-8 button-blue-d px-5 py-1">
+            <Link to="/login" className="text-base sm:text-lg ml-auto sm:ml-0 sm:absolute sm:right-8 button-blue-d px-3 sm:px-5 py-1">
               Connexion
             </Link>
           )}
 
           {utilisateur && (
             <>
-              <Link to="/play" className="text-lg button-blue-d px-5 py-1">Jouer</Link>
-              <Link to="/profile" className="text-lg button-blue-d px-5 py-1">Profil</Link>
-              <Link to="/friends" className="text-lg button-blue-d px-5 py-1">Amis</Link>
+              <Link to="/play" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Jouer</Link>
+              <Link to="/profile" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Profil</Link>
+              <Link to="/friends" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Amis</Link>
               {/* On affiche qui est connecté : utile en soutenance pour
                   démontrer plusieurs comptes simultanés dans deux navigateurs. */}
-              <span className="absolute right-48 text-sm text-gray-300">
+              <span className="hidden lg:block lg:absolute lg:right-48 text-sm text-gray-300">
                 {utilisateur.displayName || utilisateur.email}
               </span>
               <button
                 type="button"
-                className="text-lg absolute right-8 button-red-d px-5 py-1"
+                className="text-base sm:text-lg ml-auto sm:ml-0 sm:absolute sm:right-8 button-red-d px-3 sm:px-5 py-1"
                 onClick={handleLogout}
               >
                 Deconnexion

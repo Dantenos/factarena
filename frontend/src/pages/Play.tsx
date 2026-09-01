@@ -49,13 +49,13 @@ export default function Play() {
   }
 
   return (
-    <section className="grid gap-4 grid-cols-2 p-8 bg-noir-krystal w-full min-h-full">
-      <div className="col-span-1 col-start-1">
-        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-[46%] text-white font-semibold rounded-xl">
+    <section className="grid gap-4 grid-cols-1 lg:grid-cols-2 p-4 sm:p-8 bg-noir-krystal w-full min-h-full">
+      <div className="lg:col-span-1 lg:col-start-1">
+        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-full lg:w-[46%] text-white font-semibold rounded-xl">
           Rejoindre une room
         </h1>
 
-        <div className="p-8 gap-2 bg-gris-krystal min-h-[92%] rounded-xl flex flex-col gap-3">
+        <div className="p-4 sm:p-8 gap-2 bg-gris-krystal min-h-[92%] rounded-xl flex flex-col gap-3">
           {chargement && <p className="text-white">Chargement des salons...</p>}
 
           {!chargement && salons.length === 0 && (
@@ -79,12 +79,12 @@ export default function Play() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 justify-center col-start-2 p-8">
+      <div className="flex flex-col gap-4 justify-center lg:col-start-2 p-4 sm:p-8">
         <button
           type="button"
           onClick={creerSalon}
           disabled={creation}
-          className="flex items-center justify-center px-10 py-10 button-blue-d text-xl disabled:opacity-50"
+          className="flex items-center justify-center px-6 sm:px-10 py-6 sm:py-10 button-blue-d text-xl disabled:opacity-50"
         >
           {creation ? 'Création...' : 'Créer une room'}
         </button>

@@ -250,7 +250,7 @@ export default function Room() {
   const dejaVote = clipCourant ? mesVotes[clipCourant.id] !== undefined : false;
 
   return (
-    <section className="bg-noir-krystal w-full min-h-full p-6 space-y-4">
+    <section className="bg-noir-krystal w-full min-h-full p-4 sm:p-6 space-y-4">
       <StatsBar
         stats={{
           clipIndex: Math.min(indexClip + 1, clips.length),
@@ -267,8 +267,8 @@ export default function Room() {
         <p className="text-amber-400 text-sm">Connexion au salon en cours...</p>
       )}
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-gris-krystal rounded-xl p-3 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-gris-krystal rounded-xl p-3 space-y-3">
           <div className="relative">
             <span className="absolute top-2 left-2 z-10 text-xs text-red-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> LIVE
@@ -383,7 +383,7 @@ export default function Room() {
           )}
         </div>
 
-        <div className="col-span-1">
+        <div className="h-[60vh] lg:h-auto lg:col-span-1">
           <Chat
             messages={messages}
             roomLabel={etat?.room?.name ? `Chat — ${etat.room.name}` : 'Chat du salon'}

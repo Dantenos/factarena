@@ -20,7 +20,7 @@ export default function StatsBar({ stats }: StatsBarProps) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-4 bg-gris-krystal rounded-xl p-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gris-krystal rounded-xl p-4">
       {items.map((item) => (
         <div key={item.label} className="text-center">
           <p className="text-xs text-white/50 uppercase tracking-wide">{item.label}</p>

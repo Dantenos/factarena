@@ -94,12 +94,12 @@ export default function Friends() {
   }
 
   return (
-    <section className="p-8 bg-noir-krystal w-full min-h-full text-white">
+    <section className="p-4 sm:p-8 bg-noir-krystal w-full min-h-full text-white">
       <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 inline-block font-semibold rounded-xl mb-6">
         Mes amis
       </h1>
 
-      <div className="grid grid-cols-2 gap-6 max-w-5xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
         <div className="bg-gris-krystal rounded-xl p-6">
           <h2 className="font-semibold mb-4">
             Liste <span className="text-white/40 font-normal">({amis.length})</span>
@@ -164,7 +164,9 @@ export default function Friends() {
               placeholder="e-mail ou pseudo"
               minLength={2}
               maxLength={60}
-              className="flex-1 bg-noir-krystal rounded-lg px-3 py-2 text-sm outline-none placeholder:text-white/25"
+              // Voir Chat.tsx : sans min-w-0 le champ ne rétrécit pas et le
+              // bouton « chercher » sort de l'écran sur un petit téléphone.
+              className="flex-1 min-w-0 bg-noir-krystal rounded-lg px-3 py-2 text-sm outline-none placeholder:text-white/25"
             />
             <button type="submit" className="button-blue-d px-4 py-2 text-sm">
               chercher

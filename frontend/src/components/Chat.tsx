@@ -82,7 +82,10 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
           // rien ne l'indiquait : on pouvait lui écrire sans jamais obtenir de
           // réponse, en croyant qu'il était cassé. Le placeholder le dit.
           placeholder="Écris un message… ou @bot pour interroger l'IA"
-          className="flex-1 bg-noir-krystal text-white text-sm rounded-lg px-3 py-2 outline-none placeholder:text-white/30"
+          // min-w-0 : un champ texte a une largeur intrinsèque d'environ 220 px
+          // que flex-1 seul ne fait pas céder. Sur un écran de 320 px, le bouton
+          // « envoyer » se retrouvait poussé hors de l'écran.
+          className="flex-1 min-w-0 bg-noir-krystal text-white text-sm rounded-lg px-3 py-2 outline-none placeholder:text-white/30"
         />
         <button onClick={handleSend} className="button-blue-d px-4 py-2 text-sm">
           envoyer
