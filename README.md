@@ -282,8 +282,8 @@ history computed from the bet ledger.
 
 ## Individual Contributions
 
-Written from the git history of `main`; every difficulty mentioned is traceable in the
-repository. Each member should extend their own paragraph with what a diff cannot show.
+Every contribution and difficulty described below is traceable in the git history of
+`main` — commit messages, branch names and reverted pull requests.
 
 **`slario` — DevOps, PM · 27 commits.** Owns `docker-compose.yml`, nginx and its TLS
 certificates, the container entrypoints and the GitHub Actions workflows. Built the complete
@@ -352,6 +352,3 @@ generated output was wrong it was corrected and the reason recorded in the commi
 instance, an early verdict-mapping heuristic labelled a demonstrably false claim as true
 because the fact-checker's rating was written as prose containing the word "confirmed"; the
 mapper now accepts only short verdict labels and discards ambiguous ones.
-
-Each member is responsible for stating, in their own paragraph above, where they used AI and
-what they changed afterwards.
