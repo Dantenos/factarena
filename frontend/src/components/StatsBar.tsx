@@ -1,8 +1,7 @@
-// Bandeau de statistiques affiché en haut de la page Room : progression
-// dans la compilation, bonnes réponses du joueur, pot commun, solde de
-// crédits. Purement visuel — les données viennent du parent (Room), mockées
-// pour l'instant (cf mocks/gameData.ts), à remplacer par l'état réel de la
-// session une fois le WebSocket branché.
+// Bandeau de statistiques affiché en haut de la page Room : progression dans
+// la compilation, bonnes réponses du joueur, pot commun, solde de crédits.
+// Purement visuel — tout vient du parent, qui tient l'état réel de la manche
+// reçu par WebSocket.
 import { SessionStats } from "../mocks/gameData";
 
 interface StatsBarProps {

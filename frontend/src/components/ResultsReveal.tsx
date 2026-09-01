@@ -1,8 +1,7 @@
-// Écran de révélation des résultats en fin de compilation : bannière de
-// score global, détail clip par clip avec verdict + explication IA (RAG),
-// et classement des joueurs ("course à la précision"). Données mockées pour
-// l'instant (cf mocks/gameData.ts) — alimenté par le vrai résultat de
-// session une fois le WebSocket branché.
+// Écran de révélation des résultats en fin de compilation : bannière de score
+// global, détail clip par clip avec verdict et explication sourcée, et
+// classement des joueurs (« course à la précision »). Tout est alimenté par le
+// résultat que le serveur envoie à la révélation.
 import { ClipResult, ClipVerdict, LeaderboardEntry } from "../mocks/gameData";
 
 interface ResultsRevealProps {

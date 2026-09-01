@@ -2,12 +2,13 @@
 // navigateur) pour pouvoir styliser librement. S'adapte automatiquement au
 // format de la vidéo (large 16:9 ou vertical façon TikTok/Instagram 9:16) en
 // détectant le ratio réel au chargement des métadonnées, plutôt que de le
-// figer en dur. La synchronisation multi-joueurs (plusieurs clients sur le
-// même timecode) reste à faire une fois le protocole WebSocket fixé avec le
-// Back Core.
+// figer en dur.
+//
+// La lecture n'est volontairement pas synchronisée entre joueurs : c'est le
+// serveur qui tient la fenêtre de vote, chacun regarde le clip à son rythme.
 //
 // Props :
-// - src          : URL de la vidéo à lire (mock pour l'instant, cf mocks/gameData.ts)
+// - src          : URL de la vidéo à lire
 // - onEnded      : callback déclenché à la fin de la vidéo
 // - onTimeUpdate : callback déclenché en continu pendant la lecture
 import { useEffect, useRef, useState } from "react";
