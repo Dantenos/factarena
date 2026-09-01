@@ -32,10 +32,31 @@ interface LigneClassement extends Stats {
   rank: number;
 }
 
+/**
+ * Une manche jouée, telle que /stats/me/round-history la renvoie : une mise,
+ * et la manche à laquelle elle se rattache avec les mises de tous les joueurs.
+ * C'est de là que sortent les adversaires — le back ne les liste pas à part.
+ */
+interface MancheJouee {
+  id: string;
+  stake: number;
+  payout: number | null;
+  result: 'WIN' | 'LOSS' | null;
+  createdAt: string;
+  round: {
+    id: string;
+    revealedAt: string | null;
+    createdAt: string;
+    room: { id: string; name: string } | null;
+    bets: { userId: string; result: 'WIN' | 'LOSS' | null; user: ProfilJoueur }[];
+  };
+}
+
 export default function Profile() {
   const { utilisateur, rafraichir } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [podium, setPodium] = useState<LigneClassement[]>([]);
+  const [historique, setHistorique] = useState<MancheJouee[]>([]);
   // Édition du pseudo : fermée par défaut, pour que la page reste une fiche
   // qu'on lit plutôt qu'un formulaire.
   const [edition, setEdition] = useState(false);
@@ -50,6 +71,11 @@ export default function Profile() {
       // Le back renvoie tout le monde, classé. On n'affiche que le podium.
       .then((liste) => setPodium(liste.slice(0, 3)))
       .catch(() => setPodium([]));
+    // Le module « statistiques » du sujet demande l'historique des parties, pas
+    // seulement les totaux : dates, résultats et adversaires.
+    api<MancheJouee[]>('/stats/me/round-history')
+      .then(setHistorique)
+      .catch(() => setHistorique([]));
   }, []);
 
   const nomDe = (profil?: ProfilJoueur | null, secours?: string) =>
@@ -226,6 +252,67 @@ export default function Profile() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Historique des parties. Il occupe toute la largeur sous les trois
+          colonnes : une manche a trop d'informations (date, salon, adversaires)
+          pour tenir dans une colonne du haut. */}
+      <div className="lg:col-span-5 mt-6">
+        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-full lg:w-[18%] text-white font-semibold rounded-xl">
+          Historique
+        </h1>
+        <div className="bg-gris-krystal rounded-xl p-4 sm:p-6 mt-2">
+          {historique.length === 0 ? (
+            <p className="text-white/30 text-sm">
+              Aucune manche terminée pour l'instant.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {historique.map((manche) => {
+                // Les adversaires sortent des mises de la manche : le back
+                // renvoie tout le monde, il faut juste s'en retirer.
+                const adversaires = manche.round.bets
+                  .filter((b) => b.user?.id !== stats?.user.id)
+                  .map((b) => nomDe(b.user));
+                const gagne = manche.result === 'WIN';
+                // Ce que la manche a rapporté ou coûté : le gain net, pas le
+                // versement brut, sinon une victoire à 100 crédits pour 100
+                // misés s'afficherait comme un gain.
+                const net = (manche.payout ?? 0) - manche.stake;
+                const date = new Date(manche.round.revealedAt ?? manche.round.createdAt);
+                return (
+                  <li
+                    key={manche.id}
+                    className="bg-noir-krystal rounded-xl p-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-white"
+                  >
+                    <span
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                        gagne ? 'bg-emerald-400/15 text-emerald-400' : 'bg-red-400/15 text-red-400'
+                      }`}
+                    >
+                      {gagne ? 'gagnée' : 'perdue'}
+                    </span>
+                    <span className="text-sm text-white/50 shrink-0">
+                      {date.toLocaleDateString('fr-FR')} à {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className="text-sm truncate min-w-0 flex-1">
+                      {manche.round.room?.name ?? 'salon supprimé'}
+                      {adversaires.length > 0 && (
+                        <span className="text-white/40"> · contre {adversaires.join(', ')}</span>
+                      )}
+                    </span>
+                    <span className="text-sm text-white/40 shrink-0">mise {manche.stake}</span>
+                    <span
+                      className={`text-sm font-semibold shrink-0 ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                    >
+                      {net >= 0 ? '+' : ''}{net} cr
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       </div>
     </section>

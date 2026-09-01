@@ -207,7 +207,7 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 | AI moderation | elanteno, alaroque | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
 | Questionable AI bot | elanteno | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
 | Sourced fact-check corpus | elanteno | 1 559 passages shipped with the repository (published fact-checks plus INSEE, Eurostat and World Bank figures), loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run. The ingestion scripts can grow it further — our own working index holds 72 000 passages including French Wikipedia. |
-| Profile & stats | krfranco, alaroque, elanteno | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload |
+| Profile & stats | krfranco, alaroque, elanteno | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload; match history listing each finished round with its date, room, opponents, stake and net gain |
 | Friends | elanteno | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
 | Playable clip corpus | elanteno | 87 clips with a playable video, 72 of them with their reveal explanation, all shipped in the seed |
 | Responsive layout | krfranco, elanteno | Every page adapts from 320 px upwards: the multi-column grids stack, the navigation wraps, and the room's chat moves below the video. Verified with no element overflowing the viewport at 320, 390, 768 and 1024 px. |
@@ -230,7 +230,7 @@ for the audited rationale and per-module subject references.
 | ORM (Prisma) | Minor | 1 | alaroque | Done |
 | OAuth 2.0 (42) | Minor | 1 | alaroque | Code done — needs the 42 API credentials in `.env` |
 | AI content moderation | Minor | 1 | elanteno, alaroque | Done |
-| Game statistics & match history | Minor | 1 | alaroque, krfranco | Partial — statistics and leaderboard are displayed, the match-history endpoint exists but no screen consumes it yet |
+| Game statistics & match history | Minor | 1 | alaroque, elanteno | Done |
 
 ### How each module is implemented
 
