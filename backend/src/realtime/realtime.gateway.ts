@@ -7,7 +7,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CUID_PATTERN } from '../common/pipes/cuid-param.pipe';
 import { PrismaService } from '../prisma/prisma.service';
@@ -39,9 +46,14 @@ interface ChatPayload extends RoomPayload {
   cors: { origin: false },
 })
 @Injectable()
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class RealtimeGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RealtimeGateway.name);
   private readonly socketsByUser = new Map<string, Set<string>>();
+  // Nettement sous le TTL de 45 s de la présence, pour qu'elle n'expire jamais
+  // tant que la socket vit.
+  private static readonly BATTEMENT_MS = 20_000;
+  private battement?: ReturnType<typeof setInterval>;
 
   @WebSocketServer()
   server!: Server;
@@ -86,6 +98,30 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       socket.emit('error', { code: 'UNAUTHORIZED', message: 'Authentication required' });
       socket.disconnect(true);
       if (error instanceof UnauthorizedException) return;
+    }
+  }
+
+  // Sans ce battement, la présence d'un joueur qui regarde sans agir expirait
+  // au bout de 45 s : il restait connecté mais n'était plus membre, et ses
+  // messages comme ses votes étaient refusés sans que rien ne l'indique.
+  onModuleInit() {
+    this.battement = setInterval(() => { void this.rafraichirPresences(); }, RealtimeGateway.BATTEMENT_MS);
+  }
+
+  onModuleDestroy() {
+    if (this.battement) clearInterval(this.battement);
+  }
+
+  private async rafraichirPresences() {
+    if (!this.server) return;
+    try {
+      const entrees = [...this.server.sockets.sockets.values()]
+        .map((socket) => socket as AuthenticatedSocket)
+        .filter((socket) => socket.data?.userId && socket.data?.roomId)
+        .map((socket) => ({ socketId: socket.id, userId: socket.data.userId, roomId: socket.data.roomId as string }));
+      if (entrees.length > 0) await this.roomPresence.rafraichir(entrees);
+    } catch (error) {
+      this.logger.warn(`Rafraîchissement des présences échoué: ${(error as Error).message}`);
     }
   }
 

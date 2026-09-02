@@ -10,11 +10,13 @@ export class BetsService {
 
   async create(data: { roundId: string; stake: number }, userId: string) {
     if (!Number.isSafeInteger(data.stake) || data.stake <= 0) throw new BadRequestException('Stake must be a positive integer');
+    // Voir clip-votes.service.ts : isMember() réclame une connexion du pool, on
+    // ne l'appelle donc jamais depuis l'intérieur d'une transaction.
+    const round = await this.prisma.round.findUnique({ where: { id: data.roundId } });
+    if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
+    if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Join the room before placing a bet');
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const round = await tx.round.findUnique({ where: { id: data.roundId } });
-        if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
-        if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Join the room before placing a bet');
         const open = await tx.round.updateMany({ where: { id: data.roundId, status: 'OPEN', locksAt: { gt: new Date() }, room: { status: { not: 'FINISHED' } } }, data: { updatedAt: new Date() } });
         if (open.count !== 1) throw new BadRequestException('Betting is closed for this round');
         await this.ledger.debitForBet(tx, userId, data.stake);
