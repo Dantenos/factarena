@@ -89,8 +89,17 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
+  // Socket.IO ne surveille pas la promesse renvoyée : une erreur qui s'échappe
+  // d'ici devient un rejet non capturé et arrête le process.
   async handleDisconnect(rawSocket: Socket) {
-    const socket = rawSocket as AuthenticatedSocket;
+    try {
+      await this.nettoyerDeconnexion(rawSocket as AuthenticatedSocket);
+    } catch (error) {
+      this.logger.warn(`Nettoyage de déconnexion incomplet: ${(error as Error).message}`);
+    }
+  }
+
+  private async nettoyerDeconnexion(socket: AuthenticatedSocket) {
     const userId = socket.data.userId;
     if (!userId) return;
 

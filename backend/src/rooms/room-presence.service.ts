@@ -52,7 +52,9 @@ export class RoomPresenceService {
     const current = await this.prisma.roomPresence.findUnique({ where: { socketId } });
     if (!current) return null;
 
-    await this.prisma.roomPresence.delete({ where: { socketId } });
+    // deleteMany, pas delete : prune() peut avoir effacé la ligne juste après
+    // le findUnique, et delete() lèverait alors P2025.
+    await this.prisma.roomPresence.deleteMany({ where: { socketId } });
     const remaining = await this.prisma.roomPresence.count({
       where: { roomId: current.roomId, userId: current.userId, lastSeenAt: { gt: this.activeSince() } },
     });
