@@ -189,7 +189,7 @@ Room ──1─N── RoomPresence     who is connected, by socket
 ```
 
 Key fields. **Claim** carries `truthLabel` (TRUE/FALSE), the editorial answer key, plus
-`mediaRef`, `videoStartS`/`videoEndS`, `sourceUrl` and `sourceKey` (unique, makes imports
+`mediaRef`, `videoEndS`, `sourceUrl` and `sourceKey` (unique, makes imports
 idempotent). **Round** moves through `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`.
 **Bet** holds the stake and the payout; **ClipVote** holds one `isFake` per claim, unique
 per `(user, round, claim)`. **Transaction** records every credit movement with a
@@ -204,9 +204,9 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 |---|---|---|
 | Account & authentication | alaroque | Sign-up and sign-in by email and password (bcrypt, salted), plus 42 OAuth; JWT issued for both the REST API and the WebSocket |
 | Live rooms | alaroque | Create or join a room, see members appear and leave in real time, presence persisted server-side so a reconnection restores the player |
-| Round state machine | alaroque | Server-authoritative `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`, driven by a 250 ms server loop that advances rounds even with no client connected |
+| Round state machine | alaroque, elanteno | Server-authoritative `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`, driven by a 250 ms server loop that advances rounds even with no client connected. A round also locks early as soon as every player who staked has judged every clip, so nobody waits out the timer once the game is over. |
 | Clip drafting | alaroque, elanteno | The server draws the round's clips itself, balanced at roughly 60 % false and excluding clips already played in that room |
-| Good/fake voting | alaroque | One vote per clip while the round is open, one stake per round |
+| Good/fake voting | alaroque, elanteno | One vote per clip while the round is open, and one stake per round chosen from the room screen before judging |
 | Accuracy-race scoring | alaroque | Whoever judges the most clips correctly takes the shared pot, split on a tie; settlement is a single atomic PostgreSQL transaction |
 | Virtual credit ledger | alaroque | Every debit and payout is journalled with the resulting balance; payouts are idempotent |
 | Room chat | oztozdem, alaroque | Send and receive messages in real time |
