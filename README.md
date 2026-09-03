@@ -333,7 +333,7 @@ settled, at the cost of a long-lived branch that had to absorb `main` repeatedly
 
 ## Resources
 
-- Project subject: `docs/subject.pdf` (source of truth)
+- Project subject: the PDF handed out by the school (not vendored here)
 - Architecture & module rationale: `docs/ARCHITECTURE.md`
 - AI service roadmap and decisions: `docs/AI.md`
 - Game content specification: `docs/CLAIMS.md`

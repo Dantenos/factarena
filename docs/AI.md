@@ -3,7 +3,7 @@
 Doc de travail du service IA. Il couvre **mes trois modules** (RAG, interface LLM, modération),
 l'ordre dans lequel je les construis, et les décisions techniques prises avant de coder.
 
-La source de vérité reste `docs/subject.pdf`. L'archi d'ensemble est dans
+La source de vérité reste le sujet officiel remis par l'école. L'archi d'ensemble est dans
 `docs/ARCHITECTURE.md` (voir surtout §3 « les trois pièges à points » et §5.2 la frontière
 Prisma / vecteurs). Ici je descends au niveau de MA partie.
 

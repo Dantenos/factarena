@@ -7,8 +7,8 @@
 > Projet de fin de tronc commun 42, équipe de 5.
 
 Ce document est la référence technique de l'équipe. Il explique le **POURQUOI** de chaque
-choix, pas seulement le QUOI. La source de vérité reste `docs/subject.pdf` (extrait texte :
-`docs/subject.txt`) : en cas de contradiction, **c'est le sujet qui gagne**.
+choix, pas seulement le QUOI. La source de vérité reste le sujet officiel remis par l'école : en cas de
+contradiction, **c'est le sujet qui gagne**.
 
 > ATTENTION : les points **[À VALIDER]** sont des décisions d'équipe (PO / Tech Lead) ou de staff,
 > pas des faits actés. Le plan de modules ci-dessous a été **audité contre le texte exact
@@ -355,4 +355,4 @@ Points clés : `depends_on` + healthchecks (attendre Postgres) ; migrations Pris
 ---
 
 *Document vivant : toute décision d'archi importante s'y consigne (traçabilité exigée par
-le sujet). Concept et plan de modules issus d'une synthèse auditée contre `docs/subject.txt`.*
+le sujet). Concept et plan de modules issus d'une synthèse auditée contre le sujet.*
