@@ -27,7 +27,9 @@ SORTIE = pathlib.Path("/app/export/rag-noyau.json.gz")
 
 # Les sources qui servent réellement à justifier un verdict. Wikipédia est
 # volontairement exclu : 67 000 passages de culture générale, tout le poids.
-SOURCES = ("factcheck", "insee", "eurostat", "banque_mondiale")
+# factcheck_article porte le CORPS des articles, factcheck seulement les fiches
+# ClaimReview : c'est le premier qui permet d'expliquer un clip.
+SOURCES = ("factcheck", "factcheck_article", "insee", "eurostat", "banque_mondiale")
 
 
 def main() -> None:

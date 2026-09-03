@@ -184,6 +184,12 @@ export class AiService {
       // de l'explication principale.
     }
 
+    // Une non-réponse ne va pas en base : elle serait resservie telle quelle à
+    // chaque manche, et le stock grossissait à chaque partie.
+    if (AiService.REFUS_RAG.test(verdictText.split(/\n\s*\n/)[0])) {
+      return { data: { claimId, verdictText, confidence, citations } };
+    }
+
     const verdict = await this.prisma.claimVerdict.upsert({
       where: { claimId },
       update: {
@@ -210,6 +216,26 @@ export class AiService {
     };
   }
 
+  /** Formules par lesquelles le RAG signale qu'aucun passage ne couvre le clip. */
+  private static readonly REFUS_RAG =
+    /ne mentionn|ne contiennent aucune|ne permettent pas|je ne peux (donc )?pas|aucun passage/i;
+
+  /**
+   * Repli quand le RAG n'a rien pour se prononcer. Il a raison de ne pas
+   * inventer, mais « je ne peux pas répondre » n'apprend rien au joueur à la
+   * révélation. On sert alors la clé éditoriale et la source qui l'a établie —
+   * les deux existent toujours.
+   */
+  private repliEditorial(claim: { truthLabel: string; sourceUrl: string | null }) {
+    const nature = claim.truthLabel === 'TRUE' ? 'authentique' : 'trompeuse';
+    // On ne nomme pas la source : selon les clips c'est un fact-checkeur, mais
+    // parfois seulement l'hébergeur de la vidéo, et écrire « vérifiée par
+    // commons.wikimedia.org » serait faux. L'URL est déjà affichée à côté.
+    if (!claim.sourceUrl) return `Affirmation ${nature} selon la clé éditoriale.`;
+    return `Affirmation ${nature}. Aucun passage du corpus ne couvre ce clip : `
+      + `le verdict vient de la source ci-contre, pas du modèle.`;
+  }
+
   async generateRoundVerdicts(roundId: string) {
     const round = await this.prisma.round.findUnique({
       where: { id: roundId },
@@ -227,17 +253,37 @@ export class AiService {
         text: claim.text,
         sourceUrl: claim.sourceUrl ?? '',
       };
+      // Le second avis est accolé après une ligne vide : on ne teste que
+      // l'explication elle-même, pour ne pas perdre le bonus au passage.
+      const servir = (texte: string) => {
+        const coupe = texte.search(/\n\s*\n\s*Second avis de l'IA/);
+        const explication = coupe === -1 ? texte : texte.slice(0, coupe);
+        const suite = coupe === -1 ? '' : texte.slice(coupe);
+        if (!AiService.REFUS_RAG.test(explication)) {
+          return { ...commun, verdictText: texte, explanationSource: 'rag' as const };
+        }
+        return {
+          ...commun,
+          verdictText: this.repliEditorial(claim) + suite,
+          explanationSource: 'editorial' as const,
+        };
+      };
+
       // Explication déjà en base : on la sert telle quelle, sans rappeler le
       // service IA — c'est autant de latence en moins à la révélation.
       if (claim.verdicts.length > 0) {
-        return { ...commun, verdictText: claim.verdicts[0].verdictText };
+        return servir(claim.verdicts[0].verdictText);
       }
       try {
         const genere = await this.generateClaimVerdict(claim.id);
-        return { ...commun, verdictText: genere.data.verdictText };
+        return servir(genere.data.verdictText);
       } catch (error) {
         this.logger.warn(`Verdict generation failed for claim ${claim.id}: ${String(error)}`);
-        return { ...commun, verdictText: 'Explication indisponible.' };
+        return {
+          ...commun,
+          verdictText: this.repliEditorial(claim),
+          explanationSource: 'editorial' as const,
+        };
       }
     }));
     return verdicts;
@@ -254,13 +300,19 @@ export class AiService {
   async *streamRag(
     prompt: string,
     rateKey: string,
-    live: { topics?: string[]; claims?: string[] } = {},
+    live: { topics?: string[]; claims?: string[]; exclureUrls?: string[] } = {},
   ): AsyncGenerator<AiStreamEvent> {
     this.rateLimit.consume(`rag:${rateKey}`, 20, 60_000);
     try {
       const response = await firstValueFrom(this.httpService.post(
         `${this.aiBaseUrl}/rag/ask`,
-        { question: prompt, live_topics: live.topics ?? [], live_claims: live.claims ?? [] },
+        {
+          question: prompt,
+          live_topics: live.topics ?? [],
+          live_claims: live.claims ?? [],
+          // Articles des clips en jeu, écartés de la recherche.
+          exclure_urls: live.exclureUrls ?? [],
+        },
         { responseType: 'stream', timeout: 120_000 },
       ));
 
