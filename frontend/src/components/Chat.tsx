@@ -1,9 +1,10 @@
-// Fil de discussion du salon, thème sombre cohérent avec la DA du site.
-// Gère l'affichage des messages système, utilisateur, et modérés par l'IA
-// (contenu masqué). Chaque auteur reçoit une couleur distincte, dérivée
-// automatiquement de son nom (pas de configuration manuelle nécessaire).
-// L'envoi de message est local pour l'instant (onSendMessage optionnel) —
-// le vrai flux temps réel arrivera avec l'intégration WebSocket.
+// Fil de discussion du salon. Quatre rendus distincts : message système,
+// message masqué par la modération, message de l'assistant, message de joueur.
+//
+// L'assistant est volontairement démarqué — liseré, badge, sources cliquables.
+// Les trois faux joueurs mentent délibérément ; lui cite ce sur quoi il
+// s'appuie. Rien à l'écran ne disait la différence, et on pouvait suivre un
+// menteur en croyant lire l'IA.
 import { useState } from "react";
 import { ChatMessage } from "../mocks/gameData";
 
@@ -70,6 +71,33 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
               // Message masqué par la modération IA : le vrai contenu n'est
               // jamais affiché, seulement un avertissement générique
               <span className="text-white/30 italic">⚠ message masqué par la modération IA</span>
+            ) : msg.type === "bot" ? (
+              // L'assistant, à ne pas confondre avec les autres joueurs : eux
+              // affirment ce qu'ils veulent, lui cite ce sur quoi il s'appuie.
+              // D'où le liseré, le badge, et les sources sous la réponse.
+              <div className="border-l-2 border-emerald-400/60 pl-2 py-0.5">
+                <span className="font-semibold text-emerald-400">{msg.author}</span>
+                <span className="ml-1 text-[10px] text-emerald-400/70 border border-emerald-400/40 rounded-full px-1.5">
+                  assistant
+                </span>{" "}
+                <span className="text-white/80">{msg.content}</span>
+                {msg.sources && msg.sources.length > 0 && (
+                  <ul className="mt-1 flex flex-col gap-0.5">
+                    {msg.sources.map((source) => (
+                      <li key={source.url}>
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-emerald-400/70 hover:text-emerald-400 underline break-all"
+                        >
+                          {source.title?.trim() || source.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ) : (
               // Message utilisateur normal : auteur coloré + contenu
               <>
@@ -102,11 +130,12 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
           envoyer
         </button>
       </div>
-      {/* Rappel discret : l'assistant cite ses sources et refuse de répondre
-          sur les clips de la manche en cours (garde-fou anti-spoil). Le dire
-          évite qu'on prenne son refus pour un bug. */}
+      {/* Ce que fait l'assistant, dit une fois : il renseigne sur le sujet mais
+          ne donne jamais le verdict d'un clip en jeu. Sans ce rappel, son refus
+          ponctuel passerait pour un bug. */}
       <p className="text-white/30 text-xs mt-2">
-        @bot répond en citant ses sources, mais refuse de parler des clips de la manche en cours.
+        @bot cite ses sources et peut t'éclairer sur le sujet — mais il ne dira pas si un
+        clip en cours est vrai ou faux.
       </p>
     </div>
   );

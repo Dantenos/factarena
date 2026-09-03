@@ -19,6 +19,9 @@ export interface ChatMessage {
   // true si le message a été masqué par la modération IA — dans ce cas
   // `content` est ignoré et un texte d'avertissement est affiché à la place.
   moderated?: boolean;
+  // Sources citées par l'assistant. C'est ce qui le distingue des faux joueurs,
+  // qui affirment sans jamais rien produire.
+  sources?: Array<{ title?: string; url: string }>;
 }
 
 // --- Bandeau de statistiques ---
@@ -42,6 +45,9 @@ export interface ClipResult {
   title: string;        // description courte du clip
   explanation: string;  // explication sourcée affichée à la révélation
   source: string;       // source citée (ex: « AFP Factuel »)
+  // D'où vient l'explication : le RAG, ou la clé éditoriale quand le corpus ne
+  // couvre pas le clip. L'étiquette affichée en dépend.
+  explanationSource?: 'rag' | 'editorial';
   userVoted: boolean;   // true si le joueur a voté sur ce clip précis
   // Ce que l'IA aurait répondu SANS connaître la clé et sans son article
   // source. Purement informatif : le score n'en dépend jamais. Quand elle se

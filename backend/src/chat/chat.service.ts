@@ -82,11 +82,17 @@ export class ChatService {
     // continuer à poser des questions générales pendant qu'il joue.
     const active = await this.prisma.round.findFirst({
       where: { roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] } },
-      select: { roundClaims: { select: { claim: { select: { text: true } } } } },
+      select: { roundClaims: { select: { claim: { select: { text: true, sourceUrl: true } } } } },
     });
     const liveClaims = active?.roundClaims.map((rc) => rc.claim.text) ?? [];
+    // Les articles qui ont établi le verdict des clips en jeu sont écartés de la
+    // recherche : sinon une question sur le sujet ramène le débunk, et la
+    // réponse donne la solution.
+    const exclureUrls = (active?.roundClaims ?? [])
+      .map((rc) => rc.claim.sourceUrl)
+      .filter((u): u is string => typeof u === 'string' && u.length > 0);
 
-    yield* this.aiService.streamRag(prompt, userId, { claims: liveClaims });
+    yield* this.aiService.streamRag(prompt, userId, { claims: liveClaims, exclureUrls });
   }
 
   private async assertMember(userId: string, roomId: string): Promise<void> {
