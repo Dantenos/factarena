@@ -114,6 +114,11 @@ export function profil() {
 /** ⚠️ Le back renvoie `virtualBalance`, pas `balance` : se tromper de nom
  *  affichait un solde vide sans la moindre erreur, le champ étant simplement
  *  `undefined`. */
+/** Recrédite un joueur qui n'a plus de quoi miser. Le back refuse au-dessus du seuil. */
+export function reclamerRattrapage() {
+  return api<{ virtualBalance: number; credite: number }>('/ledger/rattrapage', { method: 'POST' });
+}
+
 export function solde() {
   return api<{ virtualBalance: number }>('/ledger/balance');
 }

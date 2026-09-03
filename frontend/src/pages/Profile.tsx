@@ -3,7 +3,7 @@
 // déjà côté back (backend/src/stats/).
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, envoyerAvatar, modifierProfil } from '../api/client';
+import { api, envoyerAvatar, modifierProfil, reclamerRattrapage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
 /** Profil réduit renvoyé par le back à l'intérieur des statistiques. */
@@ -52,6 +52,10 @@ interface MancheJouee {
   };
 }
 
+// Même valeur que LedgerService.SEUIL_RATTRAPAGE côté serveur, qui tranche
+// vraiment : ici on ne fait qu'éviter d'afficher un bouton voué au refus.
+const SEUIL_RATTRAPAGE = 50;
+
 export default function Profile() {
   const { utilisateur, rafraichir } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -62,6 +66,22 @@ export default function Profile() {
   const [edition, setEdition] = useState(false);
   const [nouveauPseudo, setNouveauPseudo] = useState('');
   const [messageProfil, setMessageProfil] = useState<string | null>(null);
+  const [rattrapageEnCours, setRattrapageEnCours] = useState(false);
+
+  // On ne peut plus miser sous ce seuil : c'est la plus petite mise proposée
+  // dans le salon, et le back applique la même règle.
+  async function rattraper() {
+    setRattrapageEnCours(true);
+    setMessageProfil(null);
+    try {
+      const r = await reclamerRattrapage();
+      setStats((prec) => (prec ? { ...prec, virtualBalance: r.virtualBalance } : prec));
+    } catch (e) {
+      setMessageProfil(e instanceof Error ? e.message : 'Rattrapage impossible');
+    } finally {
+      setRattrapageEnCours(false);
+    }
+  }
 
   useEffect(() => {
     // Pas de console.error dans les catch : une statistique indisponible n'est
@@ -181,6 +201,18 @@ export default function Profile() {
             <p className="text-white/40 text-sm">
               {stats ? `${stats.virtualBalance} crédits` : '—'}
             </p>
+            {/* Sous la mise minimale, le compte était enfermé : plus rien à
+                engager, donc plus aucun gain possible, et rien pour remonter. */}
+            {stats && stats.virtualBalance < SEUIL_RATTRAPAGE && (
+              <button
+                type="button"
+                onClick={rattraper}
+                disabled={rattrapageEnCours}
+                className="button-blue-l px-3 py-1 text-xs mt-1 disabled:opacity-50"
+              >
+                {rattrapageEnCours ? '...' : 'Réclamer 200 crédits'}
+              </button>
+            )}
             {/* L'envoi part dès la sélection du fichier : un bouton « envoyer »
                 séparé n'apporterait rien pour un seul champ. */}
             <label className="text-xs text-white/30 hover:text-white cursor-pointer">
