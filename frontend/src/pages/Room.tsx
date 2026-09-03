@@ -37,6 +37,23 @@ const CLIPS_PAR_MANCHE = 10;
 const MISES = [50, 100, 250];
 
 /**
+ * Marques d'un renvoi aux passages récupérés. Elles décident si l'on affiche les
+ * citations sous la réponse.
+ *
+ * La recherche vectorielle rend toujours ses six plus proches voisins, même
+ * quand aucun n'a de rapport : sur « c'est quoi un orage ? » elle remonte des
+ * articles sur les ovnis. Afficher ces sources sous une réponse de culture
+ * générale laisserait croire qu'elles l'étayent.
+ *
+ * Un seuil de distance ne trancherait pas — mesuré sur ce corpus, « comment
+ * cuire des pâtes » sort à 0,32 et « vidéo sortie de son contexte », pourtant
+ * couvert, à 0,31. On se fie donc à ce que le modèle a réellement fait : s'il
+ * n'a renvoyé à aucun passage, il a répondu de lui-même, et on ne cite rien.
+ */
+const RENVOI_AUX_PASSAGES =
+  /\[\d+\]|d'apr[èe]s les passages|selon les passages|les passages (fournis|indiquent|montrent|abordent)/i;
+
+/**
  * Mot d'accueil de l'assistant, replacé en tête à chaque fois que la liste des
  * messages est reconstruite. Rien à l'écran ne disait qu'il existe, ni qu'il est
  * fiable contrairement aux trois faux joueurs qui, eux, mentent volontiers.
@@ -184,7 +201,15 @@ export default function Room() {
         // Le message du bot est terminé : on lui donne un identifiant définitif
         // pour que le prochain n'y soit pas concaténé.
         setMessages((prec) =>
-          prec.map((m) => (m.id === 'bot-en-cours' ? { ...m, id: `bot-${Date.now()}` } : m)),
+          prec.map((m) =>
+            m.id === 'bot-en-cours'
+              ? {
+                  ...m,
+                  id: `bot-${Date.now()}`,
+                  sources: RENVOI_AUX_PASSAGES.test(m.content) ? m.sources : undefined,
+                }
+              : m,
+          ),
         );
       }),
       // Le serveur confirme la mise en diffusant bet:updated. On relit nos

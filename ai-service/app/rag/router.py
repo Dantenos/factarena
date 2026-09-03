@@ -69,11 +69,24 @@ def _build_messages(question: str, passages: list[dict]) -> list[dict]:
     contexte = "\n\n".join(
         f"[{i + 1}] {p['title']}\n{p['content']}" for i, p in enumerate(passages)
     )
+    # Le corpus ne contient que des fact-checks et des indicateurs officiels : il
+    # ne sait pas ce qu'est un orage. Une consigne strictement ancrée faisait donc
+    # refuser toute question de culture générale, ce qui rendait le bot inutile
+    # pour ce qu'on lui demande le plus souvent. Il répond maintenant de ses
+    # propres connaissances quand les passages ne suffisent pas — mais il doit le
+    # DIRE, pour qu'on ne prenne pas une réponse non sourcée pour une réponse
+    # vérifiée. C'est cette phrase que le front détecte pour masquer les
+    # citations, qui n'auraient alors aucun rapport.
     systeme = (
-        "Tu es un assistant de fact-checking. Réponds à la question EN FRANÇAIS "
-        "en t'appuyant UNIQUEMENT sur les passages fournis ci-dessous. "
-        "Si les passages ne permettent pas de répondre, dis-le clairement au lieu "
-        "d'inventer. Sois concis et factuel."
+        "Tu es un assistant de fact-checking. Réponds EN FRANÇAIS, de façon concise "
+        "et factuelle.\n"
+        "Quand les passages fournis couvrent la question, appuie-toi dessus et "
+        "renvoie-y explicitement.\n"
+        "Quand ils ne la couvrent pas — c'est fréquent, le corpus ne contient que "
+        "des vérifications et des statistiques — réponds quand même à partir de tes "
+        "propres connaissances, mais commence par « Sans source dans mon corpus : » "
+        "afin qu'on sache que cette réponse-là n'est pas vérifiée.\n"
+        "N'invente jamais de source ni de citation."
     )
     return [
         {"role": "system", "content": systeme},
