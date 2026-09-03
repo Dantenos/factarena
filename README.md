@@ -212,10 +212,10 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 | Room chat | oztozdem, alaroque | Send and receive messages in real time |
 | AI moderation | elanteno, alaroque | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
 | Questionable AI bot | elanteno | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
-| Sourced fact-check corpus | elanteno | 1 559 passages shipped with the repository (published fact-checks plus INSEE, Eurostat and World Bank figures), loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run. The ingestion scripts can grow it further — our own working index holds 72 000 passages including French Wikipedia. |
+| Sourced fact-check corpus | elanteno | 1 849 passages shipped with the repository, loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run: the ClaimReview records of published fact-checks, the full text of the 32 articles that established the verdict of the playable clips, and figures from INSEE, Eurostat and the World Bank. The ingestion scripts can grow it further. |
 | Profile & stats | krfranco, alaroque, elanteno | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload; match history listing each finished round with its date, room, opponents, stake and net gain |
 | Friends | elanteno | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
-| Playable clip corpus | elanteno | 63 hand-curated clips with a playable video, 53 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped. |
+| Playable clip corpus | elanteno | 63 hand-curated clips with a playable video, 57 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped. |
 | Responsive layout | krfranco, elanteno | Every page adapts from 320 px upwards: the multi-column grids stack, the navigation wraps, and the room's chat moves below the video. Verified with no element overflowing the viewport at 320, 390, 768 and 1024 px. |
 
 ## Modules
@@ -257,13 +257,16 @@ alongside.
 status — distinct from the basic authentication required by the subject.
 
 **Complete RAG system.** Cosine search over pgvector, answers grounded in the retrieved
-passages and always citing their URL. The repository ships 1 559 passages with their
-pre-computed vectors, so a freshly cloned installation answers with sources without running
-any ingestion; the ingestion scripts grow that corpus further, and our own working index
-holds 72 000 passages. The corpus mixes general knowledge (Wikipedia), published fact-checks
-(AFP, franceinfo, TF1, dpa) and live official indicators (INSEE, Eurostat, World Bank),
-which lets the bot answer national, European and international claims with a dated, sourced
-figure.
+passages and citing their URL. The repository ships 1 849 passages with their pre-computed
+vectors, so a freshly cloned installation answers with sources without running any ingestion.
+The corpus mixes published fact-checks (AFP, Snopes, franceinfo, dpa…) — both their
+ClaimReview records and the full article text for the clips in play — with live official
+indicators from INSEE, Eurostat and the World Bank.
+
+When no retrieved passage covers the question, the assistant answers from its own knowledge
+and says so, and the interface then shows no citation: the vector search always returns its
+six nearest neighbours, relevant or not, and displaying unrelated sources under an answer
+would suggest they support it.
 
 **LLM interface.** Streaming generation from free user input, with retrieval switched off —
 this is what makes it demonstrably distinct from the RAG surface — plus a server-side rate
