@@ -240,6 +240,33 @@ export class RoundsService {
     return this.lockIfDueOrOpen(id, true);
   }
 
+  /**
+   * Verrouille une manche ouverte dont tous les parieurs ont voté sur tous les
+   * clips, sans attendre l'heure. Sinon la manche courait jusqu'à locksAt même
+   * quand plus personne n'avait rien à faire : cinq minutes devant un écran figé.
+   *
+   * On se base sur ceux qui ont misé — eux seuls jouent pour le pot. Les faux
+   * joueurs ne misent pas, un bot lent ne peut donc pas retenir la manche, et le
+   * chronomètre reste le filet si quelqu'un ne vote jamais.
+   */
+  async lockIfEveryoneVoted(id: string) {
+    const [clips, parieurs] = await Promise.all([
+      this.prisma.roundClaim.count({ where: { roundId: id } }),
+      this.prisma.bet.findMany({ where: { roundId: id }, select: { userId: true } }),
+    ]);
+    if (clips === 0 || parieurs.length === 0) return null;
+
+    const votes = await this.prisma.clipVote.groupBy({
+      by: ['userId'],
+      where: { roundId: id, userId: { in: parieurs.map((b) => b.userId) } },
+      _count: { _all: true },
+    });
+    const compte = new Map(votes.map((v) => [v.userId, v._count._all]));
+    if (!parieurs.every((b) => compte.get(b.userId) === clips)) return null;
+
+    return this.lockIfDueOrOpen(id, false);
+  }
+
   private async lockIfDueOrOpen(id: string, dueOnly: boolean) {
     const now = new Date();
     const claimed = await this.prisma.round.updateMany({
