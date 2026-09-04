@@ -32,7 +32,11 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already exists');
+      // Une inscription répétée est un cas métier attendu. On renvoie une
+      // réponse normale avec un indicateur explicite afin que le navigateur
+      // n'affiche pas un 409 dans la console pour un message déjà géré par le
+      // formulaire.
+      return { alreadyExists: true, message: 'Adresse e-mail déjà utilisée' };
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -48,7 +52,7 @@ export class AuthService {
       });
     } catch (error: unknown) {
       if ((error as { code?: string }).code === 'P2002') {
-        throw new ConflictException('Email already exists');
+        return { alreadyExists: true, message: 'Adresse e-mail déjà utilisée' };
       }
       throw error;
     }
@@ -63,13 +67,13 @@ export class AuthService {
     });
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Identifiants invalides');
     }
 
     const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!passwordMatches) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Identifiants invalides');
     }
 
     return this.buildAuthResponse(user);
@@ -87,10 +91,10 @@ export class AuthService {
     const email = params.email?.trim().toLowerCase();
 
     if (provider !== '42' || provider.length > 32 || !providerId || providerId.length > 255) {
-      throw new BadRequestException('OAuth provider identity is invalid');
+      throw new BadRequestException('Identité du fournisseur OAuth invalide');
     }
     if (!email) {
-      throw new UnauthorizedException('OAuth provider did not return an email');
+      throw new UnauthorizedException('Le fournisseur OAuth n\'a pas retourné d\'adresse e-mail');
     }
 
     const providerUser = await this.prisma.user.findUnique({
@@ -111,7 +115,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('An account already exists for this email; link OAuth after authenticating first');
+      throw new ConflictException('Un compte existe déjà pour cette adresse e-mail; veuillez lier votre compte OAuth après vous être authentifié');
     }
 
     let user: AuthUser;
@@ -128,7 +132,7 @@ export class AuthService {
       });
     } catch (error: unknown) {
       if ((error as { code?: string }).code === 'P2002') {
-        throw new ConflictException('An OAuth account with this identity already exists');
+        throw new ConflictException('Un compte OAuth existe déjà pour cette identité');
       }
       throw error;
     }

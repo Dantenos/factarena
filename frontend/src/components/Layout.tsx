@@ -45,7 +45,7 @@ export default function Layout() {
                 className="text-base sm:text-lg ml-auto sm:ml-0 sm:absolute sm:right-8 button-red-d px-3 sm:px-5 py-1"
                 onClick={handleLogout}
               >
-                Deconnexion
+                Déconnexion
               </button>
             </>
           )}

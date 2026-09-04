@@ -78,7 +78,7 @@ export class StatsService {
       },
     });
 
-    if (!user) throw new NotFoundException(`User ${userId} not found`);
+    if (!user) throw new NotFoundException(`Utilisateur ${userId} introuvable`);
 
     const { bets, virtualBalance, ...profile } = user;
     return {
@@ -98,7 +98,7 @@ export class StatsService {
 
   async getUserRoundHistory(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-    if (!user) throw new NotFoundException(`User ${userId} not found`);
+    if (!user) throw new NotFoundException(`Utilisateur ${userId} introuvable`);
 
     return this.prisma.bet.findMany({
       where: { userId, result: { not: null } },

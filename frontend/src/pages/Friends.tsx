@@ -73,7 +73,11 @@ export default function Friends() {
   async function ajouter(joueur: Ami) {
     setMessage(null);
     try {
-      await ajouterAmi(joueur.id);
+      const resultat = await ajouterAmi(joueur.id);
+      if (resultat.alreadyFriends) {
+        setMessage('Déjà dans ta liste d\'amis.');
+        return;
+      }
       setResultats((r) => r.filter((x) => x.id !== joueur.id));
       rafraichir();
     } catch (e) {

@@ -56,7 +56,7 @@ export class UsersController {
     @Request() req: { user: { userId: string } },
     @UploadedFile() file?: { path: string },
   ) {
-    if (!file) throw new BadRequestException('A valid image avatar is required');
+    if (!file) throw new BadRequestException('Une image d’avatar valide est obligatoire');
     return this.usersService.setAvatarFromUpload(req.user.userId, file.path);
   }
 

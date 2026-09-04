@@ -318,10 +318,14 @@ export default function Room() {
     setLancement(true);
     setErreurManche(null);
     try {
-      await api('/rounds', {
+      const resultat = await api<{ alreadyActive?: boolean }>('/rounds', {
         method: 'POST',
         body: { roomId, claimCount: CLIPS_PAR_MANCHE, durationSeconds: 300 },
       });
+      if (resultat.alreadyActive) {
+        setErreurManche('Une manche est déjà en cours.');
+        return;
+      }
       // Pas besoin de recharger : le serveur diffuse le nouvel état par
       // WebSocket, la page se met à jour toute seule.
       setIndexClip(0);

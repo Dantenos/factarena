@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { RoomPresenceService } from '../rooms/room-presence.service';
@@ -33,25 +33,41 @@ export class FriendsService {
 
   async add(userId: string, friendId: string) {
     if (userId === friendId) {
-      throw new BadRequestException('Cannot add yourself as a friend');
+      throw new BadRequestException('Vous ne pouvez pas vous ajouter vous-même comme ami');
     }
 
     const friendUser = await this.prisma.user.findUnique({ where: { id: friendId } });
     if (!friendUser) {
-      throw new NotFoundException(`User ${friendId} not found`);
+      throw new NotFoundException(`Utilisateur ${friendId} introuvable`);
     }
 
     const existingFriendship = await this.prisma.friend.findUnique({
       where: { userId_friendId: { userId, friendId } },
     });
     if (existingFriendship) {
-      throw new ConflictException('Already friends');
+      // Ajouter une relation déjà existante est un cas métier normal (double
+      // clic, recherche conservée ouverte, ou deux onglets). On le traite
+      // comme une opération idempotente plutôt que comme une erreur HTTP 409 :
+      // le navigateur n'affiche ainsi pas une erreur console pour une action
+      // attendue, tout en permettant au frontend d'informer l'utilisateur.
+      return { ...friendUser, alreadyFriends: true };
     }
 
-    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await tx.friend.create({ data: { userId, friendId } });
-      await tx.friend.create({ data: { userId: friendId, friendId: userId } });
-    });
+    try {
+      await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        await tx.friend.create({ data: { userId, friendId } });
+        await tx.friend.create({ data: { userId: friendId, friendId: userId } });
+      });
+    } catch (error) {
+      // Deux clics rapides ou deux onglets peuvent franchir le contrôle
+      // précédent avant que la première transaction ne soit validée. La
+      // contrainte unique Prisma devient alors, elle aussi, un simple cas
+      // "déjà ami", pas une erreur affichée au navigateur.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return { ...friendUser, alreadyFriends: true };
+      }
+      throw error;
+    }
 
     return friendUser;
   }
@@ -67,7 +83,7 @@ export class FriendsService {
     });
 
     if (deleted.count === 0) {
-      throw new NotFoundException('Friend relationship not found');
+      throw new NotFoundException('Relation d’amitié introuvable');
     }
 
     return { success: true };

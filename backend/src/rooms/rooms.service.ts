@@ -43,7 +43,7 @@ export class RoomsService {
         },
       },
     });
-    if (!room) throw new NotFoundException(`Room ${id} not found`);
+    if (!room) throw new NotFoundException(`Salon ${id} introuvable`);
     return room;
   }
 
@@ -66,7 +66,7 @@ export class RoomsService {
 
   async getMembers(id: string) {
     const room = await this.prisma.room.findUnique({ where: { id }, select: { createdBy: true } });
-    if (!room) throw new NotFoundException(`Room ${id} not found`);
+    if (!room) throw new NotFoundException(`Salon ${id} introuvable`);
 
     const memberIds = await this.roomPresence.getMemberIds(id);
     if (memberIds.length === 0) return [];
@@ -101,7 +101,7 @@ export class RoomsService {
       },
     });
 
-    if (!room) throw new NotFoundException(`Room ${id} not found`);
+    if (!room) throw new NotFoundException(`Salon ${id} introuvable`);
 
     return {
       ...room,
@@ -112,14 +112,14 @@ export class RoomsService {
 
   async getRoundHistory(id: string) {
     const round = await this.findRoundForHistory(id);
-    if (!round) throw new NotFoundException(`Round ${id} not found`);
+    if (!round) throw new NotFoundException(`La manche ${id} est introuvable`);
     return this.sanitizeRound(round);
   }
 
   async assertHost(id: string, userId: string) {
     const room = await this.prisma.room.findUnique({ where: { id }, select: { createdBy: true } });
-    if (!room) throw new NotFoundException(`Room ${id} not found`);
-    if (room.createdBy !== userId) throw new ForbiddenException('Only the room host may perform this action');
+    if (!room) throw new NotFoundException(`Salon ${id} introuvable`);
+    if (room.createdBy !== userId) throw new ForbiddenException('Seul l’hôte du salon peut effectuer cette action');
   }
 
   private async findRoundForHistory(id: string) {

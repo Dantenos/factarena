@@ -162,7 +162,7 @@ export class AiService {
   async generateClaimVerdict(claimId: string, question?: string, limit = 4) {
     const claim = await this.prisma.claim.findUnique({ where: { id: claimId } });
     if (!claim) {
-      throw new NotFoundException(`Claim ${claimId} not found`);
+      throw new NotFoundException(`Affirmation ${claimId} introuvable`);
     }
 
     const ragResponse = await this.askRag(question || claim.text, limit);
@@ -241,7 +241,7 @@ export class AiService {
       where: { id: roundId },
       include: { roundClaims: { orderBy: { orderIndex: 'asc' }, include: { claim: { include: { verdicts: true } } } } },
     });
-    if (!round) throw new NotFoundException(`Round ${roundId} not found`);
+    if (!round) throw new NotFoundException(`La manche ${roundId} est introuvable`);
 
     // Tous les clips, pas seulement ceux qu'il reste à expliquer : filtrer sur
     // `verdicts.length === 0` rendait un tableau vide quand les explications
@@ -381,7 +381,7 @@ export class AiService {
   async getClaimVerdict(claimId: string) {
     const verdict = await this.prisma.claimVerdict.findUnique({ where: { claimId } });
     if (!verdict) {
-      throw new NotFoundException(`No verdict found for claim ${claimId}`);
+      throw new NotFoundException(`Aucun verdict trouvé pour l’affirmation ${claimId}`);
     }
 
     return {
@@ -474,7 +474,7 @@ export class AiService {
     if (error instanceof AiResponseParseError) {
       return new BadGatewayException({
         code: 'AI_INVALID_RESPONSE',
-        message: `${operation} returned an invalid response`,
+        message: `${operation} a renvoyé une réponse invalide`,
       });
     }
 
@@ -487,23 +487,23 @@ export class AiService {
     if (status === 429) {
       return new HttpException({
         code: 'AI_RATE_LIMITED',
-        message: 'The AI service rate limit has been reached',
+        message: 'La limite de requêtes du service IA a été atteinte',
         retryAfterSeconds: this.getRetryAfterSeconds(candidate.response?.data),
       }, HttpStatus.TOO_MANY_REQUESTS);
     }
     if (candidate.code === 'ECONNABORTED' || candidate.code === 'ETIMEDOUT' || candidate.code === 'ESOCKETTIMEDOUT') {
-      return new GatewayTimeoutException({ code: 'AI_TIMEOUT', message: `${operation} timed out` });
+      return new GatewayTimeoutException({ code: 'AI_TIMEOUT', message: `${operation} a dépassé le délai d’attente` });
     }
     if (candidate.code === 'ECONNREFUSED' || candidate.code === 'ENOTFOUND' || candidate.code === 'EHOSTUNREACH') {
-      return new ServiceUnavailableException({ code: 'AI_UNAVAILABLE', message: 'The AI service is unavailable' });
+      return new ServiceUnavailableException({ code: 'AI_UNAVAILABLE', message: 'Le service IA est indisponible' });
     }
     if (status !== undefined && status >= 500) {
-      return new ServiceUnavailableException({ code: 'AI_TEMPORARY_ERROR', message: 'The AI service failed temporarily' });
+      return new ServiceUnavailableException({ code: 'AI_TEMPORARY_ERROR', message: 'Le service IA a rencontré une erreur temporaire' });
     }
     if (status !== undefined && status >= 400) {
-      return new BadGatewayException({ code: 'AI_UPSTREAM_ERROR', message: 'The AI service rejected the request' });
+      return new BadGatewayException({ code: 'AI_UPSTREAM_ERROR', message: 'Le service IA a rejeté la requête' });
     }
-    return new ServiceUnavailableException({ code: 'AI_UNAVAILABLE', message: 'The AI service is unavailable' });
+    return new ServiceUnavailableException({ code: 'AI_UNAVAILABLE', message: 'Le service IA est indisponible' });
   }
 
   private getRetryAfterSeconds(data: unknown): number {

@@ -19,6 +19,23 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/**
+ * Vérification locale uniquement destinée à éviter un appel prévisible avec
+ * un ancien JWT. Le backend reste la seule autorité : cette fonction ne
+ * remplace jamais la vérification cryptographique du garde JWT.
+ */
+export function tokenExpire(token: string): boolean {
+  const parties = token.split('.');
+  if (parties.length !== 3) return true;
+  try {
+    const base64Payload = parties[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64Payload.padEnd(Math.ceil(base64Payload.length / 4) * 4, '=')));
+    return typeof payload.exp !== 'number' || payload.exp <= Math.floor(Date.now() / 1000);
+  } catch {
+    return true;
+  }
+}
+
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
@@ -92,6 +109,11 @@ export interface ReponseAuth {
   user: Utilisateur;
 }
 
+export interface ReponseInscriptionDejaExistante {
+  alreadyExists: true;
+  message: string;
+}
+
 /** ⚠️ Le back attend un EMAIL, pas un pseudo (cf. LoginDto / RegisterDto). */
 export function connexion(email: string, motDePasse: string) {
   return api<ReponseAuth>('/auth/login', {
@@ -101,7 +123,7 @@ export function connexion(email: string, motDePasse: string) {
 }
 
 export function inscription(email: string, motDePasse: string) {
-  return api<ReponseAuth>('/auth/register', {
+  return api<ReponseAuth | ReponseInscriptionDejaExistante>('/auth/register', {
     method: 'POST',
     body: { email, password: motDePasse },
   });
@@ -146,7 +168,10 @@ export function listeAmis() {
 }
 
 export function ajouterAmi(friendId: string) {
-  return api<unknown>('/friends', { method: 'POST', body: { friendId } });
+  return api<Ami & { alreadyFriends?: boolean }>('/friends', {
+    method: 'POST',
+    body: { friendId },
+  });
 }
 
 export function retirerAmi(friendId: string) {

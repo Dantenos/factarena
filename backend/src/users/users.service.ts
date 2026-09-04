@@ -41,7 +41,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User ${id} not found`);
+      throw new NotFoundException(`Utilisateur ${id} introuvable`);
     }
 
     return user;
@@ -88,7 +88,7 @@ export class UsersService {
     }
 
     if (Object.keys(updateData).length === 0) {
-      throw new BadRequestException('No profile fields provided');
+      throw new BadRequestException('Aucun champ de profil fourni');
     }
 
     return this.prisma.user.update({
@@ -113,17 +113,17 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Utilisateur introuvable');
     }
 
     if (user.passwordHash) {
       if (!dto.currentPassword) {
-        throw new BadRequestException('Current password is required');
+        throw new BadRequestException('Le mot de passe actuel est obligatoire');
       }
 
       const currentMatches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
       if (!currentMatches) {
-        throw new UnauthorizedException('Current password is invalid');
+        throw new UnauthorizedException('Le mot de passe actuel est invalide');
       }
     }
 
@@ -137,9 +137,9 @@ export class UsersService {
   }
 
   async setAvatar(userId: string, filename: string) {
-    if (!this.isAvatarFilename(filename)) throw new BadRequestException('Invalid avatar file');
+    if (!this.isAvatarFilename(filename)) throw new BadRequestException('Fichier avatar invalide');
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
 
     const avatarUrl = `/api/users/avatars/${filename}`;
     const previous = user.avatarUrl?.match(/^\/api\/users\/avatars\/([a-zA-Z0-9._-]+)$/)?.[1];
@@ -196,10 +196,10 @@ export class UsersService {
 
   getAvatar(filename: string) {
     if (!/^[a-zA-Z0-9_-]+\.(png|jpe?g|gif|webp)$/i.test(filename)) {
-      throw new NotFoundException('Avatar not found');
+      throw new NotFoundException('Avatar introuvable');
     }
     const filePath = join(this.avatarDirectory(), filename);
-    if (!existsSync(filePath)) throw new NotFoundException('Avatar not found');
+    if (!existsSync(filePath)) throw new NotFoundException('Avatar introuvable');
     return new StreamableFile(createReadStream(filePath));
   }
 
@@ -210,9 +210,9 @@ export class UsersService {
   private async inspectAvatar(filePath: string): Promise<AvatarInfo> {
     const bytes = await readFile(filePath);
     const avatar = this.detectAvatar(bytes);
-    if (!avatar) throw new BadRequestException('The uploaded file is not a supported image');
+    if (!avatar) throw new BadRequestException('Le fichier envoyé n’est pas une image prise en charge');
     if (avatar.width < 1 || avatar.height < 1 || avatar.width > MAX_AVATAR_WIDTH || avatar.height > MAX_AVATAR_HEIGHT || avatar.width * avatar.height > MAX_AVATAR_PIXELS) {
-      throw new BadRequestException('Avatar dimensions are too large');
+      throw new BadRequestException('Les dimensions de l’avatar sont trop grandes');
     }
     return avatar;
   }

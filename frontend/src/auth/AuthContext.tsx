@@ -25,6 +25,7 @@ import {
   inscription as apiInscription,
   profil,
   setToken,
+  tokenExpire,
   type Utilisateur,
 } from '../api/client';
 
@@ -50,7 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Vérification du jeton au premier rendu.
   useEffect(() => {
-    if (!getToken()) {
+    const token = getToken();
+    // Un JWT expiré est détectable sans réseau. On le supprime avant l'appel
+    // à /users/me afin d'éviter un 401 attendu affiché par le navigateur lors
+    // de chaque ouverture du site après expiration de la session.
+    if (!token || tokenExpire(token)) {
+      if (token) clearToken();
       setChargement(false);
       return;
     }
@@ -90,6 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sInscrire = useCallback(async (email: string, motDePasse: string) => {
     const reponse = await apiInscription(email, motDePasse);
+    if ('alreadyExists' in reponse && reponse.alreadyExists) {
+      throw new Error(reponse.message);
+    }
     setToken(reponse.accessToken);
     setUtilisateur(reponse.user);
   }, []);

@@ -18,7 +18,7 @@ export class RateLimitService {
     if (bucket.count > maxRequests) {
       const retryAfter = Math.max(1, Math.ceil((bucket.startedAt + windowMs - now) / 1000));
       throw new HttpException({
-        message: 'Rate limit exceeded',
+        message: 'Trop de tentatives. Veuillez réessayer plus tard.',
         retryAfter,
       }, HttpStatus.TOO_MANY_REQUESTS);
     }

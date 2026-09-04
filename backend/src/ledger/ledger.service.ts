@@ -14,7 +14,7 @@ export class LedgerService {
 
   async getBalance(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { virtualBalance: true } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
     return user;
   }
 
@@ -32,7 +32,7 @@ export class LedgerService {
       }
     }
     const updated = await tx.user.updateMany({ where: { id: userId, virtualBalance: { gte: stake } }, data: { virtualBalance: { decrement: stake } } });
-    if (updated.count !== 1) throw new BadRequestException('Insufficient virtual credits');
+    if (updated.count !== 1) throw new BadRequestException('Crédits virtuels insuffisants');
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { virtualBalance: true } });
     return tx.transaction.create({ data: { userId, type: 'BET', amount: -stake, balanceAfter: user.virtualBalance, referenceId } });
   }
@@ -52,7 +52,7 @@ export class LedgerService {
 
   async refundBet(tx: Prisma.TransactionClient, userId: string, amount: number, referenceId: string) {
     this.assertPositiveAmount(amount);
-    if (!referenceId?.trim()) throw new BadRequestException('A refund reference is required');
+    if (!referenceId?.trim()) throw new BadRequestException('Une référence de remboursement est obligatoire');
     const existing = await tx.transaction.findUnique({ where: { referenceId } });
     if (existing) {
       this.assertSameOperation(existing, userId, 'REFUND', amount);
@@ -78,7 +78,7 @@ export class LedgerService {
       where: { id: userId },
       select: { virtualBalance: true },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
     if (user.virtualBalance >= LedgerService.SEUIL_RATTRAPAGE) {
       throw new BadRequestException('Le rattrapage est réservé aux joueurs qui ne peuvent plus miser');
     }
@@ -101,7 +101,7 @@ export class LedgerService {
 
   private assertPositiveAmount(amount: number) {
     if (!Number.isSafeInteger(amount) || amount <= 0) {
-      throw new BadRequestException('Ledger amount must be a positive integer');
+      throw new BadRequestException('Le montant du ledger doit être un entier positif');
     }
   }
 
@@ -112,7 +112,7 @@ export class LedgerService {
     amount: number,
   ) {
     if (existing.userId !== userId || existing.type !== type || existing.amount !== amount) {
-      throw new ConflictException('Ledger reference is already used by another operation');
+      throw new ConflictException('La référence du ledger est déjà utilisée par une autre opération');
     }
   }
 }

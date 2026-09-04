@@ -2,29 +2,29 @@ import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-valid
 import { Transform } from 'class-transformer';
 
 export class RegisterDto {
-  @IsEmail({}, { message: 'Email must be a valid email address.' })
-  @IsNotEmpty({ message: 'Email is required.' })
+  @IsEmail({}, { message: 'L’adresse e-mail doit être valide.' })
+  @IsNotEmpty({ message: 'L’adresse e-mail est obligatoire.' })
   @MaxLength(254)
   @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)
   email!: string;
 
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long.' })
-  @MaxLength(128, { message: 'Password must be at most 128 characters long.' })
-  @IsNotEmpty({ message: 'Password is required.' })
+  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères.' })
+  @MaxLength(128, { message: 'Le mot de passe doit contenir au maximum 128 caractères.' })
+  @IsNotEmpty({ message: 'Le mot de passe est obligatoire.' })
   password!: string;
 }
 
 export class LoginDto {
-  @IsEmail({}, { message: 'Email must be a valid email address.' })
-  @IsNotEmpty({ message: 'Email is required.' })
+  @IsEmail({}, { message: 'L’adresse e-mail doit être valide.' })
+  @IsNotEmpty({ message: 'L’adresse e-mail est obligatoire.' })
   @MaxLength(254)
   @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)
   email!: string;
 
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long.' })
-  @MaxLength(128, { message: 'Password must be at most 128 characters long.' })
-  @IsNotEmpty({ message: 'Password is required.' })
+  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères.' })
+  @MaxLength(128, { message: 'Le mot de passe doit contenir au maximum 128 caractères.' })
+  @IsNotEmpty({ message: 'Le mot de passe est obligatoire.' })
   password!: string;
 }

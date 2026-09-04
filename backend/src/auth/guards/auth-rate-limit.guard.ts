@@ -12,14 +12,28 @@ export class AuthRateLimitGuard {
     const policy = this.policyFor(endpoint);
     const ip = request.ip || request.socket.remoteAddress || 'unknown';
 
-    this.rateLimit.consume(`auth:${endpoint}:${ip}`, policy.maxRequests, policy.windowMs);
+    if (endpoint === 'register') {
+      // Le compteur unique par IP bloquait toutes les fenêtres Chrome d'une
+      // même machine dès qu'une personne testait plusieurs fois une adresse.
+      // On garde un plafond IP global anti-abus, mais on ajoute un compteur par
+      // e-mail pour que les utilisateurs légitimes ne se bloquent pas entre eux.
+      this.rateLimit.consume(`auth:register:ip:${ip}`, 50, policy.windowMs);
+      const email = typeof request.body?.email === 'string'
+        ? request.body.email.trim().toLowerCase()
+        : '';
+      if (email) {
+        this.rateLimit.consume(`auth:register:email:${email}`, policy.maxRequests, policy.windowMs);
+      }
+    } else {
+      this.rateLimit.consume(`auth:${endpoint}:${ip}`, policy.maxRequests, policy.windowMs);
+    }
     return true;
   }
 
   private policyFor(endpoint: string): { maxRequests: number; windowMs: number } {
     switch (endpoint) {
       case 'register':
-        return { maxRequests: 5, windowMs: 60 * 60_000 };
+        return { maxRequests: 10, windowMs: 60 * 60_000 };
       case 'authenticateWith42Callback':
         return { maxRequests: 10, windowMs: 15 * 60_000 };
       case 'login':
