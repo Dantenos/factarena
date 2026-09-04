@@ -3,7 +3,7 @@
 Doc de travail du service IA. Il couvre **mes trois modules** (RAG, interface LLM, modération),
 l'ordre dans lequel je les construis, et les décisions techniques prises avant de coder.
 
-La source de vérité reste `docs/subject.pdf`. L'archi d'ensemble est dans
+La source de vérité reste le sujet officiel remis par l'école. L'archi d'ensemble est dans
 `docs/ARCHITECTURE.md` (voir surtout §3 « les trois pièges à points » et §5.2 la frontière
 Prisma / vecteurs). Ici je descends au niveau de MA partie.
 
@@ -290,7 +290,17 @@ lieu d'un crash).
 
 ### Ce que ça me coûte à coder
 - **FAIT — le garde-fou en cascade** (`app/rag/guardrail.py` + branchement dans `/rag/ask`,
-  8 tests pytest verts). Reste : brancher l'exclusion des clips vivants au retrieval (bretelles).
+  8 tests pytest verts), puis **recentré** : il refusait tout ce qui touchait au thème d'un
+  clip, donc le bot était muet pendant toute la manche — c'est-à-dire au seul moment où on
+  le sollicite. Il ne refuse plus que les **demandes de verdict** : une tournure explicite
+  (« le clip 1 est vrai ou faux ? ») attrapée par une expression régulière, ou une question
+  qui reprend l'affirmation, tranchée par le juge LLM. Le reste passe, et le bot renseigne
+  sur le sujet — c'est le propos du jeu : apprendre à juger, pas se faire juger à sa place.
+- **FAIT — l'exclusion au retrieval** : `/rag/ask` accepte `exclure_urls` et écarte les
+  articles de fact-check des clips en jeu, avec un `k` élargi pour compenser. Même motif que
+  `exclure_url` sur `/second-avis`. Sans ça, une question sur le sujet ramenait le débunk et
+  donnait la réponse. Réserve assumée : une autre source du corpus peut couvrir le même fait,
+  le risque est réduit, pas annulé.
   Tout le reste (`/rag/ask`, streaming, rate-limit) existait déjà.
 - **Le contrat avec le Back Core** : sa requête `@bot` sur `/rag/ask` m'apporte deux listes des
   clips de la manche ouverte — `live_topics` (mots-thèmes, couche 1) et `live_claims` (textes,

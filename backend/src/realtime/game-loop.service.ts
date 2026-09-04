@@ -17,6 +17,10 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GameLoopService.name);
   private timer?: NodeJS.Timeout;
   private running = false;
+  // Dernière vérification « tout le monde a voté », par manche. Le tick est à
+  // 250 ms : sans ce frein, la question coûterait douze requêtes par seconde.
+  private readonly dernierControle = new Map<string, number>();
+  private static readonly CONTROLE_VOTES_MS = 2_000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -63,9 +67,13 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
         }
 
         if (status === 'OPEN') {
-          if (candidate.locksAt > new Date()) continue;
-          const locked = await this.roundsService.lockIfDue(candidate.id);
+          // Avant l'heure, la manche se verrouille quand même si tous les
+          // parieurs ont fini de voter — inutile de leur imposer l'attente.
+          const locked = candidate.locksAt > new Date()
+            ? await this.verrouillerSiToutLeMondeAVote(candidate.id)
+            : await this.roundsService.lockIfDue(candidate.id);
           if (!locked) continue;
+          this.dernierControle.delete(candidate.id);
           status = 'LOCKED';
           await this.realtimeGateway.publishRoundState(candidate.roomId, 'round:locked', candidate.id);
           // Manche verrouillée : les bots n'ont plus rien à influencer.
@@ -93,6 +101,15 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
     } finally {
       this.running = false;
     }
+  }
+
+  /** Applique le frein avant d'interroger la base. */
+  private async verrouillerSiToutLeMondeAVote(roundId: string) {
+    const maintenant = Date.now();
+    const precedent = this.dernierControle.get(roundId) ?? 0;
+    if (maintenant - precedent < GameLoopService.CONTROLE_VOTES_MS) return null;
+    this.dernierControle.set(roundId, maintenant);
+    return this.roundsService.lockIfEveryoneVoted(roundId);
   }
 
   private async finish(roundId: string, roomId: string) {

@@ -52,12 +52,12 @@ export default function Login() {
   }
 
   return (
-    <section className="relative bg-noir-krystal w-full flex-1 flex flex-col items-center">
+    <section className="relative bg-noir-krystal w-full flex-1 flex flex-col items-center px-4">
       <h1 className="text-white font-semibold text-lg mb-2">
         {modeInscription ? 'Inscription' : 'Connexion'}
       </h1>
 
-      <div className="p-5 w-[30%] min-w-[320px] bg-gris-krystal text-white rounded-xl">
+      <div className="p-5 w-full max-w-sm md:w-[30%] md:max-w-none md:min-w-[320px] bg-gris-krystal text-white rounded-xl">
         <form onSubmit={handleSubmit} className="text-white gap-1 items-center">
           <div className="flex mt-6 flex-col">
             <label htmlFor="email" className="font-semibold">Adresse e-mail</label>
@@ -89,6 +89,17 @@ export default function Login() {
 
           {/* role="alert" : le message est annoncé aux lecteurs d'écran
               (accessibilité demandée par le sujet). */}
+          {/* Connexion 42 (module OAuth du sujet). Un lien, pas un fetch : le
+              back redirige vers 42, qui redirige à son tour vers le callback.
+              Une requête XHR ne peut pas suivre ce parcours. On sort donc du
+              routeur React avec une navigation complète. */}
+          <a
+            href="/api/auth/42"
+            className="mt-3 button-blue-l px-4 py-2 text-sm block text-center"
+          >
+            Se connecter avec 42
+          </a>
+
           {erreur && (
             <p role="alert" className="mt-4 text-red-l text-sm">{erreur}</p>
           )}

@@ -5,7 +5,7 @@ avoir à me poser trois questions avant de lancer le projet. Lisez-le en entier 
 ensuite vous n'y reviendrez que pour les sections « où est quoi » et « à trancher ».
 
 Deux autres documents comptent :
-- `docs/subject.pdf` — le sujet officiel. **C'est lui qui gagne** en cas de contradiction.
+- Le sujet officiel remis par l'école. **C'est lui qui gagne** en cas de contradiction.
 - `docs/ARCHITECTURE.md` — le doc technique : le concept, le plan des 18 points, les
   décisions d'archi. Celui-ci (ONBOARDING) explique **comment ça tourne** ; l'autre explique
   **pourquoi on a choisi ça**.
@@ -303,7 +303,7 @@ Légende : **fonctionnel** = ça tourne, n'y touchez pas sans raison.
 | `.env.example` | Le modèle sans les secrets. Suivi par git (exigé par le sujet). |
 | `.gitignore` | Empêche de commiter `.env`, `node_modules`, `dist`, les certificats. |
 | `README.md` | La vitrine, **en anglais** (le sujet l'exige). |
-| `docs/subject.pdf` / `.txt` | Le sujet. La source de vérité. |
+
 | `docs/ARCHITECTURE.md` | Le doc technique : concept, plan des 18 points, décisions. |
 | `docs/ONBOARDING.md` | Ce fichier. |
 | `DEMARRAGE_GITHUB.md` | Notice de lancement du repo. À supprimer une fois fait. |

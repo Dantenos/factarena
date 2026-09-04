@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Query,
   Post,
   Request,
   UploadedFile,
@@ -83,6 +84,30 @@ export class UsersController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.usersService.changePassword(req.user.userId, dto);
+  }
+
+  /**
+   * Recherche de joueurs pour le module amis.
+   *
+   * Déclarée AVANT @Get(':id') : Nest teste les routes dans l'ordre, et
+   * « /users?recherche=... » serait sinon capté par la route paramétrée.
+   *
+   * La validation est double, comme partout : longueur minimale ici, et
+   * plafond de résultats côté service.
+   */
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  rechercher(
+    @Request() req: { user: { userId: string } },
+    @Query('recherche') recherche?: string,
+  ) {
+    if (!recherche || recherche.trim().length < 2) {
+      throw new BadRequestException('La recherche doit faire au moins deux caractères');
+    }
+    if (recherche.length > 60) {
+      throw new BadRequestException('Recherche trop longue');
+    }
+    return this.usersService.rechercher(req.user.userId, recherche);
   }
 
   @Get(':id')

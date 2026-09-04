@@ -26,12 +26,59 @@ interface ClipEnJeu {
   };
 }
 
+// Longueur d'une manche. Assez long pour que le classement départage vraiment
+// les joueurs plutôt que de récompenser un coup de chance. La constante sert
+// aussi au libellé du bouton, qui annonçait un chiffre différent de celui
+// réellement demandé au serveur.
+const CLIPS_PAR_MANCHE = 10;
+
+// Trois paliers plutôt qu'un champ libre : rien à valider, et le joueur choisit
+// en un clic pendant que la fenêtre de vote tourne.
+const MISES = [50, 100, 250];
+
+/**
+ * Marques d'un renvoi aux passages récupérés. Elles décident si l'on affiche les
+ * citations sous la réponse.
+ *
+ * La recherche vectorielle rend toujours ses six plus proches voisins, même
+ * quand aucun n'a de rapport : sur « c'est quoi un orage ? » elle remonte des
+ * articles sur les ovnis. Afficher ces sources sous une réponse de culture
+ * générale laisserait croire qu'elles l'étayent.
+ *
+ * Un seuil de distance ne trancherait pas — mesuré sur ce corpus, « comment
+ * cuire des pâtes » sort à 0,32 et « vidéo sortie de son contexte », pourtant
+ * couvert, à 0,31. On se fie donc à ce que le modèle a réellement fait : s'il
+ * n'a renvoyé à aucun passage, il a répondu de lui-même, et on ne cite rien.
+ */
+const RENVOI_AUX_PASSAGES =
+  /\[\d+\]|d'apr[èe]s les passages|selon les passages|les passages (fournis|indiquent|montrent|abordent)/i;
+
+/**
+ * Mot d'accueil de l'assistant, replacé en tête à chaque fois que la liste des
+ * messages est reconstruite. Rien à l'écran ne disait qu'il existe, ni qu'il est
+ * fiable contrairement aux trois faux joueurs qui, eux, mentent volontiers.
+ */
+function accueilBot(): ChatMessage {
+  return {
+    id: 'accueil-bot',
+    type: 'bot',
+    author: 'FactBot',
+    content:
+      "Je suis l'assistant du salon. Écris « @bot » suivi de ta question et je réponds "
+      + "en citant mes sources — les autres joueurs, eux, disent ce qu'ils veulent. "
+      + "Je ne dis jamais si un clip en cours est vrai ou faux, mais je peux t'éclairer "
+      + 'sur le sujet et sur la façon de le vérifier.',
+    timestamp: Date.now(),
+  };
+}
+
 export default function Room() {
   const { roomId } = useParams<{ roomId: string }>();
   const { connecte, etat, emettre, ecouter } = useSocket(roomId ?? null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([accueilBot()]);
   const [balance, setBalance] = useState(0);
+  const [aMise, setAMise] = useState(false);
   const [indexClip, setIndexClip] = useState(0);
   // Vote du joueur par claim : sert à griser les boutons déjà utilisés.
   const [mesVotes, setMesVotes] = useState<Record<string, boolean>>({});
@@ -54,6 +101,21 @@ export default function Room() {
   }, []);
   useEffect(rafraichirSolde, [rafraichirSolde]);
 
+  // L'état diffusé ne donne que le pot global. Pour savoir si CE joueur a
+  // déjà misé sur la manche en cours, on demande ses propres mises.
+  const idManche = (etat?.round as { id?: string } | null)?.id;
+  useEffect(() => {
+    if (!idManche) { setAMise(false); return; }
+    api<unknown[]>(`/bets/round/${idManche}`)
+      .then((liste) => setAMise(liste.length > 0))
+      .catch(() => setAMise(false));
+  }, [idManche]);
+
+  function miser(montant: number) {
+    if (!roomId || !idManche || aMise || montant > balance) return;
+    emettre('bet:place', { roomId, roundId: idManche, stake: montant });
+  }
+
   // Abonnements aux événements temps réel.
   useEffect(() => {
     if (!connecte) return;
@@ -65,15 +127,16 @@ export default function Room() {
           `/chat/room/${roomId}`,
         )
           .then((liste) =>
-            setMessages(
-              liste.map((m) => ({
+            setMessages([
+              accueilBot(),
+              ...liste.map((m) => ({
                 id: m.id,
                 type: 'user' as const,
                 author: m.user?.email?.split('@')[0] ?? 'joueur',
                 content: m.content,
                 timestamp: new Date(m.createdAt).getTime(),
               })),
-            ),
+            ]),
           )
           .catch(() => { /* salon sans historique : on démarre vide */ });
       }),
@@ -100,6 +163,20 @@ export default function Room() {
           },
         ]);
       }),
+      // Modération : seul l'auteur du message reçoit cet événement. On l'affiche
+      // comme une ligne système, sans reprendre le contenu bloqué.
+      ecouter('chat:moderated', (d: { reason?: string }) => {
+        setMessages((prec) => [
+          ...prec,
+          {
+            id: `mod-${Date.now()}`,
+            type: 'system',
+            author: 'modération',
+            content: d?.reason ?? 'Message bloqué par la modération.',
+            timestamp: Date.now(),
+          },
+        ]);
+      }),
       // Réponses du bot : on les affiche comme un message de type "bot" pour
       // que le Chat les distingue visuellement des joueurs.
       ecouter('ai:token', (d: { text: string }) => {
@@ -113,12 +190,36 @@ export default function Room() {
           return [...prec, { id: 'bot-en-cours', type: 'bot', author: 'FactBot', content: d.text, timestamp: Date.now() }];
         });
       }),
+      ecouter('ai:sources', (liste: Array<{ title?: string; url: string }>) => {
+        const sources = Array.isArray(liste) ? liste.filter((s) => s?.url) : [];
+        setMessages((prec) => [
+          ...prec,
+          { id: 'bot-en-cours', type: 'bot', author: 'FactBot', content: '', timestamp: Date.now(), sources },
+        ]);
+      }),
       ecouter('ai:done', () => {
         // Le message du bot est terminé : on lui donne un identifiant définitif
         // pour que le prochain n'y soit pas concaténé.
         setMessages((prec) =>
-          prec.map((m) => (m.id === 'bot-en-cours' ? { ...m, id: `bot-${Date.now()}` } : m)),
+          prec.map((m) =>
+            m.id === 'bot-en-cours'
+              ? {
+                  ...m,
+                  id: `bot-${Date.now()}`,
+                  sources: RENVOI_AUX_PASSAGES.test(m.content) ? m.sources : undefined,
+                }
+              : m,
+          ),
         );
+      }),
+      // Le serveur confirme la mise en diffusant bet:updated. On relit nos
+      // propres mises plutôt que de faire confiance à l'émission : elle peut
+      // être refusée, et l'événement concerne aussi les autres joueurs.
+      ecouter('bet:updated', () => {
+        if (!idManche) return;
+        api<unknown[]>(`/bets/round/${idManche}`)
+          .then((liste) => { setAMise(liste.length > 0); rafraichirSolde(); })
+          .catch(() => { /* sans réponse, on laisse l'état inchangé */ });
       }),
       // Révélation : le back publie les verdicts, on peut enfin les afficher.
       ecouter('round:revealed', (d: { verdicts?: unknown[] }) => {
@@ -134,6 +235,7 @@ export default function Room() {
       } | unknown[]) => {
         const liste = (Array.isArray(charge) ? charge : charge?.verdicts ?? []) as Array<{
           claimId: string; truthLabel: string; text?: string; verdictText?: string; sourceUrl?: string;
+          explanationSource?: 'rag' | 'editorial';
         }>;
         if (!Array.isArray(charge)) setClassement(charge?.classement ?? []);
         const resultatsClips: ClipResult[] = liste.map((v) => {
@@ -163,6 +265,7 @@ export default function Room() {
             title: v.text ?? '',
             explanation: explication?.trim() || "Explication en cours de génération.",
             source: v.sourceUrl ?? '',
+            explanationSource: v.explanationSource,
             userVoted: mesVotes[v.claimId] !== undefined,
             aiGuess,
             aiGuessWhy,
@@ -178,7 +281,7 @@ export default function Room() {
       }),
     ];
     return () => arret.forEach((stop) => stop());
-  }, [connecte, ecouter, mesVotes, rafraichirSolde]);
+  }, [connecte, ecouter, mesVotes, rafraichirSolde, idManche, roomId]);
 
   function voter(estFake: boolean) {
     if (!clipCourant || !round?.id || !roomId) return;
@@ -217,10 +320,7 @@ export default function Room() {
     try {
       await api('/rounds', {
         method: 'POST',
-        // 10 clips par manche : c'est le format de compilation décrit dans nos
-        // documents, assez long pour que le classement départage vraiment les
-        // joueurs plutôt que de récompenser un coup de chance sur six clips.
-        body: { roomId, claimCount: 10, durationSeconds: 300 },
+        body: { roomId, claimCount: CLIPS_PAR_MANCHE, durationSeconds: 300 },
       });
       // Pas besoin de recharger : le serveur diffuse le nouvel état par
       // WebSocket, la page se met à jour toute seule.
@@ -247,7 +347,7 @@ export default function Room() {
   const dejaVote = clipCourant ? mesVotes[clipCourant.id] !== undefined : false;
 
   return (
-    <section className="bg-noir-krystal w-full min-h-full p-6 space-y-4">
+    <section className="bg-noir-krystal w-full min-h-full p-4 sm:p-6 space-y-4">
       <StatsBar
         stats={{
           clipIndex: Math.min(indexClip + 1, clips.length),
@@ -264,8 +364,8 @@ export default function Room() {
         <p className="text-amber-400 text-sm">Connexion au salon en cours...</p>
       )}
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-gris-krystal rounded-xl p-3 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-gris-krystal rounded-xl p-3 space-y-3">
           <div className="relative">
             <span className="absolute top-2 left-2 z-10 text-xs text-red-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> LIVE
@@ -296,12 +396,40 @@ export default function Room() {
                 disabled={lancement || !connecte}
                 className="button-blue-d px-4 py-3 disabled:opacity-40"
               >
-                {lancement ? 'Lancement...' : 'Lancer une manche (6 clips)'}
+                {lancement ? 'Lancement...' : `Lancer une manche (${CLIPS_PAR_MANCHE} clips)`}
               </button>
               {erreurManche && (
                 <p role="alert" className="text-red-l text-sm">{erreurManche}</p>
               )}
             </div>
+          )}
+
+          {/* Mise de la manche. Le serveur acceptait « bet:place » depuis le
+              début, mais rien ne l'émettait : le pot restait donc à zéro et les
+              crédits ne servaient à rien. Une seule mise par manche, posée
+              pendant que la fenêtre est ouverte. */}
+          {round && manchOuverte && !aMise && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-white/50 text-sm">Ta mise :</span>
+              {MISES.map((montant) => (
+                <button
+                  key={montant}
+                  type="button"
+                  onClick={() => miser(montant)}
+                  disabled={montant > balance}
+                  className="button-blue-l px-4 py-2 text-sm disabled:opacity-40"
+                  title={montant > balance ? 'Solde insuffisant' : undefined}
+                >
+                  {montant} cr
+                </button>
+              ))}
+              <span className="text-white/30 text-xs">solde {balance}</span>
+            </div>
+          )}
+          {round && aMise && (
+            <p className="text-emerald-400/80 text-sm">
+              Mise enregistrée — pot commun : {etat?.pot ?? 0} crédits.
+            </p>
           )}
 
           {/* Vote good/fake : le cœur du jeu. Désactivé hors fenêtre ouverte ou
@@ -380,7 +508,7 @@ export default function Room() {
           )}
         </div>
 
-        <div className="col-span-1">
+        <div className="h-[60vh] lg:h-auto lg:col-span-1">
           <Chat
             messages={messages}
             roomLabel={etat?.room?.name ? `Chat — ${etat.room.name}` : 'Chat du salon'}
@@ -390,10 +518,13 @@ export default function Room() {
       </div>
 
       {/* Résultats : affichés seulement après la révélation, plus en permanence. */}
+      {/* Le total vient des résultats reçus, pas des clips en mémoire : une
+          fois la manche finie le serveur ne renvoie plus de manche active,
+          clips retombe à zéro et le score s'affichait « 3/0 ». */}
       {resultats && (
         <ResultsReveal
           correctCount={bonnesReponses}
-          totalClips={clips.length}
+          totalClips={resultats.length}
           clipResults={resultats}
           leaderboard={classement}
         />

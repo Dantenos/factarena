@@ -39,7 +39,14 @@ const legacyDemoClaims = [
 
 // The versioned editorial source is the single source of truth for seeded
 // claims. The legacy array above is kept temporarily for migration readability.
-const demoClaims = require('./data/editorial-claims.json');
+// Les quatre claims d'origine servent à la manche d'historique plus bas, qui
+// les cherche par sourceKey. Le corpus généré apporte les clips jouables, avec
+// leur vidéo et leur explication. On charge les deux : remplacer l'un par
+// l'autre faisait échouer le seed, et le back ne démarrait plus du tout.
+const demoClaims = [
+  ...require('./data/editorial-claims.json'),
+  ...require('./data/editorial-claims.generated.json'),
+];
 // SHA-256 fingerprint of the historical admin password. The plaintext is
 // intentionally not kept in the source anymore, but the compromised value is
 // still rejected if someone tries to provide it through the environment.
@@ -105,11 +112,25 @@ async function seedAdmin() {
 
 async function seedClaims(createdBy) {
   for (const claim of demoClaims) {
-    const data = createdBy ? { ...claim, createdBy } : { ...claim };
-    await prisma.claim.upsert({
+    // L'explication de révélation vit dans ClaimVerdict, pas sur Claim : on la
+    // met de côté avant l'upsert, sinon Prisma refuse le champ.
+    const { verdict, ...champs } = claim;
+    const data = createdBy ? { ...champs, createdBy } : { ...champs };
+    const enregistree = await prisma.claim.upsert({
       where: { sourceKey: claim.sourceKey },
       update: data,
       create: data,
+    });
+    if (!verdict) continue;
+    await prisma.claimVerdict.upsert({
+      where: { claimId: enregistree.id },
+      update: { verdictText: verdict.verdictText, confidence: verdict.confidence, citations: verdict.citations },
+      create: {
+        claimId: enregistree.id,
+        verdictText: verdict.verdictText,
+        confidence: verdict.confidence,
+        citations: verdict.citations,
+      },
     });
   }
 }

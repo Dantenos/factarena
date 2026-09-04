@@ -30,6 +30,24 @@ SEVERE_CATEGORIES = {
     "selfharm",
 }
 
+# Seuil de suppression sur les SCORES, en plus des drapeaux de Mistral.
+#
+# POURQUOI : les drapeaux du modèle sont calibrés pour l'anglais et pour des
+# contenus lourds. Sur un chat de jeu francophone ils laissaient passer les
+# insultes courantes — « enculé » sortait à 0.076, « sale connard » à 0.295,
+# sans qu'aucune catégorie soit levée.
+#
+# On a mesuré les deux populations sur ce chat : les messages ordinaires
+# plafonnent à 0.017 sur hate_and_discrimination, les insultes commencent à
+# 0.073. Un seuil à 0.05 les sépare avec trois fois de marge et n'a produit
+# aucun faux positif sur nos échantillons.
+#
+# La DÉTECTION reste entièrement celle du modèle : on ne compare aucun mot, on
+# ne fait que déplacer le curseur de décision, qui est la partie qui nous
+# revient. Limite connue : les abréviations (« ntm ») ne sont pas décodées par
+# le modèle et passent donc au travers.
+SEUIL_SUPPRESSION = 0.05
+
 
 class ModerationRequest(BaseModel):
     # Validation back (exigence du sujet) : message non vide, taille bornée.
@@ -45,19 +63,30 @@ def _decide(result: dict) -> dict:
     - d'autres catégories levées    -> warn   (utilisateur averti)
     """
     categories = result.get("categories", {})
+    scores = result.get("category_scores", {})
     flagged = [name for name, hit in categories.items() if hit]
 
-    if not flagged:
-        action = "allow"
-    elif any(name in SEVERE_CATEGORIES for name in flagged):
+    # Catégories graves que le modèle n'a pas levées mais qui dépassent notre
+    # propre seuil : c'est ce qui rattrape les insultes francophones.
+    au_dessus_du_seuil = [
+        name for name in SEVERE_CATEGORIES
+        if name not in flagged and float(scores.get(name, 0)) >= SEUIL_SUPPRESSION
+    ]
+
+    if any(name in SEVERE_CATEGORIES for name in flagged) or au_dessus_du_seuil:
         action = "delete"
-    else:
+    elif flagged:
         action = "warn"
+    else:
+        action = "allow"
 
     return {
         "action": action,
-        "flagged": flagged,                          # catégories levées (traçabilité)
-        "scores": result.get("category_scores", {}),  # détail chiffré (transparence)
+        # On expose les deux : ce que le modèle a levé, et ce que notre seuil
+        # ajoute. La distinction est ce qu'on explique en soutenance.
+        "flagged": flagged + au_dessus_du_seuil,
+        "au_dessus_du_seuil": au_dessus_du_seuil,
+        "scores": scores,
     }
 
 

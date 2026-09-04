@@ -4,6 +4,12 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class LedgerService {
+  // Rattrapage décidé par l'équipe. Le seuil est la plus petite mise proposée
+  // par l'interface, pas zéro : rester coincé à trente crédits est la même
+  // impasse qu'en avoir aucun, puisqu'on ne peut déjà plus rien engager.
+  static readonly SEUIL_RATTRAPAGE = 50;
+  static readonly MONTANT_RATTRAPAGE = 200;
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getBalance(userId: string) {
@@ -55,6 +61,42 @@ export class LedgerService {
 
     const user = await tx.user.update({ where: { id: userId }, data: { virtualBalance: { increment: amount } }, select: { virtualBalance: true } });
     return tx.transaction.create({ data: { userId, type: 'REFUND', amount, balanceAfter: user.virtualBalance, referenceId } });
+  }
+
+  /**
+   * Recrédite un joueur qui n'a plus de quoi miser.
+   *
+   * Sans ça, tomber sous la mise minimale enfermait le compte : plus rien à
+   * engager, donc plus aucun gain possible, et rien pour remonter. Le joueur
+   * pouvait encore voter, mais ne jouait plus jamais pour le pot.
+   *
+   * Il se réclame et n'est pas automatique : le joueur voit ce qui lui arrive,
+   * et l'écriture BONUS en garde la trace.
+   */
+  async reclamerRattrapage(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { virtualBalance: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.virtualBalance >= LedgerService.SEUIL_RATTRAPAGE) {
+      throw new BadRequestException('Le rattrapage est réservé aux joueurs qui ne peuvent plus miser');
+    }
+
+    const misAJour = await this.prisma.user.update({
+      where: { id: userId },
+      data: { virtualBalance: { increment: LedgerService.MONTANT_RATTRAPAGE } },
+      select: { virtualBalance: true },
+    });
+    await this.prisma.transaction.create({
+      data: {
+        userId,
+        type: 'BONUS',
+        amount: LedgerService.MONTANT_RATTRAPAGE,
+        balanceAfter: misAJour.virtualBalance,
+      },
+    });
+    return { virtualBalance: misAJour.virtualBalance, credite: LedgerService.MONTANT_RATTRAPAGE };
   }
 
   private assertPositiveAmount(amount: number) {

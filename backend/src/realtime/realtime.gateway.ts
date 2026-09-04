@@ -7,7 +7,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CUID_PATTERN } from '../common/pipes/cuid-param.pipe';
 import { PrismaService } from '../prisma/prisma.service';
@@ -39,9 +46,14 @@ interface ChatPayload extends RoomPayload {
   cors: { origin: false },
 })
 @Injectable()
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class RealtimeGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RealtimeGateway.name);
   private readonly socketsByUser = new Map<string, Set<string>>();
+  // Nettement sous le TTL de 45 s de la présence, pour qu'elle n'expire jamais
+  // tant que la socket vit.
+  private static readonly BATTEMENT_MS = 20_000;
+  private battement?: ReturnType<typeof setInterval>;
 
   @WebSocketServer()
   server!: Server;
@@ -89,8 +101,41 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
+  // Sans ce battement, la présence d'un joueur qui regarde sans agir expirait
+  // au bout de 45 s : il restait connecté mais n'était plus membre, et ses
+  // messages comme ses votes étaient refusés sans que rien ne l'indique.
+  onModuleInit() {
+    this.battement = setInterval(() => { void this.rafraichirPresences(); }, RealtimeGateway.BATTEMENT_MS);
+  }
+
+  onModuleDestroy() {
+    if (this.battement) clearInterval(this.battement);
+  }
+
+  private async rafraichirPresences() {
+    if (!this.server) return;
+    try {
+      const entrees = [...this.server.sockets.sockets.values()]
+        .map((socket) => socket as AuthenticatedSocket)
+        .filter((socket) => socket.data?.userId && socket.data?.roomId)
+        .map((socket) => ({ socketId: socket.id, userId: socket.data.userId, roomId: socket.data.roomId as string }));
+      if (entrees.length > 0) await this.roomPresence.rafraichir(entrees);
+    } catch (error) {
+      this.logger.warn(`Rafraîchissement des présences échoué: ${(error as Error).message}`);
+    }
+  }
+
+  // Socket.IO ne surveille pas la promesse renvoyée : une erreur qui s'échappe
+  // d'ici devient un rejet non capturé et arrête le process.
   async handleDisconnect(rawSocket: Socket) {
-    const socket = rawSocket as AuthenticatedSocket;
+    try {
+      await this.nettoyerDeconnexion(rawSocket as AuthenticatedSocket);
+    } catch (error) {
+      this.logger.warn(`Nettoyage de déconnexion incomplet: ${(error as Error).message}`);
+    }
+  }
+
+  private async nettoyerDeconnexion(socket: AuthenticatedSocket) {
     const userId = socket.data.userId;
     if (!userId) return;
 
@@ -166,6 +211,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }, socket.data.userId);
     const state = await this.roomsService.getState(body.roomId);
     this.server.to(this.roomChannel(body.roomId)).emit('bet:updated', { bet, ...this.liveStats(state) });
+    // Le front tient son état des événements room:state / round:* uniquement.
+    // Sans cette diffusion, le pot restait affiché à sa valeur d'avant la mise.
+    this.server.to(this.roomChannel(body.roomId)).emit('room:state', state);
     return bet;
   }
 
@@ -259,11 +307,21 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       }
     }
     const message = await this.chatService.sendMessage(socket.data.userId, body.roomId, body.content);
+    // Message supprimé par la modération : rien ne part dans le salon, mais on
+    // prévient son auteur. Sans ça il tapait, envoyait, et il ne se passait
+    // rien — de quoi croire le chat cassé plutôt que d'y voir une sanction.
+    if (message.action === 'delete') {
+      socket.emit('chat:moderated', { reason: 'Message bloqué par la modération.' });
+      return message;
+    }
     this.server.to(this.roomChannel(body.roomId)).emit('chat:message', message);
     // Si le joueur a nommé un des faux joueurs, celui-ci répond. Diffusé après
     // le message d'origine pour que l'ordre d'affichage reste cohérent.
-    this.botsService.interpeller(body.roomId, body.content, (m) =>
-      this.diffuserMessageBot(body.roomId, m),
+    void this.botsService.interpeller(
+      body.roomId,
+      body.content,
+      (m) => this.diffuserMessageBot(body.roomId, m),
+      socket.data.email?.split('@')[0],
     );
     return message;
   }
@@ -274,12 +332,32 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       throw new BadRequestException('Invalid prompt');
     }
     if (body.roomId) await this.assertInRoom(socket, body.roomId);
+
+    // On passait par streamChat (/llm/chat), qui répond SANS source : le bot
+    // n'a jamais démontré le module RAG. Et un refus global pendant la manche
+    // le rendait muet sur tout, y compris les questions de méthode — alors que
+    // guardrail.py sait précisément distinguer les deux. On lui donne donc les
+    // clips en jeu et on le laisse trancher.
     const activeRound = body.roomId ? (await this.roomsService.getState(body.roomId)).round : null;
-    if (activeRound && ['COUNTDOWN', 'OPEN', 'LOCKED'].includes(String(activeRound.status))) {
-      throw new BadRequestException('The bot cannot comment on clips from the current round');
-    }
+    const enJeu = activeRound && ['COUNTDOWN', 'OPEN', 'LOCKED'].includes(String(activeRound.status));
+    const enCours = enJeu
+      ? ((activeRound as {
+          roundClaims?: Array<{ claim?: { text?: string; sourceUrl?: string | null } }>;
+        }).roundClaims ?? []).map((rc) => rc.claim)
+      : [];
+    const claims = enCours.map((c) => c?.text).filter((t): t is string => typeof t === 'string');
+    // Les articles qui ont établi le verdict des clips en jeu sont écartés de la
+    // recherche : sans ça, une question sur le sujet ramène le débunk et donne
+    // la réponse.
+    const exclureUrls = enCours
+      .map((c) => c?.sourceUrl)
+      .filter((u): u is string => typeof u === 'string' && u.length > 0);
+
     try {
-      for await (const event of this.aiService.streamChat(body.prompt, socket.data.userId)) {
+      for await (const event of this.aiService.streamRag(body.prompt, socket.data.userId, {
+        claims,
+        exclureUrls,
+      })) {
         socket.emit(`ai:${event.type}`, event.data);
       }
       return { success: true };

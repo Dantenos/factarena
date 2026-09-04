@@ -1,9 +1,10 @@
-// Fil de discussion du salon, thème sombre cohérent avec la DA du site.
-// Gère l'affichage des messages système, utilisateur, et modérés par l'IA
-// (contenu masqué). Chaque auteur reçoit une couleur distincte, dérivée
-// automatiquement de son nom (pas de configuration manuelle nécessaire).
-// L'envoi de message est local pour l'instant (onSendMessage optionnel) —
-// le vrai flux temps réel arrivera avec l'intégration WebSocket.
+// Fil de discussion du salon. Quatre rendus distincts : message système,
+// message masqué par la modération, message de l'assistant, message de joueur.
+//
+// L'assistant est volontairement démarqué — liseré, badge, sources cliquables.
+// Les trois faux joueurs mentent délibérément ; lui cite ce sur quoi il
+// s'appuie. Rien à l'écran ne disait la différence, et on pouvait suivre un
+// menteur en croyant lire l'IA.
 import { useState } from "react";
 import { ChatMessage } from "../mocks/gameData";
 
@@ -12,6 +13,11 @@ interface ChatProps {
   roomLabel?: string;
   onSendMessage?: (content: string) => void;
 }
+
+// Longueur maximale d'un message, alignée sur la limite du serveur. Le sujet
+// exige que toute saisie soit validée des deux côtés : sans borne ici, un
+// message trop long partait et se faisait refuser sans que rien ne l'indique.
+const MAX_MESSAGE = 1000;
 
 // Palette cyclique utilisée pour distinguer visuellement les auteurs.
 const AUTHOR_COLORS = ["text-blue-400", "text-emerald-400", "text-amber-400", "text-pink-400", "text-purple-400"];
@@ -34,8 +40,13 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
   // Envoie le message tapé au parent (via onSendMessage) et vide le champ.
   // Ignore les messages vides ou uniquement composés d'espaces.
   function handleSend() {
-    if (!draft.trim()) return;
-    onSendMessage?.(draft.trim());
+    const contenu = draft.trim();
+    // Même borne que le gateway (realtime.gateway.ts) : au-delà il rejette le
+    // message, et le joueur n'en verrait rien. On teste ici aussi plutôt que de
+    // se reposer sur le seul maxLength, qui ne couvre pas un collage tronqué
+    // suivi d'un envoi programmatique.
+    if (!contenu || contenu.length > MAX_MESSAGE) return;
+    onSendMessage?.(contenu);
     setDraft("");
   }
 
@@ -60,6 +71,33 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
               // Message masqué par la modération IA : le vrai contenu n'est
               // jamais affiché, seulement un avertissement générique
               <span className="text-white/30 italic">⚠ message masqué par la modération IA</span>
+            ) : msg.type === "bot" ? (
+              // L'assistant, à ne pas confondre avec les autres joueurs : eux
+              // affirment ce qu'ils veulent, lui cite ce sur quoi il s'appuie.
+              // D'où le liseré, le badge, et les sources sous la réponse.
+              <div className="border-l-2 border-emerald-400/60 pl-2 py-0.5">
+                <span className="font-semibold text-emerald-400">{msg.author}</span>
+                <span className="ml-1 text-[10px] text-emerald-400/70 border border-emerald-400/40 rounded-full px-1.5">
+                  assistant
+                </span>{" "}
+                <span className="text-white/80">{msg.content}</span>
+                {msg.sources && msg.sources.length > 0 && (
+                  <ul className="mt-1 flex flex-col gap-0.5">
+                    {msg.sources.map((source) => (
+                      <li key={source.url}>
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-emerald-400/70 hover:text-emerald-400 underline break-all"
+                        >
+                          {source.title?.trim() || source.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ) : (
               // Message utilisateur normal : auteur coloré + contenu
               <>
@@ -81,18 +119,23 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
           // L'assistant ne se déclenche que sur le préfixe @bot (ou /ask), et
           // rien ne l'indiquait : on pouvait lui écrire sans jamais obtenir de
           // réponse, en croyant qu'il était cassé. Le placeholder le dit.
+          maxLength={MAX_MESSAGE}
           placeholder="Écris un message… ou @bot pour interroger l'IA"
-          className="flex-1 bg-noir-krystal text-white text-sm rounded-lg px-3 py-2 outline-none placeholder:text-white/30"
+          // min-w-0 : un champ texte a une largeur intrinsèque d'environ 220 px
+          // que flex-1 seul ne fait pas céder. Sur un écran de 320 px, le bouton
+          // « envoyer » se retrouvait poussé hors de l'écran.
+          className="flex-1 min-w-0 bg-noir-krystal text-white text-sm rounded-lg px-3 py-2 outline-none placeholder:text-white/30"
         />
         <button onClick={handleSend} className="button-blue-d px-4 py-2 text-sm">
           envoyer
         </button>
       </div>
-      {/* Rappel discret : l'assistant cite ses sources et refuse de répondre
-          sur les clips de la manche en cours (garde-fou anti-spoil). Le dire
-          évite qu'on prenne son refus pour un bug. */}
+      {/* Ce que fait l'assistant, dit une fois : il renseigne sur le sujet mais
+          ne donne jamais le verdict d'un clip en jeu. Sans ce rappel, son refus
+          ponctuel passerait pour un bug. */}
       <p className="text-white/30 text-xs mt-2">
-        @bot répond en citant ses sources, mais refuse de parler des clips de la manche en cours.
+        @bot cite ses sources et peut t'éclairer sur le sujet — mais il ne dira pas si un
+        clip en cours est vrai ou faux.
       </p>
     </div>
   );

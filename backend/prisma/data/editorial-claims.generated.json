@@ -1,1011 +1,1716 @@
 [
   {
-    "sourceKey": "tf1-info:70d32e6cfa18",
-    "text": "Une vidéo virale montre un robot humanoïde capable de courir à vive allure sur un terrain en pente",
+    "sourceKey": "snopes-com:3a6d8f38e80a",
+    "text": "A video clip shows a wind turbine exploding during high winds.",
     "truthLabel": "TRUE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-chine-cette-video-d-un-robot-chinois-en-devaler-une-pente-en-courant-est-elle-authentique-2383044.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2025-07-15",
-    "themeTags": [
-      "video",
-      "virale",
-      "montre",
-      "robot",
-      "humanoide",
-      "capable"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/sbCs7ZQDKoM",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **oui**, une vidéo montrant une éolienne explosant lors de vents violents existe et est authentique.\n\nLes sources (notamment [1], [3] et [4]) confirment que deux éoliennes Vestas se sont effondrées au Danemark en février 2008 lors de tempêtes, dont une a été filmée. L'incident près d'Århus montre une pale se briser, projetant des débris sur les autres pales et sectionnant presque la tour de 60 mètres.\n\nCependant, un autre clip viral de 2019 est un faux créé avec des effets numériques (mentionné dans [2]).\n\nSecond avis de l'IA (sans sa source) : FAUX. Les passages fournis ne contiennent aucune mention ou preuve d'une vidéo montrant une éolienne explosant lors de vents violents.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/video-of-lightning-strike/",
+          "title": "Is This Real Video of a Lightning Strike? | Snopes.com"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "20-minutes:9ffd429db48e",
-    "text": "Une fausse vidéo de Trump en train d’embrasser les pieds de Musk diffusée dans les locaux du HUD",
+    "sourceKey": "snopes:3a6d8f38e80a",
+    "text": "A video clip shows a wind turbine exploding during high winds.",
     "truthLabel": "TRUE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/societe/4140873-20250227-oui-fausse-video-trump-train-embrasser-pieds-musk-projetee-administration-us",
-    "_publisher": "20 Minutes",
-    "_rating": "Vrai",
-    "_reviewDate": "2025-02-27",
-    "themeTags": [
-      "fausse",
-      "video",
-      "trump",
-      "train",
-      "embrasser",
-      "pieds"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/sbCs7ZQDKoM",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **un tel événement s'est produit en février 2008 au Danemark** :\n\n- Deux éoliennes Vestas se sont effondrées lors de vents violents, dont une filmée en train de se désintégrer de manière explosive (passage [3]).\n- Un article du *Copenhagen Post* mentionne une enquête du ministre danois de l'environnement après ces incidents (passage [4]).\n\nCependant, **aucun passage ne confirme qu'une explosion similaire ait été filmée en 2019** : un autre clip viral de cette année-là a été identifié comme un faux généré par ordinateur (passage [2]).\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucune des sources fournies ne mentionne une vidéo montrant une éolienne explosant par grand vent.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/video-of-lightning-strike/",
+          "title": "Is This Real Video of a Lightning Strike? | Snopes.com"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "20-minutes:38848bc935e5",
-    "text": "Cette vidéo de « duel » entre un « mini-cerf » et un rhinocéros est-elle générée par IA ?",
+    "sourceKey": "snopes:b2931b98e933",
+    "text": "A video showing a crowded wave pool with people floating in multicolored inflatable tubes was captured at a water park in China.",
     "truthLabel": "TRUE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/monde/4197565-20260128-video-duel-entre-mini-cerf-rhinoceros-generee-ia",
-    "_publisher": "20 Minutes",
-    "_rating": "Vrai",
-    "_reviewDate": "2026-01-28",
-    "themeTags": [
-      "video",
-      "duel",
-      "entre",
-      "mini",
-      "cerf",
-      "rhinoceros"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/water-park-in-china/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/LvfyhtxIy7Y",
+    "verdict": {
+      "verdictText": "Oui, selon les passages fournis, la vidéo montrant une piscine à vagues bondée avec des personnes flottant sur des tubes gonflables multicolores a bien été capturée dans un parc aquatique en Chine. Les sources (Snopes, South China Morning Post, Stuff.co.nz) confirment son authenticité et son lieu (Heiyuhu Water Amusement Park à Daqing, Heilongjiang).\n\nSecond avis de l'IA (sans sa source) : FAUX. Le passage [1] indique qu'aucune autre vidéo du même lieu n'a été trouvée sous différents angles, ce qui rend peu probable l'authenticité de la vidéo.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/water-park-in-china/",
+          "title": "Is This 'Water Park in China' Wave Pool Video Real? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/water-park-in-china/",
+          "title": "Is This 'Water Park in China' Wave Pool Video Real? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/water-park-in-china/",
+          "title": "Is This 'Water Park in China' Wave Pool Video Real? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/water-park-in-china/",
+          "title": "Is This 'Water Park in China' Wave Pool Video Real? | Snopes.com"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://dpa-factchecking.com/switzerland/250403-99-421563",
+          "title": "Cette vidéo montre l'eau d'une piscine se déverser dans le quartier chinois de Bangkok après le récent séisme en Asie du Sud-Est."
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:e35c97e8a568",
-    "text": "Kylian Mbappé a partagé sur Instagram une photo d'un de ses buts modifiée par IA",
+    "sourceKey": "snopes:99d978a58e20",
+    "text": "A video shows a bear riding in the sidecar of a motorcycle.",
     "truthLabel": "TRUE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/sport/verif-une-photo-de-son-but-postee-par-kylian-mbappe-sur-instagram-a-t-elle-ete-modifiee-par-ia-2381646.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2025-07-08",
-    "themeTags": [
-      "kylian",
-      "mbappe",
-      "partage",
-      "instagram",
-      "photo",
-      "d'un"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/bear-motorcycle-sidecar/",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Funiladmag%2Fvideos%2F2853773281312379&show_text=false&width=560",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, la vidéo montrant un ours (nommé Tim) dans le side-car d'une moto est **authentique**.\n\nElle a été filmée dans les rues d'Arkhangelsk (Russie) en juillet 2017, dans le cadre d'une tournée publicitaire pour un cirque. L'ours, partiellement aveugle et âgé de 22 ans (presque à la retraite), était transporté par le club de moto *Polar Wolves* avec l'autorisation des autorités locales.\n\n*(Sources : passages [1], [2], [3])*.\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucun passage ne mentionne une vidéo avec un ours dans un side-car de moto.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/bear-motorcycle-sidecar/",
+          "title": "Bear Rides in Motorcycle Sidecar? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/bear-motorcycle-sidecar/",
+          "title": "Bear Rides in Motorcycle Sidecar? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/bear-motorcycle-sidecar/",
+          "title": "Bear Rides in Motorcycle Sidecar? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/bear-motorcycle-sidecar/",
+          "title": "Bear Rides in Motorcycle Sidecar? | Snopes.com"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://www.lighthousejournalism.com/viral/fact-check-ai-made-videos-of-animals-go-viral-as-real-2584/",
+          "title": "Fact check: AI-made videos of animals go viral as real | lighthousejournalism"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "franceinfo:960f47dd2793",
-    "text": "Dans notre pays, il y a 10 millions de personnes qui sont mal inscrites ou non inscrites sur les listes électorales, c'est 20% du corps électoral",
+    "sourceKey": "snopes-com:5bab28f81a37",
+    "text": "A video shows an aerial drone with a flamethrower taking out a wasp or hornet nest high in a tree.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/vrai-ou-faux-y-a-t-il-10-millions-de-francais-non-inscrits-ou-mal-inscrits-sur-les-listes-electorales-comme-l-affirme-manon-aubry_6376201.html",
-    "_publisher": "franceinfo",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-03-05",
-    "themeTags": [
-      "notre",
-      "pays",
-      "millions",
-      "personnes",
-      "inscrites",
-      "listes"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/uCq8tEwO90Q",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **oui**, il existe des vidéos authentiques montrant un drone équipé d'un dispositif lance-flammes pour détruire des nids de guêpes/hornets en Chine, notamment en décembre 2020 (mentionné par l'AP et le *South China Morning Post*).\n\nCependant, **le lien avec la vidéo TikTok/Reddit de décembre 2022 n'est pas clairement établi** : bien que le drone semble similaire, Snopes n'a pas confirmé qu'il s'agissait du même appareil ou du même nid. La vidéo TikTok (@bebeetok) pourrait être une reprise d'un contenu existant sans preuve directe de son authenticité originale.\n\n**Conclusion** : Les flamethrowers drones pour nids de guêpes/hornets existent bien en Chine, mais la vidéo virale de 2022 n'est pas formellement liée à ces opérations officielles.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage fourni pour vérifier l'affirmation.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+          "title": "Does Video Show a Flamethrower Drone Torching a Wasp Nest? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+          "title": "Does Video Show a Flamethrower Drone Torching a Wasp Nest? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+          "title": "Does Video Show a Flamethrower Drone Torching a Wasp Nest? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+          "title": "Does Video Show a Flamethrower Drone Torching a Wasp Nest? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+          "title": "Does Video Show a Flamethrower Drone Torching a Wasp Nest? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/drone-flamethrower-wasp-nest/",
+          "title": "Does Video Show a Flamethrower Drone Torching a Wasp Nest? | Snopes.com"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:d41188c3be39",
-    "text": "Les plus de 50 ans sont désormais majoritaires au sein du corps électoral",
+    "sourceKey": "snopes:857a820a4746",
+    "text": "A video shows a truck destroying the canopy over a bank's drive-through lane.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.tf1info.fr/politique/les-seniors-plus-de-50-ans-sont-ils-desormais-majoritaires-parmi-les-electeurs-francais-selon-economiste-maxime-sbaihi-sur-reseau-social-x-2282350.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-01-11",
-    "themeTags": [
-      "desormais",
-      "majoritaires",
-      "sein",
-      "corps",
-      "electoral"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/truck-bank-drive-through/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/lVIDddPQdEs",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **oui**, une vidéo montre bien un camion détruisant l'auvent (canopy) d'une banque en drive-through.\n\n**Détails** :\n- L'incident s'est produit le **2 juillet 2008** au **Texas State Bank** à Center, Texas.\n- Le véhicule impliqué était un **Dodge Ram 2500** tirant une remorque de voyage.\n- Le conducteur, **Mickey Miller**, et son fils de 10 ans ont pu sortir du véhicule sans blessure.\n- L'auvent s'est effondré après que la remorque ait heurté son coin.\n\n*(Sources : passages [1] et [2])*.\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo est identifiée comme un exemple de brûlage dirigé, une technique de gestion des risques d'incendie, et non comme une manifestation du réchauffement climatique.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/truck-bank-drive-through/",
+          "title": "Does This Video Show a Truck Destroying a Drive-Through Bank Canopy? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/truck-bank-drive-through/",
+          "title": "Does This Video Show a Truck Destroying a Drive-Through Bank Canopy? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/truck-bank-drive-through/",
+          "title": "Does This Video Show a Truck Destroying a Drive-Through Bank Canopy? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/video-of-lightning-strike/",
+          "title": "Is This Real Video of a Lightning Strike? | Snopes.com"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "beto:1d15c9aef6ad",
-    "text": "La Secrétaire exécutive adjointe de la Communauté de développement de l’Afrique australe (SADC), Angèle Makombo, a réagi ce jeudi aux rumeurs et publications fallacieuses circulant après le Sommet virtuel des Chefs d’État et de Gouvernement de la SADC, tenu le 17 décembre.",
+    "sourceKey": "snopes:5ac6722208c0",
+    "text": "A video shows lightning striking and severely damaging a building and tree.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://beto.cd/sadc-la-secretaire-executive-adjointe-dement-que-tshisekedi-ait-ete-prive-de-parole/",
-    "_publisher": "BETO",
-    "_rating": "True",
-    "_reviewDate": "2025-12-19",
-    "themeTags": [
-      "secretaire",
-      "executive",
-      "adjointe",
-      "communaute",
-      "developpement",
-      "afrique"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/video-of-lightning-strike/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/szOnAUnuMLk",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, la vidéo montrant un éclair frappant et endommageant gravement un bâtiment et un arbre semble être authentique. Elle a été partagée sur les réseaux sociaux et est référencée sur Jukin Media, une entreprise qui licencie des vidéos réelles. L'incident aurait eu lieu à Mansfield-et-Pontefract, au Québec, Canada. Cependant, les détails précis sur la date et les dommages ne sont pas clairement confirmés dans les passages.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage fourni ne permet de confirmer ou d'infirmer cette affirmation.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/video-of-lightning-strike/",
+          "title": "Is This Real Video of a Lightning Strike? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/video-of-lightning-strike/",
+          "title": "Is This Real Video of a Lightning Strike? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/wind-turbine-explosion/",
+          "title": "Does This Video Show a Wind Turbine Explosion? | Snopes.com"
+        },
+        {
+          "url": "https://dpa-factchecking.com/switzerland/230912-99-169283",
+          "title": "Cette vidéo montre un bâtiment s'effondrer suite au récent tremblement de terre au Maroc."
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/truck-bank-drive-through/",
+          "title": "Does This Video Show a Truck Destroying a Drive-Through Bank Canopy? | Snopes.com"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:e211b355835c",
-    "text": "La France n'a pas eu de budget à l'équilibre depuis 51 ans",
+    "sourceKey": "snopes:511b5bad77ec",
+    "text": "A video that went viral in August 2023 authentically depicted a giant iceberg approaching the coast of Newfoundland in Canada.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.tf1info.fr/politique/verif-la-france-n-a-t-elle-vraiment-connu-aucun-budget-deficit-a-l-equilibre-depuis-51-ans-comme-l-affirme-demission-premier-ministre-francois-bayrou-2393543.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2025-09-09",
-    "themeTags": [
-      "france",
-      "budget",
-      "l'equilibre",
-      "depuis"
-    ]
+    "category": "confirme_viral",
+    "sourceUrl": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/O51OFGIUtJA",
+    "verdict": {
+      "verdictText": "**Réponse :** Vrai.\n\nLe vidéo viral, bien que partagé en août 2023, a été capturé en juillet 2023 à Conche, Terre-Neuve (Canada). Plusieurs sources et témoignages confirment son authenticité et montrent le même iceberg depuis différents angles.\n\nSecond avis de l'IA (sans sa source) : FAUX. Le passage [1] mentionne un autre sujet (un éléphant secouru par la police) et ne fournit aucun élément sur une vidéo d'iceberg au Canada.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+          "title": "Authentic Video of a Giant Iceberg Approaching the Coast of Newfoundland? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+          "title": "Authentic Video of a Giant Iceberg Approaching the Coast of Newfoundland? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+          "title": "Authentic Video of a Giant Iceberg Approaching the Coast of Newfoundland? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+          "title": "Authentic Video of a Giant Iceberg Approaching the Coast of Newfoundland? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+          "title": "Authentic Video of a Giant Iceberg Approaching the Coast of Newfoundland? | Snopes.com"
+        },
+        {
+          "url": "https://www.snopes.com/fact-check/giant-iceberg-newfoundland-canada/",
+          "title": "Authentic Video of a Giant Iceberg Approaching the Coast of Newfoundland? | Snopes.com"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:d9aff17225b1",
-    "text": "S'il n'obtient qu'une majorité relative aux législatives, le RN peut refuser de gouvernement",
+    "sourceKey": "horscontexte:f6d9280ccb4b3d7c",
+    "text": "Cette vidéo montre la tornade qui a frappé la Normandie en octobre 2018.",
+    "truthLabel": "FALSE",
+    "category": "hors_contexte",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:1_April_2025_Rhodes_IF1_tornado.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/a/ab/1_April_2025_Rhodes_IF1_tornado.webm"
+  },
+  {
+    "sourceKey": "horscontexte:5431da32583f3065",
+    "text": "Cette vidéo montre l'avalanche qui a emporté un refuge dans les Alpes françaises.",
+    "truthLabel": "FALSE",
+    "category": "hors_contexte",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Avalanche_on_Mount_Rainier.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Avalanche_on_Mount_Rainier.webm"
+  },
+  {
+    "sourceKey": "horscontexte:4dcd6b3e0f0b7e01",
+    "text": "Cette vidéo montre l'éruption du Vésuve filmée par un touriste.",
+    "truthLabel": "FALSE",
+    "category": "hors_contexte",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:007_Volcano_eruption_of_Litli-Hr%C3%BAtur_in_Iceland_in_2023_Video_by_Giles_Laurent.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/5/53/007_Volcano_eruption_of_Litli-Hr%C3%BAtur_in_Iceland_in_2023_Video_by_Giles_Laurent.webm"
+  },
+  {
+    "sourceKey": "horscontexte:6f452d153b9d9202",
+    "text": "Cette vidéo montre un geyser apparu dans un jardin après un forage en Islande.",
+    "truthLabel": "FALSE",
+    "category": "hors_contexte",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Castle_geyser_20190714_072044_VID.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Castle_geyser_20190714_072044_VID.webm"
+  },
+  {
+    "sourceKey": "dpa-factchecking:81b97bac121b",
+    "text": "Une église au Pays de Galles a été incendiée par deux migrants pakistanais.",
+    "truthLabel": "FALSE",
+    "category": "societe_fr",
+    "sourceUrl": "https://dpa-factchecking.com/switzerland/250430-99-698259",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fhenrico.sencee%2Fvideos%2F1732826424322559&show_text=false&width=560",
+    "verdict": {
+      "verdictText": "Faux. L'affirmation a été jugée fausse par dpa-factchecking le 30 avril 2025.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://dpa-factchecking.com/switzerland/250430-99-698259",
+          "title": "Une église au Pays de Galles a été incendiée par deux migrants pakistanais."
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.C4PL366",
+          "title": "Cette vidéo montre une église incendiée par un immigrant musluman au Canada"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.C4HA3T3",
+          "title": "Une église incendiée par un immigrant musulman au Canada"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Appel_des_58",
+          "title": "Appel des 58"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Inde",
+          "title": "Inde"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Arabie_saoudite",
+          "title": "Arabie saoudite"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "factcheck:edf60116e25d",
+    "text": "A video circulating on social media claims to show Donald Trumps security rushing the stage after a prankster shouted during a rally.",
+    "truthLabel": "FALSE",
+    "category": "trump_media",
+    "sourceUrl": "https://www.misbar.com/en/factcheck/2025/12/23/digitally-altered-video-falsely-shows-trump-reacting-fake-%E2%80%9Callahu-akbar%E2%80%9D-chant",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/-9-Ry-sVhmQ"
+  },
+  {
+    "sourceKey": "india-today:9b9c75766133",
+    "text": "This video shows Donald Trump promising to get former Pakistan PM Imran Khan out of jail after winning the elections.",
+    "truthLabel": "FALSE",
+    "category": "trump_media",
+    "sourceUrl": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/2iEu27fR7EQ",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **cette vidéo est un deepfake**. Elle a été créée à partir d'une interview de Donald Trump avec NBC News en 2017, où il parlait d'autres sujets. Aucune mention d'Imran Khan n'apparaît dans l'original.\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucune mention dans les passages fournis ne fait référence à une vidéo de Donald Trump promettant de faire sortir Imran Khan de prison après des élections.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "ap-news:d1f41fd7b261",
+    "text": "Video shows rainbow flag with the text, “FOR MORE TOP SECRET NUCLEAR DOCUMENTS RAID HERE” hanging from Trump Tower in New York City.",
+    "truthLabel": "FALSE",
+    "category": "trump_media",
+    "sourceUrl": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/eJuN0SIuxII",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **cette affirmation est fausse**.\n\nLe passage [1] indique clairement que la vidéo a été **altérée** : l'original (daté de juillet 2020) montrait l'installation d'un \"Black Lives Matter\" mural devant Trump Tower, sans bannière arc-en-ciel. La bannière avec le texte sur les documents nucléaires est un montage partagé comme satire.\n\nSecond avis de l'IA (sans sa source) : VRAI. La vidéo mentionnée dans l'affirmation est explicitement qualifiée de deepfake et aucune affiche de ce genre n'est visible dans la vidéo d'origine.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://apnews.com/article/fact-check-trump-tower-rainbow-banner-265920451713",
+          "title": "Video altered to show rainbow banner at Trump Tower | AP News"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/donald-trump-pakistan-pm-imran-khan-out-of-jail-deepfake-video-us-president-2629371-2024-11-06",
+          "title": "Fact Check: This video of Trump promising to get Imran Khan out of jail is a DEEPFAKE - India Today"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "lighthouse-journalism:5df7d90bfa3b",
+    "text": "Fact check: AI-made videos of animals go viral as real",
+    "truthLabel": "FALSE",
+    "category": "video_ia",
+    "sourceUrl": "https://www.lighthousejournalism.com/viral/fact-check-ai-made-videos-of-animals-go-viral-as-real-2584/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/5k_Oj3OBwuE",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **les vidéos d'animaux générés par IA circulant comme réelles sont fausses**.\n\n- Plusieurs médias (Lighthouse Journalism, Factly) ont vérifié ces vidéos et confirmé leur nature artificielle.\n- Des outils de détection d'IA (comme Hugging Face's Maybe) ont attribué un score élevé d'artificialité (jusqu'à 98%).\n- Des incohérences visuelles (disparitions de parties du corps, mouvements irréalistes) et des mentions explicites (\"AI-generated for entertainment only\") ont été relevées.\n\n**Conclusion** : Ces vidéos sont des deepfakes et ne montrent pas d'animaux réels.\n\nSecond avis de l'IA (sans sa source) : VRAI. Plusieurs passages (2, 3, 5, 6) confirment que des vidéos générées par IA représentant des animaux sont partagées comme réelles sur les réseaux sociaux.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.lighthousejournalism.com/viral/fact-check-ai-made-videos-of-animals-go-viral-as-real-2584/",
+          "title": "Fact check: AI-made videos of animals go viral as real | lighthousejournalism"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        },
+        {
+          "url": "https://www.lighthousejournalism.com/viral/fact-check-ai-made-videos-of-animals-go-viral-as-real-2584/",
+          "title": "Fact check: AI-made videos of animals go viral as real | lighthousejournalism"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://www.lighthousejournalism.com/viral/fact-check-ai-made-videos-of-animals-go-viral-as-real-2584/",
+          "title": "Fact check: AI-made videos of animals go viral as real | lighthousejournalism"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "factly:52c30d19802b",
+    "text": "The viral video shows a crowded market in Thailand or China where pigs, crocodiles, snakes, and insects, both alive and dead, are being sold",
+    "truthLabel": "FALSE",
+    "category": "video_ia",
+    "sourceUrl": "https://factly.in/this-video-claiming-to-show-a-market-in-thailand-china-selling-animals-reptiles-like-crocodiles-snakes-and-insects-is-ai-generated/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/Ntwn338wKZk",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **le vidéo viral ne montre pas un marché réel en Thaïlande ou en Chine**. Plusieurs sources (FACTLY, India Today) confirment qu'il s'agit d'une vidéo **AI-générée**, avec des éléments comme des glitches (serpents à deux têtes, parties de reptiles qui disparaissent) et des outils comme Google's SynthID ou Hugging Face qui l'ont identifiée comme artificielle.\n\n**Réponse : FAUX** – La vidéo est une création artificielle et ne représente pas un marché réel.\n\nSecond avis de l'IA (sans sa source) : FAUX. Les passages mentionnent un parc aquatique en Chine et des animaux dans des situations irréalistes (comme un éléphant coincé dans une montagne rocheuse), mais aucun ne décrit un marché avec des animaux vivants ou morts.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factly.in/this-video-claiming-to-show-a-market-in-thailand-china-selling-animals-reptiles-like-crocodiles-snakes-and-insects-is-ai-generated/",
+          "title": "This video claiming to show a market in Thailand/China selling animals, reptiles like crocodiles & snakes, and insects is AI-generated. - FACTLY"
+        },
+        {
+          "url": "https://factly.in/this-video-claiming-to-show-a-market-in-thailand-china-selling-animals-reptiles-like-crocodiles-snakes-and-insects-is-ai-generated/",
+          "title": "This video claiming to show a market in Thailand/China selling animals, reptiles like crocodiles & snakes, and insects is AI-generated. - FACTLY"
+        },
+        {
+          "url": "https://factly.in/this-video-claiming-to-show-a-market-in-thailand-china-selling-animals-reptiles-like-crocodiles-snakes-and-insects-is-ai-generated/",
+          "title": "This video claiming to show a market in Thailand/China selling animals, reptiles like crocodiles & snakes, and insects is AI-generated. - FACTLY"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "factly:56e56a68d5f9",
+    "text": "The viral video shows an elephant rescuing multiple animals from the Sri Lankan floods.",
+    "truthLabel": "FALSE",
+    "category": "video_ia",
+    "sourceUrl": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/G4hL9cJGZkE",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **la réponse est claire** : **le vidéo est FAUX**.\n\nLes sources (FACTLY et India Today) confirment que les vidéos montrant un éléphant sauvant des animaux lors des inondations au Sri Lanka sont **générées par IA**. Plusieurs éléments le prouvent :\n- L'étiquetage explicite comme \"AI-generated\" sur TikTok.\n- La détection par des outils spécialisés (comme Hive AI).\n- Des incohérences visuelles (disparitions partielles, mouvements irréalistes).\n\n**Conclusion** : La vidéo est une fabrication numérique, pas un événement réel.\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucun passage ne mentionne un éléphant secourant d'autres animaux lors des inondations au Sri Lanka.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "india-today:6ce11d8dd1ca",
+    "text": "This video shows an elephant being rescued from a mountain in the US.",
+    "truthLabel": "FALSE",
+    "category": "video_ia",
+    "sourceUrl": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/eHC2F4auyY8",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **aucun ne confirme qu'une vidéo montre un éléphant étant secouru d'une montagne aux États-Unis**. Au contraire, les passages [1], [2] et [3] indiquent clairement que la vidéo virale à ce sujet est **fausse et générée par IA**.\n\n**Réponse :** Non, cette vidéo n'est pas réelle. Elle est générée par IA.\n\nSecond avis de l'IA (sans sa source) : FAUX. Les passages fournis ne mentionnent aucunement une vidéo montrant un éléphant en train d'être secouru dans une montagne aux États-Unis.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        },
+        {
+          "url": "https://factly.in/these-videos-showing-an-elephant-rescuing-animals-from-the-sri-lankan-floods-are-ai-generated/",
+          "title": "These videos, showing an elephant rescuing animals from the Sri Lankan floods, are AI-generated - FACTLY"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "factly:c153230eca04",
+    "text": "This video shows a sea creature that has a head of a cow.",
+    "truthLabel": "FALSE",
+    "category": "video_ia",
+    "sourceUrl": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/kQ65O_wVsWM",
+    "verdict": {
+      "verdictText": "**Réponse :** Faux.\n\nD'après les passages fournis, la vidéo montrant un animal marin avec une tête de vache est **AI-generated** (générée par intelligence artificielle). Aucune preuve crédible ne confirme l'existence d'un tel animal, et plusieurs anomalies (comme des jambes qui apparaissent soudainement ou des chaussures fusionnées) indiquent une création artificielle (passages [1], [2], [4], [5]).\n\nSecond avis de l'IA (sans sa source) : FAUX. Les passages [2], [4] et [6] indiquent clairement que les vidéos virales montrant des animaux marins hybrides (comme une \"vache de mer\") sont générées par IA et non réelles.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://www.indiatoday.in/fact-check/story/fact-check-viral-video-elephant-rescue-ai-generated-2613689-2024-10-08",
+          "title": "Fact Check: Jumbo save? No, this video of an elephant rescue is AI-generated - India Today"
+        },
+        {
+          "url": "https://www.lighthousejournalism.com/viral/fact-check-ai-made-videos-of-animals-go-viral-as-real-2584/",
+          "title": "Fact check: AI-made videos of animals go viral as real | lighthousejournalism"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "factly:cbd5317ab340",
+    "text": "This video shows a series of dance performances by birds where a bird transforms into a girl and then into a flower, leaving the judges stunned.",
+    "truthLabel": "FALSE",
+    "category": "video_ia",
+    "sourceUrl": "https://factly.in/a-clipped-ai-generated-video-is-falsely-shared-as-a-stunning-dance-performance-of-birds-transforming-into-humans/",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fteakayj%2Fvideos%2F836787905145781&show_text=false&width=560",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **cette affirmation est fausse**.\n\nLe vidéo viral est un montage utilisant :\n1. Des séquences de danse d'oiseaux générées par IA (provenant d'une chaîne YouTube \"Interesting and Natural\").\n2. Des réactions de juges provenant d'une vidéo de *Britain's Got Talent* (2022) sur des auditions dangereuses, sans lien avec des oiseaux ou des danses.\n\nLes outils d'IA (Hive AI et Hugging Face) ont confirmé que les séquences de danse étaient à **99,4% et 88% générées par IA**. Aucune performance réelle de transformation d'oiseaux en humains ou en fleurs n'a été identifiée.\n\n**Conclusion** : Le vidéo est une **fausse information** basée sur une compilation de contenus générés par IA.\n\nSecond avis de l'IA (sans sa source) : FAUX. Les passages fournis mentionnent des anomalies et des preuves d'IA ou de VFX dans les vidéos, sans aucun élément évoquant des danses ou des transformations d'oiseaux.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factly.in/a-clipped-ai-generated-video-is-falsely-shared-as-a-stunning-dance-performance-of-birds-transforming-into-humans/",
+          "title": "A clipped AI-generated video is falsely shared as a stunning dance performance of Birds transforming into humans - FACTLY"
+        },
+        {
+          "url": "https://factly.in/a-clipped-ai-generated-video-is-falsely-shared-as-a-stunning-dance-performance-of-birds-transforming-into-humans/",
+          "title": "A clipped AI-generated video is falsely shared as a stunning dance performance of Birds transforming into humans - FACTLY"
+        },
+        {
+          "url": "https://factly.in/a-clipped-ai-generated-video-is-falsely-shared-as-a-stunning-dance-performance-of-birds-transforming-into-humans/",
+          "title": "A clipped AI-generated video is falsely shared as a stunning dance performance of Birds transforming into humans - FACTLY"
+        },
+        {
+          "url": "https://factly.in/a-clipped-ai-generated-video-is-falsely-shared-as-a-stunning-dance-performance-of-birds-transforming-into-humans/",
+          "title": "A clipped AI-generated video is falsely shared as a stunning dance performance of Birds transforming into humans - FACTLY"
+        },
+        {
+          "url": "https://factly.in/ai-generated-videos-shared-as-real-visuals-of-new-mutated-animal-creatures/",
+          "title": "AI-generated videos shared as real visuals of new mutated animals - FACTLY"
+        },
+        {
+          "url": "https://factly.in/a-clipped-ai-generated-video-is-falsely-shared-as-a-stunning-dance-performance-of-birds-transforming-into-humans/",
+          "title": "A clipped AI-generated video is falsely shared as a stunning dance performance of Birds transforming into humans - FACTLY"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:2b40fe5f658eaae3",
+    "text": "Cette vidéo montre des rafales de tirs en Ukraine",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.32474DU",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/ERG5CkduphI",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **l'affirmation \"Cette vidéo montre des rafales de tirs en Ukraine\"** est jugée **Faux** par Factuel AFP (passage [1]).\n\nAucun passage ne confirme que la vidéo montre effectivement des rafales de tirs en Ukraine.\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo montre des engins blindés américains visés par des projectiles, et non des tirs russes en Ukraine.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.32474DU",
+          "title": "Cette vidéo montre des rafales de tirs en Ukraine"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.32474DU",
+          "title": "Cette vidéo prétendant montrer un avion au milieu de tirs en Ukraine provient d'un jeu vidéo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.32474DU",
+          "title": "Cette vidéo prétendant montrer un avion au milieu de tirs en Ukraine provient d'un jeu vidéo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.32474DU",
+          "title": "Cette vidéo prétendant montrer un avion au milieu de tirs en Ukraine provient d'un jeu vidéo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.323U3J8",
+          "title": "Cette vidéo montre des tirs russes contre l'Ukraine"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:1c577d3856242f1d",
+    "text": "Cette vidéo montre la mairie de Paris colorer la Seine en bleu",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/43OtAQR6K00",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **cette vidéo ne montre pas la mairie de Paris colorer la Seine en bleu**. Plusieurs sources (AFP, Factuel AFP) ont vérifié et confirmé que la vidéo est sortie de son contexte et provient en réalité des États-Unis, où elle illustre un traitement d'étang avec du colorant bleu pour limiter la prolifération de végétation. Aucune annonce officielle de la mairie de Paris n'a été retrouvée à ce sujet.\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucun passage ne mentionne une telle action de la mairie de Paris.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+          "title": "Non, cette vidéo ne montre pas la mairie de Paris colorer la Seine en bleu avant les JO | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+          "title": "Non, cette vidéo ne montre pas la mairie de Paris colorer la Seine en bleu avant les JO | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+          "title": "Cette vidéo montre la mairie de Paris colorer la Seine en bleu"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+          "title": "Non, cette vidéo ne montre pas la mairie de Paris colorer la Seine en bleu avant les JO | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+          "title": "Non, cette vidéo ne montre pas la mairie de Paris colorer la Seine en bleu avant les JO | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34TF8AB",
+          "title": "Non, cette vidéo ne montre pas la mairie de Paris colorer la Seine en bleu avant les JO | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:7a83cbf192ac06bb",
+    "text": "Cette vidéo montre l'armée israélienne détruire un camp à Gaza",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.34868XQ",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/EJ2y1meVy6U",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, l'affirmation **« Cette vidéo montre l'armée israélienne détruire un camp à Gaza »** a été jugée **Faux** par Factuel AFP le 19 décembre 2023.\n\nSource : [1]\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucune des sources fournies ne traite de cette affirmation spécifique.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34868XQ",
+          "title": "Cette vidéo montre l'armée israélienne détruire un camp à Gaza"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/video-guerre-israel-hamas-que-sait-on-des-images-d-un-cimetiere-detruit-par-l-armee-israelienne-au-nord-de-la-bande-de-gaza-2279810.html",
+          "title": "L'armée israélienne a détruit un cimetière au nord de la bande de Gaza"
+        },
+        {
+          "url": "https://www.20minutes.fr/monde/israel/4065509-20231206-guerre-hamas-israel-attention-video-pretend-montrer-aide-humanitaire-francaise-vers-gaza",
+          "title": "Cette vidéo montre des hélicoptères français décoller avec de l'aide humanitaire pour Gaza"
+        },
+        {
+          "url": "https://www.20minutes.fr/monde/israel/4058458-20231018-frappe-hopital-gaza-videos-anciennes-posts-douteux-trie-vrai-faux-infos",
+          "title": "L'armée israélienne a publié sur sa page Facebook en arabe : « A cause du manque d’équipement et de personnel médical, il a été décidé de bombarder l’hôpital baptiste à Gaza et de les euthanasier »"
+        },
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Guerre-Hamas-Israel-Des-enfants-de-Gaza-vises-par-l-armee-israelienne-Gare-a-cette-video-detournee/",
+          "title": "« Un groupe d’enfants se rassemble près du réservoir d’eau dans l’est de Gaza pour obtenir de l’eau potable, et l’ennemi israélien les guette depuis les airs et leur lance une bombe incendiaire, les t"
+        },
+        {
+          "url": "https://www.20minutes.fr/monde/israel/4076370-20240215-guerre-israel-hamas-enfant-faussement-blesse-gaza-non-images-viennent-irak",
+          "title": "Cette vidéo montrant la mise en scène d'un enfant blessé a été tournée par des Palestiniens à Gaza"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:51b60ed9ca1a81fb",
+    "text": "Cette vidéo montre le raid israélien dans l'hôpital al-Chifa à Gaza",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.343R3LV",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/HfpTXcpCXl0",
+    "verdict": {
+      "verdictText": "**Réponse :** Non.\n\nD'après les passages fournis (notamment [5]), la vidéo **ne montre pas le raid israélien dans l'hôpital al-Chifa à Gaza**. Elle a été filmée en **Égypte en 2013** (passages [1], [2], [3], [4], [6]).\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo a été filmée en Égypte en 2013 et ne montre pas un raid israélien à l'hôpital al-Chifa à Gaza.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34868XQ",
+          "title": "Cette vidéo ne montre pas l'armée israélienne détruire un camp à Gaza, elle a été filmée en Egypte en 2013 | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.343R3LV",
+          "title": "Cette vidéo n'a pas été filmée dans l’hôpital al-Chifa à Gaza, mais en Egypte en 2013 | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.343R3LV",
+          "title": "Cette vidéo n'a pas été filmée dans l’hôpital al-Chifa à Gaza, mais en Egypte en 2013 | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.343R3LV",
+          "title": "Cette vidéo n'a pas été filmée dans l’hôpital al-Chifa à Gaza, mais en Egypte en 2013 | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.343R3LV",
+          "title": "Cette vidéo montre le raid israélien dans l'hôpital al-Chifa à Gaza"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.343R3LV",
+          "title": "Cette vidéo n'a pas été filmée dans l’hôpital al-Chifa à Gaza, mais en Egypte en 2013 | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:1251bae7f4f5be04",
+    "text": "Cette vidéo montre un biscuit Oreo parasité par une substance organique",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/zQwklG1RKnE",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **cette affirmation est fausse**.\n\nLa vidéo ne montre pas un biscuit Oreo parasité par une substance organique, mais il s'agit d'une création artificielle. Plusieurs sources (dont l'AFP) ont vérifié et démenti cette affirmation, précisant que les images sont le résultat d'un montage ou d'une mise en scène.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne un biscuit Oreo ou une substance organique dans les extraits fournis.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+          "title": "Cette vidéo montre un biscuit Oreo parasité par une substance organique"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+          "title": "Une vidéo montrant un parasite dans un biscuit Oreo ? C'est une création | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+          "title": "Une vidéo montrant un parasite dans un biscuit Oreo ? C'est une création | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+          "title": "Une vidéo montrant un parasite dans un biscuit Oreo ? C'est une création | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+          "title": "Une vidéo montrant un parasite dans un biscuit Oreo ? C'est une création | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.34PJ8KC",
+          "title": "Une vidéo montrant un parasite dans un biscuit Oreo ? C'est une création | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:15b51ab3b359d5a0",
+    "text": "Cette vidéo montre un incendie volontaire et prouve que le réchauffement climatique n'existe pas",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.363A9EC",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/NZSYBclYuJs",
+    "verdict": {
+      "verdictText": "D'après le passage [1], l'affirmation est jugée **Trompeur** par Factuel AFP. La vidéo ne prouve pas que le réchauffement climatique n'existe pas.\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo montre une technique de brûlage dirigé, pas un incendie volontaire lié au réchauffement climatique.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.363A9EC",
+          "title": "Cette vidéo montre un incendie volontaire et prouve que le réchauffement climatique n'existe pas"
+        },
+        {
+          "url": "https://www.dpa-factchecking.com/belgium/240314-99-337241",
+          "title": "Cette vidéo montre le réchauffement climatique à l'oeuvre."
+        },
+        {
+          "url": "https://www.tf1info.fr/environnement-ecologie/video-verif-non-32-000-chercheurs-n-ont-pas-nie-la-realite-du-rechauffement-climatique-2376410.html",
+          "title": "32000 scientifiques ont dit que le réchauffement climatique n'existait pas dans un manifeste."
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.C4FN6ZQ",
+          "title": "Les incendies en France imputables aux pyromanes, pas au réchauffement"
+        },
+        {
+          "url": "https://www.rtbf.be/article/oui-il-a-fait-tres-chaud-en-1976-mais-cela-ne-remet-pas-en-question-l-existence-du-rechauffement-climatique-11571889",
+          "title": "\"La canicule de 1976 est la preuve que le réchauffement climatique n'est pas une réalité\""
+        },
+        {
+          "url": "https://www.tf1info.fr/meteo/climat-n-est-pas-meteo-pourquoi-une-journee-fraiche-ne-remet-pas-en-question-le-rechauffement-climatique-2266953.html",
+          "title": "La météo maussade est la preuve que le réchauffement climatique n'existe pas"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:beedb9eb3835d9a5",
+    "text": "Cette vidéo montre un Ovni abattu en Pologne",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/P9j1fQs0UL4",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **cette vidéo ne montre pas un Ovni abattu en Pologne**.\n\nIl s'agit en réalité d'un exercice militaire réalisé en **Corée du Sud en décembre 2022**, et non d'un événement survenu en Pologne. Plusieurs sources (dont TF1 Info) confirment cette information.\n\nSecond avis de l'IA (sans sa source) : FAUX. Les passages [2], [3] et [4] décrivent une vidéo virale montrant un avion militaire en Ukraine, non un Ovni en Pologne.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+          "title": "Cette vidéo montre-t-elle encore un Ovni abattu, cette fois-ci au-dessus de la Pologne ? | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+          "title": "Cette vidéo montre un Ovni abattu en Pologne"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+          "title": "Cette vidéo montre-t-elle encore un Ovni abattu, cette fois-ci au-dessus de la Pologne ? | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+          "title": "Cette vidéo montre-t-elle encore un Ovni abattu, cette fois-ci au-dessus de la Pologne ? | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/cette-video-montre-t-elle-encore-un-ovni-abattu-cette-fois-ci-au-dessus-de-la-pologne-2249435.html",
+          "title": "Cette vidéo montre-t-elle encore un Ovni abattu, cette fois-ci au-dessus de la Pologne ? | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:9e9e1373be33a77d",
+    "text": "\"J’en ai rien à foutre que mes billets soient à plus de mille dollars. Je ne fais pas de concerts pour les pauvres.\"",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Intelligence-artificielle-Et-maintenant-c-est-un-audio-bluffant-mais-faux-de-Taylor-Swift-qui-circule/",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/98WTwSnkoas",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, cette citation est **fausse**. Elle a été générée par une intelligence artificielle et attribuée à tort à Taylor Swift.\n\n(Source : [1] et [3])\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucune source parmi les passages fournis ne mentionne cette citation ou un contexte similaire.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Intelligence-artificielle-Et-maintenant-c-est-un-audio-bluffant-mais-faux-de-Taylor-Swift-qui-circule/",
+          "title": "Intelligence artificielle : Et maintenant, c’est un audio bluffant mais faux de Taylor Swift qui circule – DE FACTO – Des clés pour mieux s'informer"
+        },
+        {
+          "url": "https://www.20minutes.fr/planete/3279523-20220428-non-video-virale-montre-lune-gigantesque-pole-nord",
+          "title": "Non, cette vidéo virale ne montre pas une Lune gigantesque au pôle Nord 20 Minutes : Actualités et infos en direct20 Minutes : Actualités et infos en directRetour sur la page d'accueil 20 MinutesPrécé"
+        },
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Intelligence-artificielle-Et-maintenant-c-est-un-audio-bluffant-mais-faux-de-Taylor-Swift-qui-circule/",
+          "title": "Intelligence artificielle : Et maintenant, c’est un audio bluffant mais faux de Taylor Swift qui circule – DE FACTO – Des clés pour mieux s'informer"
+        },
+        {
+          "url": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+          "title": "Gare à ce faux témoignage « d’un papa en colère » après un cours d’éducation à la sexualité en CP20 Minutes : Actualités et infos en direct20 Minutes : Actualités et infos en directRetour sur la page "
+        },
+        {
+          "url": "https://www.20minutes.fr/planete/3279523-20220428-non-video-virale-montre-lune-gigantesque-pole-nord",
+          "title": "Non, cette vidéo virale ne montre pas une Lune gigantesque au pôle Nord 20 Minutes : Actualités et infos en direct20 Minutes : Actualités et infos en directRetour sur la page d'accueil 20 MinutesPrécé"
+        },
+        {
+          "url": "https://www.20minutes.fr/societe/4203830-20260304-irm-explose-patient-interieur-gare-deepfake",
+          "title": "Une IRM explose avec un patient à l’intérieur ? Gare au deepfake20 Minutes : Actualités et infos en direct20 Minutes : Actualités et infos en directRetour sur la page d'accueil 20 MinutesPrécédentSuiv"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:067cf941f010e81d",
+    "text": "La lune se trouve au pôle Nord, où le jour dure 24 heures et où la lune n'apparaît complètement qu'en 30 secondes et ne bloque le soleil que pendant 5 secondes avant de disparaître, une vue à couper le souffle.",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/planete/3279523-20220428-non-video-virale-montre-lune-gigantesque-pole-nord",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/UiwOj-Jm7kA",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, cette affirmation est **fausse**.\n\nLe passage [1] indique clairement qu'un verdict de \"Faux\" a été attribué à cette affirmation par *20 Minutes* le 28 avril 2022. Aucune source parmi les passages ne soutient l'idée que la Lune se trouve au pôle Nord ou qu'elle apparaît ou disparaît en quelques secondes.\n\nSecond avis de l'IA (sans sa source) : FAUX. Le passage [1] indique que la Lune est visible pendant deux semaines aux pôles Nord et Sud, et non pendant seulement 30 secondes.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.20minutes.fr/planete/3279523-20220428-non-video-virale-montre-lune-gigantesque-pole-nord",
+          "title": "La lune se trouve au pôle Nord, où le jour dure 24 heures et où la lune n'apparaît complètement qu'en 30 secondes et ne bloque le soleil que pendant 5 secondes avant de disparaître, une vue à couper l"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Lune",
+          "title": "Lune"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Lune",
+          "title": "Lune"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Terre",
+          "title": "Terre"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Lune",
+          "title": "Lune"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Lune",
+          "title": "Lune"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:9ae355916e4d689a",
+    "text": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Gare-a-ce-faux-temoignage-d-un-papa-en-colere-apres-un-cours-d-education-a-la-sexualite-en-CP/",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Froqia.rennes%2Fvideos%2F1505348536667503&show_text=false&width=560",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, cette affirmation est **fausse**.\n\nLes sources [1] et [2] indiquent clairement que cette allégation a été vérifiée et jugée comme un faux témoignage par *20 Minutes* et *De Facto*.\n\nSecond avis de l'IA (sans sa source) : FAUX. L'affirmation a été jugée fausse par 20 Minutes le 2023-09-22.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+          "title": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac"
+        },
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Gare-a-ce-faux-temoignage-d-un-papa-en-colere-apres-un-cours-d-education-a-la-sexualite-en-CP/",
+          "title": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Sigmund_Freud",
+          "title": "Sigmund Freud"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Roland_Garros",
+          "title": "Roland Garros"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Genre_(sciences_sociales)",
+          "title": "Genre (sciences sociales)"
+        },
+        {
+          "url": "https://fr.wikipedia.org/wiki/Richard_Stallman",
+          "title": "Richard Stallman"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:c30753aef8d2fd93",
+    "text": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Froqia.rennes%2Fvideos%2F1505348536667503&show_text=false&width=560",
+    "verdict": {
+      "verdictText": "**Réponse :** Faux.\n\nLes sources [1], [2], [3], [4], [5] et [6] confirment que cette affirmation est un faux témoignage largement relayé sur les réseaux sociaux. Aucun élément ne permet de valider cette allégation concernant une école à Bergerac.\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucun élément ne permet d'étayer ces assertions selon le rectorat de Bordeaux.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+          "title": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac"
+        },
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Gare-a-ce-faux-temoignage-d-un-papa-en-colere-apres-un-cours-d-education-a-la-sexualite-en-CP/",
+          "title": "L'école force son fils à se dénuder et à doigter une camarade de classe à Bergerac"
+        },
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Gare-a-ce-faux-temoignage-d-un-papa-en-colere-apres-un-cours-d-education-a-la-sexualite-en-CP/",
+          "title": "Gare à ce faux témoignage « d’un papa en colère » après un cours d’éducation à la sexualité en CP – DE FACTO – Des clés pour mieux s'informer"
+        },
+        {
+          "url": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+          "title": "Gare à ce faux témoignage « d’un papa en colère » après un cours d’éducation à la sexualité en CP20 Minutes : Actualités et infos en direct20 Minutes : Actualités et infos en directRetour sur la page "
+        },
+        {
+          "url": "https://defacto-observatoire.fr/Medias/20-Minutes/Fact-checks/Gare-a-ce-faux-temoignage-d-un-papa-en-colere-apres-un-cours-d-education-a-la-sexualite-en-CP/",
+          "title": "Gare à ce faux témoignage « d’un papa en colère » après un cours d’éducation à la sexualité en CP – DE FACTO – Des clés pour mieux s'informer"
+        },
+        {
+          "url": "https://www.20minutes.fr/societe/4054265-20230922-gare-faux-temoignage-papa-colere-apres-cours-education-sexualite-cp",
+          "title": "Gare à ce faux témoignage « d’un papa en colère » après un cours d’éducation à la sexualité en CP20 Minutes : Actualités et infos en direct20 Minutes : Actualités et infos en directRetour sur la page "
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:6715cd29fba8cb52",
+    "text": "Les États-Unis ont déployé des tanks américains dans la bande de Gaza",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/cthG8I7HdU8",
+    "verdict": {
+      "verdictText": "Non. Selon les passages fournis, les États-Unis n'ont pas déployé de tanks américains dans la bande de Gaza. Cette affirmation a été jugée fausse par TF1 Info le 27 octobre 2023. La vidéo virale associée à cette rumeur provient en réalité de Syrie en 2019 et a été détournée.\n\nSecond avis de l'IA (sans sa source) : FAUX. Aucun passage ne mentionne le déploiement de tanks américains dans la bande de Gaza.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Les États-Unis ont déployé des tanks américains dans la bande de Gaza"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.343R3LV",
+          "title": "Cette vidéo n'a pas été filmée dans l’hôpital al-Chifa à Gaza, mais en Egypte en 2013 | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:8e2c61c52b8b5cee",
+    "text": "Une IRM explose avec un patient à l’intérieur ?",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://www.20minutes.fr/societe/4203830-20260304-irm-explose-patient-interieur-gare-deepfake",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/IF6CMrjGNN4"
+  },
+  {
+    "sourceKey": "video:54280343b462ea8a",
+    "text": "Une vidéo de manifestation d'Américains contre les frappes américaines en Iran",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2F100095273839011%2Fvideos%2F587344447405026&show_text=false",
+    "verdict": {
+      "verdictText": "Non, la vidéo ne montre pas une manifestation d'Américains contre les frappes américaines en Iran. Elle a été filmée une semaine avant ces frappes, lors d'un rassemblement \"No Kings\" à San Diego contre l'administration Trump. Des manifestations réelles contre les frappes en Iran ont eu lieu, mais elles étaient de petite ampleur et sans lien avec cette vidéo (sources [3] et [4]).\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo montre en réalité des habitants en colère du nord-est de la Syrie jettant des pommes de terre sur les troupes américaines en 2019, et non une manifestation d'Américains contre les frappes en Iran.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+          "title": "Attention, cette vidéo a été filmée avant les frappes américaines sur l’Iran | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+          "title": "Une vidéo de manifestation d'Américains contre les frappes américaines en Iran"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+          "title": "Attention, cette vidéo a été filmée avant les frappes américaines sur l’Iran | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+          "title": "Attention, cette vidéo a été filmée avant les frappes américaines sur l’Iran | Factuel"
+        },
+        {
+          "url": "https://www.tf1info.fr/international/guerre-israel-hamas-non-les-etats-unis-n-ont-pas-deploye-des-troupes-dans-la-bande-de-gaza-2274349.html",
+          "title": "Guerre Israël-Hamas : non, les États-Unis n'ont pas envoyé des troupes dans la bande de Gaza | TF1 Info"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+          "title": "Attention, cette vidéo a été filmée avant les frappes américaines sur l’Iran | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:3a8f940ddd5c0867",
+    "text": "Une vidéo de récentes manifestations à Lomé, au Togo",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+    "mediaRef": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FGnokobok%2Fvideos%2F1113300040849767&show_text=false",
+    "verdict": {
+      "verdictText": "**Réponse :** Faux.\n\nD'après les passages fournis, la vidéo en question ne montre pas des manifestations à Lomé (Togo), mais bien une manifestation au Kenya, près de Nairobi. Plusieurs sources (AFP Factuel, géolocalisation, langues locales) confirment cette information.\n\nSecond avis de l'IA (sans sa source) : FAUX. La vidéo montre une manifestation à San Diego (États-Unis), pas à Lomé (Togo).",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+          "title": "Attention, cette vidéo montre une manifestation au Kenya, et non au Togo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+          "title": "Attention, cette vidéo montre une manifestation au Kenya, et non au Togo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+          "title": "Attention, cette vidéo montre une manifestation au Kenya, et non au Togo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+          "title": "Une vidéo de récentes manifestations à Lomé, au Togo"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+          "title": "Attention, cette vidéo montre une manifestation au Kenya, et non au Togo | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.66DM9ZT",
+          "title": "Attention, cette vidéo montre une manifestation au Kenya, et non au Togo | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "video:86b9994bf7e5a77b",
+    "text": "Une vidéo montre une frappe iranienne sur la centrale nucléaire d'Haïfa",
+    "truthLabel": "FALSE",
+    "category": "viral_debunk",
+    "sourceUrl": "https://factuel.afp.com/doc.afp.com.62UX9G3",
+    "mediaRef": "https://www.youtube-nocookie.com/embed/N-0X6pSLs-s",
+    "verdict": {
+      "verdictText": "D'après les passages fournis, **la vidéo ne montre pas une frappe iranienne sur la centrale nucléaire d'Haïfa**.\n\nLes sources indiquent que cette vidéo est **fausse** et qu'elle date de **2015**, filmée en Chine, sans aucun lien avec le conflit actuel entre l'Iran et Israël.\n\nSecond avis de l'IA (sans sa source) : INCERTAIN. Aucun passage ne mentionne ou ne vérifie cette affirmation spécifique.",
+      "confidence": 0.5,
+      "citations": [
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.62UX9G3",
+          "title": "Non, cette vidéo ne montre pas une frappe iranienne sur une centrale électrique israélienne | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.62UX9G3",
+          "title": "Une vidéo montre une frappe iranienne sur la centrale nucléaire d'Haïfa"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.62UX9G3",
+          "title": "Non, cette vidéo ne montre pas une frappe iranienne sur une centrale électrique israélienne | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.62UX9G3",
+          "title": "Non, cette vidéo ne montre pas une frappe iranienne sur une centrale électrique israélienne | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.62UX9G3",
+          "title": "Non, cette vidéo ne montre pas une frappe iranienne sur une centrale électrique israélienne | Factuel"
+        },
+        {
+          "url": "https://factuel.afp.com/doc.afp.com.63PE4WD",
+          "title": "Attention, cette vidéo a été filmée avant les frappes américaines sur l’Iran | Factuel"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:69dfac6e9c2b162f",
+    "text": "Après un gros séisme, les répliques peuvent se poursuivre pendant des semaines, parfois des mois.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.tf1info.fr/elections/legislatives-le-rn-de-jordan-bardella-peut-il-refuser-de-gouverner-en-cas-de-majorite-relative-2306885.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-07-03",
-    "themeTags": [
-      "s'il",
-      "n'obtient",
-      "qu'une",
-      "majorite",
-      "relative",
-      "legislatives"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:2013_Lushan_earthquake_aftershock_in_Chengdu.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/6/6f/2013_Lushan_earthquake_aftershock_in_Chengdu.ogv/2013_Lushan_earthquake_aftershock_in_Chengdu.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "La croûte terrestre se réajuste progressivement autour de la rupture initiale. Le nombre de répliques décroît selon une loi bien décrite, mais leur fin n'a rien de brutal.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:2013_Lushan_earthquake_aftershock_in_Chengdu.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:77f2010f9f3d",
-    "text": "Nous sommes en France plus de 19 millions dans ce pays à avoir au moins un ancêtre immigré",
+    "sourceKey": "wtf:9d9935e762074a27",
+    "text": "Au moindre contact avec la peau, une goutte d'azote liquide provoque immédiatement une brûlure.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Oreo_in_liquid_nitrogen.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/8/81/Oreo_in_liquid_nitrogen.webm",
+    "verdict": {
+      "verdictText": "L'effet Leidenfrost interpose un film de vapeur : une projection brève roule sur la peau sans la brûler. Une immersion prolongée, elle, est bel et bien dangereuse.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Oreo_in_liquid_nitrogen.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:e7aae0b01e8b4d28",
+    "text": "Certains geysers jaillissent avec une régularité telle qu'on affiche l'heure de leur prochaine éruption aux visiteurs.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.tf1info.fr/politique/immigration-en-france-sommes-nous-19-millions-a-avoir-au-moins-un-ancetre-immigre-2325833.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-09-30",
-    "themeTags": [
-      "sommes",
-      "france",
-      "millions",
-      "pays",
-      "ancetre",
-      "immigre"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Clepsydra_geyser_20190715_111455_VID.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/3/30/Clepsydra_geyser_20190715_111455_VID.webm",
+    "verdict": {
+      "verdictText": "À Yellowstone, plusieurs geysers ont un cycle assez stable pour être prévus à quelques minutes près, et les horaires sont publiés sur place.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Clepsydra_geyser_20190715_111455_VID.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "franceinfo:032a9f02ad2e",
-    "text": "\"Que ce soit les clandestins ou des étrangers en situation légale, on franchit des records\"",
+    "sourceKey": "wtf:d01b52fbfd3bd91d",
+    "text": "Certains insectes fabriquent leur propre lumière et brillent dans le noir sans aucune source extérieure.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/l-immigration-legale-et-illegale-franchit-elle-des-records-en-france_6736599.html",
-    "_publisher": "franceinfo",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-09-05",
-    "themeTags": [
-      "soit",
-      "clandestins",
-      "etrangers",
-      "situation",
-      "legale",
-      "franchit"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bioluminescent_beetle_Elateroidea_(video).webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Bioluminescent_beetle_Elateroidea_%28video%29.webm",
+    "verdict": {
+      "verdictText": "La bioluminescence : une réaction chimique entre luciférine et luciférase produit de la lumière presque sans chaleur.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Bioluminescent_beetle_Elateroidea_(video).webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:2f55b8f01d94",
-    "text": "Le nombre de titres de séjours délivrés en France bat des records sous la présidence d'Emmanuel Macron",
+    "sourceKey": "wtf:83f63b7d994dd8fe",
+    "text": "Cette plante replie ses feuilles grâce à un système nerveux comparable à celui des animaux.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_1.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/3/32/Mimosa_pudica_1.ogv/Mimosa_pudica_1.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "Aucune plante n'a de système nerveux. Le mouvement vient d'une perte d'eau brutale dans des cellules situées à la base des feuilles.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_1.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:5d5867e96d149b3d",
+    "text": "Dès 1900, la bobine Tesla a servi à alimenter des villes entières en électricité sans fil.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Flyback_Powered_Tesla_Coil.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Flyback_Powered_Tesla_Coil.webm",
+    "verdict": {
+      "verdictText": "La tour de Wardenclyffe, censée le démontrer, n'a jamais fonctionné et le chantier a été abandonné faute de financement.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Flyback_Powered_Tesla_Coil.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:4a705289c676ac8f",
+    "text": "Il existe des éclipses où la Lune est trop petite pour cacher le Soleil, et où il en reste un anneau de feu.",
     "truthLabel": "TRUE",
-    "category": "politique_fr",
-    "sourceUrl": "https://www.tf1info.fr/societe/immigration-un-record-de-titres-de-sejour-delivres-sous-la-presidence-macron-2267902.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-08-28",
-    "themeTags": [
-      "nombre",
-      "titres",
-      "sejours",
-      "delivres",
-      "france",
-      "records"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Annular_Solar_Eclipse_2010_Lake_Nakuru,_Kenya.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Annular_Solar_Eclipse_2010_Lake_Nakuru%2C_Kenya.webm",
+    "verdict": {
+      "verdictText": "Une éclipse annulaire : la Lune se trouve alors près de son point le plus éloigné de la Terre, son disque apparent ne suffit plus à couvrir celui du Soleil.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Annular_Solar_Eclipse_2010_Lake_Nakuru,_Kenya.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "franceinfo:57a0e13c633f",
-    "text": "\"C'est un Français sur quatre qui est victime d'allergies, qui sont en lien avec la qualité de l'air, avec aussi le climat et qui renforcent les allergies\"",
+    "sourceKey": "wtf:06289bc9c757162a",
+    "text": "Il existe une plante qui replie ses feuilles en moins d'une seconde quand on la touche, alors qu'elle n'a ni muscles ni système nerveux.",
     "truthLabel": "TRUE",
-    "category": "science",
-    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/vrai-ou-faux-un-francais-sur-quatre-souffre-t-il-d-allergies-et-sont-elles-en-lien-avec-le-rechauffement-climatique_6527075.html",
-    "_publisher": "franceinfo",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-05-20",
-    "themeTags": [
-      "c'est",
-      "francais",
-      "quatre",
-      "victime",
-      "d'allergies",
-      "lien"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_leaves_folding_when_touched_1.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/b/b1/Mimosa_pudica_leaves_folding_when_touched_1.ogv/Mimosa_pudica_leaves_folding_when_touched_1.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "Le Mimosa pudica, ou sensitive. Le mouvement vient d'une chute brutale de pression dans les cellules de la base des feuilles, pas d'un muscle.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_leaves_folding_when_touched_1.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "franceinfo:6b6a8842162b",
-    "text": "\"Les chats sont une catastrophe pour la biodiversité. Les chiens sont une catastrophe pour le climat.\"",
+    "sourceKey": "wtf:6e626f56570ebec3",
+    "text": "La foudre ne frappe jamais deux fois au même endroit.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:2010-07-14-Blitze-2.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/6/6e/2010-07-14-Blitze-2.ogv/2010-07-14-Blitze-2.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "C'est l'inverse : la foudre privilégie les points hauts et conducteurs. L'Empire State Building est frappé plusieurs dizaines de fois par an.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:2010-07-14-Blitze-2.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:1ff08fc799ec0c76",
+    "text": "L'air que nous respirons est composé en majorité d'oxygène.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nitrogen.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/4/48/Liquid-nitrogen-demo-freeside-atlanta.webm/Liquid-nitrogen-demo-freeside-atlanta.webm.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "Il contient environ 78 % d'azote pour seulement 21 % d'oxygène.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Nitrogen.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:6831b576965891bf",
+    "text": "La journée la plus meurtrière jamais connue sur l'Everest n'a tué que des guides népalais, pas un seul client étranger.",
     "truthLabel": "TRUE",
-    "category": "science",
-    "sourceUrl": "https://www.franceinfo.fr/replay-radio/le-vrai-du-faux/vrai-ou-faux-les-chiens-et-les-chats-sont-ils-des-catastrophes-pour-la-biodiversite-et-le-climat_6216132.html",
-    "_publisher": "franceinfo",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-12-15",
-    "themeTags": [
-      "chats",
-      "catastrophe",
-      "biodiversite",
-      "chiens",
-      "climat"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Everest_April_18th_2014_Massive_Avalanche_Sweeps.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Everest_April_18th_2014_Massive_Avalanche_Sweeps.webm",
+    "verdict": {
+      "verdictText": "L'avalanche du 18 avril 2014 dans la cascade de glace du Khumbu a tué seize Népalais qui installaient la voie pour les expéditions. La saison a ensuite été annulée.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Everest_April_18th_2014_Massive_Avalanche_Sweeps.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:bfcdd7d8332a",
-    "text": "Les inondations en Grèce sont liées au réchauffement climatique",
+    "sourceKey": "wtf:f1488d3b518b8c63",
+    "text": "Le dirigeable Hindenburg a pris feu parce qu'il était gonflé à l'hélium.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Footage_of_the_Hindenburg_disaster_paired_with_Herb_Morrison's_report.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/5/50/Footage_of_the_Hindenburg_disaster_paired_with_Herb_Morrison%27s_report.webm",
+    "verdict": {
+      "verdictText": "Il était gonflé à l'hydrogène, inflammable. L'hélium, ininflammable, lui avait été refusé à l'exportation par les États-Unis.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Footage_of_the_Hindenburg_disaster_paired_with_Herb_Morrison's_report.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:5f412927a7fdb983",
+    "text": "Le plus grand volcan actif de la planète s'est réveillé en 2022 après trente-huit ans de silence.",
     "truthLabel": "TRUE",
-    "category": "science",
-    "sourceUrl": "https://www.tf1info.fr/international/tempete-daniel-les-inondations-meurtrieres-en-grece-peuvent-elles-etre-liees-au-rechauffement-climatique-oui-selon-des-chercheurs-du-cnrs-2269069.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-09-08",
-    "themeTags": [
-      "inondations",
-      "grece",
-      "liees",
-      "rechauffement",
-      "climatique"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Six_Day_Time-lapse_of_Mauna_Loa_Erupting_(CIRA_2022-12-04_-_labels-1).webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/f/f8/A_Six_Day_Time-lapse_of_Mauna_Loa_Erupting_%28CIRA_2022-12-04_-_labels-1%29.webm",
+    "verdict": {
+      "verdictText": "Le Mauna Loa, à Hawaï, occupe à lui seul la moitié de l'île. Son éruption de novembre 2022 était la première depuis 1984.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:A_Six_Day_Time-lapse_of_Mauna_Loa_Erupting_(CIRA_2022-12-04_-_labels-1).webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:a72b87b5404c",
-    "text": "Avec le réchauffement climatique, l’Espagne risque de devenir un désert sur 75% de sa surface",
+    "sourceKey": "wtf:a770629cb5b2926d",
+    "text": "Le séisme de 2015 au Népal a déplacé Katmandou de plusieurs mètres vers le sud en moins d'une minute.",
     "truthLabel": "TRUE",
-    "category": "science",
-    "sourceUrl": "https://www.tf1info.fr/international/l-espagne-est-elle-menacee-de-devenir-un-desert-sur-75-de-son-territoire-comme-l-affirme-jean-luc-melenchon-2267901.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-09-05",
-    "themeTags": [
-      "rechauffement",
-      "climatique",
-      "espagne",
-      "risque",
-      "devenir",
-      "desert"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:2015_Nepal_earthquake_01.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/6/66/2015_Nepal_earthquake_01.ogv/2015_Nepal_earthquake_01.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "Les mesures satellitaires ont établi un glissement d'environ trois mètres de la vallée de Katmandou, et un affaissement de l'Himalaya par endroits.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:2015_Nepal_earthquake_01.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:8aac89bb5f9e",
-    "text": "Le nouveau commissaire européen désigné au climat a travaillé pour la compagnie pétrolière Shell",
+    "sourceKey": "wtf:c880ca16efacae45",
+    "text": "Les méduses n'ont ni cerveau, ni cœur, ni sang, et peuplent les océans depuis plus de 500 millions d'années.",
     "truthLabel": "TRUE",
-    "category": "science",
-    "sourceUrl": "https://www.tf1info.fr/environnement-ecologie/le-neerlandais-wopke-hoekstra-nouveau-commissaire-europeen-au-climat-a-t-il-travaille-pour-une-grande-compagnie-petroliere-2269897.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-09-15",
-    "themeTags": [
-      "nouveau",
-      "commissaire",
-      "europeen",
-      "designe",
-      "climat",
-      "travaille"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cephea_cephea.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/3/32/Cephea_cephea.webm",
+    "verdict": {
+      "verdictText": "Elles fonctionnent avec un réseau de neurones diffus et échangent gaz et nutriments directement avec l'eau.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Cephea_cephea.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:4f1c068d4da6",
-    "text": "Une vingtaine de départements sont encore dépourvus d'unités de soins palliatifs en France",
+    "sourceKey": "wtf:4717d59da40d221a",
+    "text": "Le soufre change de couleur selon sa température, sans qu'on lui ajoute quoi que ce soit.",
     "truthLabel": "TRUE",
-    "category": "sante",
-    "sourceUrl": "https://www.tf1info.fr/sante/verif-une-vingtaine-de-departements-sont-ils-encore-depourvus-d-unites-de-soins-palliatifs-en-france-2453503.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2026-07-17",
-    "themeTags": [
-      "vingtaine",
-      "departements",
-      "encore",
-      "depourvus",
-      "d'unites",
-      "soins"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Thermochromism_of_sulfur.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Thermochromism_of_sulfur.webm",
+    "verdict": {
+      "verdictText": "Thermochromisme : la structure des molécules de soufre se réarrange avec la chaleur, ce qui modifie la lumière absorbée.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Thermochromism_of_sulfur.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:081cfae6b584",
-    "text": "En France, 85% du territoire est un désert médical",
+    "sourceKey": "wtf:cb25b33d9e49c6ea",
+    "text": "L'oxygène que nous respirons devient un liquide si on le refroidit suffisamment.",
     "truthLabel": "TRUE",
-    "category": "sante",
-    "sourceUrl": "https://www.tf1info.fr/societe/verif-sante-france-85-du-territoire-francais-est-il-un-desert-medical-2437118.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2026-04-20",
-    "themeTags": [
-      "france",
-      "territoire",
-      "desert",
-      "medical"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Condensing_O2.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/ca/Condensing_O2.ogv/Condensing_O2.ogv.240p.vp9.webm",
+    "verdict": {
+      "verdictText": "En dessous de -183 °C, l'oxygène se condense en un liquide bleu pâle, et il est magnétique.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Condensing_O2.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "franceinfo:4b86907db0d9",
-    "text": "Le Dry January\" a un effet bénéfique sur la santé",
+    "sourceKey": "wtf:832687d8c9baac21",
+    "text": "Nikola Tesla a imposé le courant continu, celui qui alimente aujourd'hui nos prises électriques.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mini_Tesla_coil.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/9/98/Mini_Tesla_coil.webm",
+    "verdict": {
+      "verdictText": "Tesla défendait le courant ALTERNATIF, contre le continu d'Edison. C'est l'alternatif qui a été retenu pour la distribution.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Mini_Tesla_coil.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:ca0957f688e10837",
+    "text": "Par grand froid, une bulle de savon gèle et se couvre de cristaux qui poussent à vue d'œil.",
     "truthLabel": "TRUE",
-    "category": "sante",
-    "sourceUrl": "https://www.franceinfo.fr/vrai-ou-fake/vrai-ou-faux-dry-january-un-mois-sans-alcool-a-t-il-vraiment-des-effets-benefiques-sur-la-sante_6990731.html",
-    "_publisher": "franceinfo",
-    "_rating": "Vrai",
-    "_reviewDate": "2025-01-05",
-    "themeTags": [
-      "january",
-      "effet",
-      "benefique",
-      "sante"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_freezing_soap_bubble_in_McGregor,_Minnesota.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/8/88/A_freezing_soap_bubble_in_McGregor%2C_Minnesota.webm",
+    "verdict": {
+      "verdictText": "L'eau du film savonneux cristallise à sa surface avant que la bulle n'éclate ou ne s'affaisse.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:A_freezing_soap_bubble_in_McGregor,_Minnesota.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:bf53b9139d37",
-    "text": "Les maladies psychiques sont le premier poste de dépense de l'assurance maladie",
+    "sourceKey": "wtf:a3b9336f3392a54b",
+    "text": "Pour connaître la distance d'un orage, on compte les secondes entre l'éclair et le tonnerre : chaque seconde vaut un kilomètre.",
+    "truthLabel": "FALSE",
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Coldfrontthunderstorm1.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Coldfrontthunderstorm1.webm",
+    "verdict": {
+      "verdictText": "Le son parcourt environ 340 m par seconde : il faut donc compter à peu près trois secondes par kilomètre, pas une.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Coldfrontthunderstorm1.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
+  },
+  {
+    "sourceKey": "wtf:c73f359fb57f6fdc",
+    "text": "Un appareil conçu en 1891 fait jaillir des éclairs de plusieurs dizaines de centimètres dans l'air libre.",
     "truthLabel": "TRUE",
-    "category": "sante",
-    "sourceUrl": "https://www.tf1info.fr/sante/sante-les-maladies-psychiques-sont-elles-le-premier-poste-de-depense-de-l-assurance-maladie-comme-le-dit-le-nouveau-premier-ministre-michel-barnier-2326894.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2024-10-04",
-    "themeTags": [
-      "maladies",
-      "psychiques",
-      "premier",
-      "poste",
-      "depense",
-      "l'assurance"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:225W_Tesla_coil_firing.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/4/4d/225W_Tesla_coil_firing.ogv/225W_Tesla_coil_firing.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "La bobine Tesla : un transformateur résonant qui monte à des centaines de milliers de volts et ionise l'air.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:225W_Tesla_coil_firing.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:5bf717abeb43",
-    "text": "Deux tiers des 300.000 patients qui nécessiteraient des soins palliatifs en sont privés",
+    "sourceKey": "wtf:072b8f138e878d41",
+    "text": "Un engin sans hélice, sans moteur et sans aucune pièce mobile peut décoller grâce à la seule haute tension.",
     "truthLabel": "TRUE",
-    "category": "sante",
-    "sourceUrl": "https://www.tf1info.fr/sante/projet-loi-fin-de-vie-deux-tiers-des-300-000-patients-qui-necessiteraient-des-soins-palliatifs-en-sont-ils-prives-2279327.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-12-13",
-    "themeTags": [
-      "deux",
-      "tiers",
-      "patients",
-      "necessiteraient",
-      "soins",
-      "palliatifs"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:FlyingLifterv1.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/5/5b/FlyingLifterv1.ogv/FlyingLifterv1.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "L'ionocraft, ou « lifter » : la haute tension ionise l'air et le vent ionique produit une poussée. Effet réel, mais très faible.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:FlyingLifterv1.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "tf1-info:0becf78c9ff8",
-    "text": "L'aide médicale d'État, c'est 0,4 % des dépenses de soins du pays",
+    "sourceKey": "wtf:40d84dec69744754",
+    "text": "Une plante peut réagir à un contact plus vite qu'un humain ne referme la main.",
     "truthLabel": "TRUE",
-    "category": "sante",
-    "sourceUrl": "https://www.tf1info.fr/sante/immigration-l-aide-medicale-d-etat-ame-ne-represente-t-elle-que-0-4-des-depenses-de-sante-2272555.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Vrai",
-    "_reviewDate": "2023-10-11",
-    "themeTags": [
-      "l'aide",
-      "medicale",
-      "d'etat",
-      "c'est",
-      "depenses",
-      "soins"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_leaves_folding_when_touched_3.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9b/Mimosa_pudica_leaves_folding_when_touched_3.ogv/Mimosa_pudica_leaves_folding_when_touched_3.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "Le Mimosa pudica replie ses folioles en une fraction de seconde, par un mécanisme hydraulique et non nerveux.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Mimosa_pudica_leaves_folding_when_touched_3.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "factuel-afp:12305f3d9469",
-    "text": "Une vidéo d'une fusée de SpaceX vient de s'écraser sur la Lune",
+    "sourceKey": "wtf:e8bc2b23866880be",
+    "text": "Un film de bulle de savon est constitué d'une seule couche de molécules de savon.",
     "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4DK3WE",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-12",
-    "themeTags": [
-      "video",
-      "d'une",
-      "fusee",
-      "spacex",
-      "vient",
-      "s'ecraser"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bulles_de_savon.ogv",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/transcoded/3/37/Une_grosse_bulle_de_savon_%C3%A9clate_en_ralenti_x40.ogv/Une_grosse_bulle_de_savon_%C3%A9clate_en_ralenti_x40.ogv.480p.vp9.webm",
+    "verdict": {
+      "verdictText": "Il est formé de deux couches de savon enfermant une mince couche d'eau — c'est cette épaisseur qui produit les irisations.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Bulles_de_savon.ogv",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   },
   {
-    "sourceKey": "factuel-afp:537909821525",
-    "text": "Une vidéo d'un migrant demandant de l'argent et un hébergement gratuit",
+    "sourceKey": "wtf:de1489dfe8f111de",
+    "text": "Uriner sur une piqûre de méduse est le meilleur moyen de calmer la douleur.",
     "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C64E863",
-    "_publisher": "Factuel AFP",
-    "_rating": "Vidéo manipulée",
-    "_reviewDate": "2026-08-21",
-    "themeTags": [
-      "video",
-      "d'un",
-      "migrant",
-      "demandant",
-      "l'argent",
-      "hebergement"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:ed508cbd23e4",
-    "text": "Une vidéo de l'éclipse solaire 2025 dans le nord de l'Espagne",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4WH263",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-20",
-    "themeTags": [
-      "video",
-      "l'eclipse",
-      "solaire",
-      "nord",
-      "l'espagne"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:ab9975e4ad0c",
-    "text": "Cette vidéo montre une église incendiée par un immigrant musluman au Canada",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4PL366",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-17",
-    "themeTags": [
-      "video",
-      "montre",
-      "eglise",
-      "incendiee",
-      "immigrant",
-      "musluman"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:ac3025a0edda",
-    "text": "Une vidéo d’un civil abattu par des groupes armés à Goma",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C4422ZR",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-10",
-    "themeTags": [
-      "video",
-      "civil",
-      "abattu",
-      "groupes",
-      "armes",
-      "goma"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:66dd941c673d",
-    "text": "Cette vidéo montre la complicité de gendarmes marocains dans l'afflux de migrants à Ceuta",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-ceuta-ce-que-l-on-sait-sur-la-video-d-un-camion-d-ou-descendent-des-dizaines-de-jeunes-hommes-au-maroc-2456710.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-05",
-    "themeTags": [
-      "video",
-      "montre",
-      "complicite",
-      "gendarmes",
-      "marocains",
-      "l'afflux"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:c54141b40c56",
-    "text": "Une vidéo de l'afflux migratoire depuis le Maroc vers Ceuta",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C3U329E",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-04",
-    "themeTags": [
-      "video",
-      "l'afflux",
-      "migratoire",
-      "depuis",
-      "maroc",
-      "ceuta"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:4fa0005da839",
-    "text": "Des liasses de billets issus du détournement d'argent des dons européens en Ukraine",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/que-sait-on-de-cette-video-de-saisie-d-argent-en-ukraine-censee-illustrer-le-detournement-de-fonds-europeens-2460339.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-25",
-    "themeTags": [
-      "liasses",
-      "billets",
-      "issus",
-      "detournement",
-      "d'argent",
-      "dons"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:d9acdcec6239",
-    "text": "Une vidéo prouve que l’Iran a détruit un data center d’Amazon à Bahreïn",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C3L349H",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-30",
-    "themeTags": [
-      "video",
-      "prouve",
-      "iran",
-      "detruit",
-      "data",
-      "center"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:5f5be62672e2",
-    "text": "Une vidéo des viandes envoyées d'Israël jetées par le peuple de Gaza",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2Q38ZW",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-22",
-    "themeTags": [
-      "video",
-      "viandes",
-      "envoyees",
-      "d'israel",
-      "jetees",
-      "peuple"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:fb6bdcd44edd",
-    "text": "Une vidéo du dernier hommage à CR7 rendu à Madère",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2274KE",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-13",
-    "themeTags": [
-      "video",
-      "dernier",
-      "hommage",
-      "rendu",
-      "madere"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:c3c896eefe25",
-    "text": "Cette vidéo montre une faute non-sanctionnée de Messi au Mondial face à la Suisse",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2DF8WE",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-17",
-    "themeTags": [
-      "video",
-      "montre",
-      "faute",
-      "sanctionnee",
-      "messi",
-      "mondial"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:33473c20cd4b",
-    "text": "Une vidéo d'Erling Halland se faisant peur à lui-même",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B9DA49M",
-    "_publisher": "Factuel AFP",
-    "_rating": "Vidéo manipulée",
-    "_reviewDate": "2026-07-07",
-    "themeTags": [
-      "video",
-      "d'erling",
-      "halland",
-      "faisant",
-      "peur",
-      "meme"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:752ec3935e47",
-    "text": "Une vidéo du Hezbollah revendiquant une attaque à venir en France pour le 14 juillet",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B9ZW3NR",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-13",
-    "themeTags": [
-      "video",
-      "hezbollah",
-      "revendiquant",
-      "attaque",
-      "venir",
-      "france"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:92bfe656e748",
-    "text": "Voici une vidéo d'Erling Haaland se faisant peur à lui-même",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B9LT6CQ",
-    "_publisher": "Factuel AFP",
-    "_rating": "Vidéo manipulée",
-    "_reviewDate": "2026-07-08",
-    "themeTags": [
-      "voici",
-      "video",
-      "d'erling",
-      "haaland",
-      "faisant",
-      "peur"
-    ]
-  },
-  {
-    "sourceKey": "20-minutes:9f47b9ee7f95",
-    "text": "Une vidéo prouve la théorie de la terre creuse",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/planete/4232655-20260707-video-prouve-theorie-terre-creuse-existence-mondes-secrets-sous-pieds-vraiment",
-    "_publisher": "20 Minutes",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-07",
-    "themeTags": [
-      "video",
-      "prouve",
-      "theorie",
-      "terre",
-      "creuse"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:16daacba47fd",
-    "text": "La vidéo d'un gigantesque objet noir démontre l'existence du projet HAARP pour dérégler le climat",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/meteo/verif-haarp-un-gigantesque-objet-noir-cette-video-revele-t-elle-l-utilisation-d-un-outil-de-manipulation-du-climat-2451105.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-03",
-    "themeTags": [
-      "video",
-      "d'un",
-      "gigantesque",
-      "objet",
-      "noir",
-      "demontre"
-    ]
-  },
-  {
-    "sourceKey": "20-minutes:e1153fc89139",
-    "text": "Une vidéo de quokka authentique",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/societe/4232171-20260703-australie-petit-marsupial-tres-doue-reclamer-nourriture-ia",
-    "_publisher": "20 Minutes",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-03",
-    "themeTags": [
-      "video",
-      "quokka",
-      "authentique"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:831a77b11ebd",
-    "text": "Une vidéo de l'effondrement d'un immeuble après le séisme au Vénézuela",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B8R37G7",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-01",
-    "themeTags": [
-      "video",
-      "l'effondrement",
-      "d'un",
-      "immeuble",
-      "apres",
-      "seisme"
-    ]
-  },
-  {
-    "sourceKey": "20-minutes:4387359b2685",
-    "text": "Cette vidéo d’un mur de glace prouve que la Terre est plate",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/societe/4231942-20260630-video-mur-glace-prouve-terre-plate-non",
-    "_publisher": "20 Minutes",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-30",
-    "themeTags": [
-      "video",
-      "glace",
-      "prouve",
-      "terre",
-      "plate"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:b0a5e68ec583",
-    "text": "Cette vidéo montre le séisme survenu au Venezuela le 24 juin 2026",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B8N26G3",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-30",
-    "themeTags": [
-      "video",
-      "montre",
-      "seisme",
-      "survenu",
-      "venezuela",
-      "juin"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:d3c880f48d0c",
-    "text": "Une vidéo d'une musulmane recevant le baptême",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B7YN4WE",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-25",
-    "themeTags": [
-      "video",
-      "d'une",
-      "musulmane",
-      "recevant",
-      "bapteme"
-    ]
-  },
-  {
-    "sourceKey": "beto-cd:b768d41d0c86",
-    "text": "Des vidéos affirment qu'Ebola « n'existe pas » ou serait un prétexte à vaccins. C'est faux : l'épidémie est documentée par Africa CDC et l'OMS, et plusieurs contenus viraux ont déjà été démontés.",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://beto.cd/desintox-non-ebola-nest-pas-une-invention-pour-vendre-des-vaccins-en-ituri/",
-    "_publisher": "beto.cd",
-    "_rating": "False",
-    "_reviewDate": "2026-06-19",
-    "themeTags": [
-      "videos",
-      "affirment",
-      "qu'ebola",
-      "n'existe",
-      "serait",
-      "pretexte"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:32e2feeebdfd",
-    "text": "Une vidéo montre Martin Fayulu demander pardon à Félix Tshisekedi.",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B7BL666",
-    "_publisher": "Factuel AFP",
-    "_rating": "Vidéo manipulée",
-    "_reviewDate": "2026-06-17",
-    "themeTags": [
-      "video",
-      "montre",
-      "martin",
-      "fayulu",
-      "demander",
-      "pardon"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:43562ef318a5",
-    "text": "Une vidéo d'une mobilisation contre les projets touristiques liés à la famille Trump en Albanie",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B6MH6WE",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-16",
-    "themeTags": [
-      "video",
-      "d'une",
-      "mobilisation",
-      "contre",
-      "projets",
-      "touristiques"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:08020f5fb90d",
-    "text": "Une vidéo montre une boite de conserve sans viande donnée aux soldats russes",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-une-boite-de-conserve-sans-viande-cette-video-montre-t-elle-le-rationnement-drastique-des-soldats-russes-2447135.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-12",
-    "themeTags": [
-      "video",
-      "montre",
-      "boite",
-      "conserve",
-      "viande",
-      "donnee"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:49ce8bf80e81",
-    "text": "Une vidéo montre des soldats détruire un hélicoptère américain avec un lance-roquette valant 150 dollars",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-des-iraniens-ont-ils-detruit-un-helicoptere-americain-avec-une-arme-a-150-dollars-2446886.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-11",
-    "themeTags": [
-      "video",
-      "montre",
-      "soldats",
-      "detruire",
-      "helicoptere",
-      "americain"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:03ae7bb0df75",
-    "text": "Cette vidéo montre des soldats israéliens dévaster une église au Liban",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B6DV6KF",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-10",
-    "themeTags": [
-      "video",
-      "montre",
-      "soldats",
-      "israeliens",
-      "devaster",
-      "eglise"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:af8dbf39c248",
-    "text": "Une vidéo montre Céline Dion snobé une fan qui chantait pour elle en refermant sous son nez la vitre de sa voiture",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/culture/verif-celine-dion-a-t-elle-snobe-une-fan-qui-chantait-pour-elle-en-refermant-sous-son-nez-la-vitre-de-sa-voiture-2444110.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-05-28",
-    "themeTags": [
-      "video",
-      "montre",
-      "celine",
-      "dion",
-      "snobe",
-      "chantait"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:b836d723f052",
-    "text": "Une vidéo montre un soldat tué par un homme derrière son ordinateur avec une manette de jeu vidéo",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/verif-la-nouvelle-guerre-moderne-cette-video-montre-t-elle-vraiment-un-soldat-tue-par-un-homme-derriere-son-ordinateur-2443627.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-05-26",
-    "themeTags": [
-      "video",
-      "montre",
-      "soldat",
-      "homme",
-      "derriere",
-      "ordinateur"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:ecf4b4a2ed89",
-    "text": "Des vidéos où des personnes ne portent pas de masques près des personnes contaminées par l'hantavirus",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/sante/verif-agent-de-securite-sans-protection-elus-a-proximite-des-malades-ces-images-prouvent-elles-que-l-hantavirus-est-une-supercherie-2441364.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-05-13",
-    "themeTags": [
-      "videos",
-      "personnes",
-      "portent",
-      "masques",
-      "pres",
-      "contaminees"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:24603761d74a",
-    "text": "Une vidéo montre une attaque iranienne contre des infrastructures énergétiques à Dubaï.",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B2GG9G3",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-05-12",
-    "themeTags": [
-      "video",
-      "montre",
-      "attaque",
-      "iranienne",
-      "contre",
-      "infrastructures"
-    ]
-  },
-  {
-    "sourceKey": "dpa-factchecking:8586598a0246",
-    "text": "Cette vidéo montre deux missiles iraniens frapper un navire militaire américain près de l'île de Jask.",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://dpa-factchecking.com/belgium/260114-99-165398",
-    "_publisher": "dpa-factchecking",
-    "_rating": "faux",
-    "_reviewDate": "2026-05-12",
-    "themeTags": [
-      "video",
-      "montre",
-      "deux",
-      "missiles",
-      "iraniens",
-      "frapper"
-    ]
-  },
-  {
-    "sourceKey": "tf1-info:4e2110da480f",
-    "text": "Une vidéo démontre que l'armée américaine a développé des drones corbeaux",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/high-tech/verif-la-bataille-du-futur-l-armee-americaine-a-t-elle-developpe-des-drones-corbeaux-capables-de-passer-inapercus-2440467.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-05-08",
-    "themeTags": [
-      "video",
-      "demontre",
-      "l'armee",
-      "americaine",
-      "developpe",
-      "drones"
-    ]
+    "category": "wtf_science",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Spotted_jelly_(Mastigias_papua)_in_Vancouver.webm",
+    "mediaRef": "https://upload.wikimedia.org/wikipedia/commons/4/49/Spotted_jelly_%28Mastigias_papua%29_in_Vancouver.webm",
+    "verdict": {
+      "verdictText": "L'urine peut au contraire déclencher la décharge des cellules urticantes restées sur la peau. Les recommandations médicales privilégient le rinçage au vinaigre ou à l'eau de mer.",
+      "confidence": 1.0,
+      "citations": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Spotted_jelly_(Mastigias_papua)_in_Vancouver.webm",
+          "titre": "Wikimedia Commons"
+        }
+      ]
+    }
   }
 ]

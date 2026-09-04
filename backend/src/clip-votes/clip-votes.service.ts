@@ -9,12 +9,21 @@ export class ClipVotesService {
 
   async create(data: { roundId: string; claimId: string; isFake: boolean }, userId: string) {
     if (typeof data.isFake !== 'boolean') throw new BadRequestException('isFake must be boolean');
+    // Vérifications hors transaction. isMember() passe par une AUTRE instance
+    // Prisma : appelée à l'intérieur, elle réclamait une seconde connexion du
+    // pool alors que la transaction en tenait déjà une. Quand plusieurs joueurs
+    // votaient en même temps, toutes les connexions étaient prises par des
+    // transactions qui en attendaient une de plus, et les votes échouaient en
+    // « Unable to start a transaction in the given time ».
+    const round = await this.prisma.round.findUnique({
+      where: { id: data.roundId },
+      include: { roundClaims: { where: { claimId: data.claimId }, select: { claimId: true } } },
+    });
+    if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
+    if (round.roundClaims.length !== 1) throw new BadRequestException('The clip is not part of this round');
+    if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Join the room before voting');
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const round = await tx.round.findUnique({ where: { id: data.roundId }, include: { roundClaims: { where: { claimId: data.claimId }, select: { claimId: true } } } });
-        if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
-        if (round.roundClaims.length !== 1) throw new BadRequestException('The clip is not part of this round');
-        if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Join the room before voting');
         const open = await tx.round.updateMany({ where: { id: data.roundId, status: 'OPEN', locksAt: { gt: new Date() }, room: { status: { not: 'FINISHED' } } }, data: { updatedAt: new Date() } });
         if (open.count !== 1) throw new BadRequestException('Voting is closed for this round');
         return tx.clipVote.create({ data: { roundId: data.roundId, claimId: data.claimId, userId, isFake: data.isFake } });

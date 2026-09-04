@@ -15,12 +15,12 @@ export class FriendsService {
       where: { userId },
       include: {
         friend: {
-          select: { id: true, email: true, avatarUrl: true, status: true, createdAt: true, updatedAt: true },
+          select: { id: true, email: true, displayName: true, avatarUrl: true, status: true, createdAt: true, updatedAt: true },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
-    return friendships.map((entry: { friend: { id: string; email: string; avatarUrl: string | null; status: string; createdAt: Date; updatedAt: Date } }) => entry.friend);
+    return friendships.map((entry: { friend: { id: string; email: string; displayName: string | null; avatarUrl: string | null; status: string; createdAt: Date; updatedAt: Date } }) => entry.friend);
   }
 
   async presence(userId: string) {

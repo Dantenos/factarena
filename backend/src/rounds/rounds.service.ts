@@ -92,12 +92,17 @@ export class RoundsService {
     const fausses = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'FALSE'));
     const vraies = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'TRUE'));
 
-    // Un quart de la manche par thème, au maximum.
+    // Un cinquième de la manche par thème, au maximum : sur dix clips, deux du
+    // même sujet, donc cinq thèmes différents au minimum.
     //
     // Le corpus est déséquilibré thème par thème — sur l'immigration ou Trump,
     // presque tout est faux. Sans plafond, le joueur apprend à répondre « fake »
-    // au sujet plutôt qu'au contenu.
-    const plafondTheme = Math.max(2, Math.ceil(nombre / 4));
+    // au sujet plutôt qu'au contenu. Le quart laissait encore trois clips d'un
+    // même thème, ce qui suffit à installer ce réflexe.
+    //
+    // Le repli plus bas dépasse ce plafond en dernier recours, donc resserrer ne
+    // risque pas de produire une manche incomplète.
+    const plafondTheme = Math.max(2, Math.ceil(nombre / 5));
     const comptes = new Map<string, number>();
     const prendre = (source: Array<{ id: string; truthLabel: string; category: string | null }>, combien: number) => {
       const pris: typeof source = [];
@@ -235,6 +240,33 @@ export class RoundsService {
     return this.lockIfDueOrOpen(id, true);
   }
 
+  /**
+   * Verrouille une manche ouverte dont tous les parieurs ont voté sur tous les
+   * clips, sans attendre l'heure. Sinon la manche courait jusqu'à locksAt même
+   * quand plus personne n'avait rien à faire : cinq minutes devant un écran figé.
+   *
+   * On se base sur ceux qui ont misé — eux seuls jouent pour le pot. Les faux
+   * joueurs ne misent pas, un bot lent ne peut donc pas retenir la manche, et le
+   * chronomètre reste le filet si quelqu'un ne vote jamais.
+   */
+  async lockIfEveryoneVoted(id: string) {
+    const [clips, parieurs] = await Promise.all([
+      this.prisma.roundClaim.count({ where: { roundId: id } }),
+      this.prisma.bet.findMany({ where: { roundId: id }, select: { userId: true } }),
+    ]);
+    if (clips === 0 || parieurs.length === 0) return null;
+
+    const votes = await this.prisma.clipVote.groupBy({
+      by: ['userId'],
+      where: { roundId: id, userId: { in: parieurs.map((b) => b.userId) } },
+      _count: { _all: true },
+    });
+    const compte = new Map(votes.map((v) => [v.userId, v._count._all]));
+    if (!parieurs.every((b) => compte.get(b.userId) === clips)) return null;
+
+    return this.lockIfDueOrOpen(id, false);
+  }
+
   private async lockIfDueOrOpen(id: string, dueOnly: boolean) {
     const now = new Date();
     const claimed = await this.prisma.round.updateMany({
@@ -329,10 +361,15 @@ export class RoundsService {
     }
 
     if (parJoueur.size === 0) return [];
+    // Les faux joueurs du chat votent aussi. Ils n'ont rien à faire dans le
+    // classement d'une partie entre humains, et ils y noyaient les vrais.
     const utilisateurs = await this.prisma.user.findMany({
-      where: { id: { in: [...parJoueur.keys()] } },
+      where: { id: { in: [...parJoueur.keys()] }, role: { not: 'BOT' } },
       select: { id: true, displayName: true, email: true },
     });
+    for (const id of [...parJoueur.keys()]) {
+      if (!utilisateurs.some((u) => u.id === id)) parJoueur.delete(id);
+    }
     const nom = new Map(
       utilisateurs.map((u) => [u.id, u.displayName || u.email.split('@')[0]]),
     );

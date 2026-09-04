@@ -48,11 +48,26 @@ export class RoomPresenceService {
     });
   }
 
+  /**
+   * Rafraîchit la présence des sockets encore connectées. En upsert et non en
+   * update : si la ligne a déjà été purgée, il faut la recréer.
+   */
+  async rafraichir(entrees: Array<{ socketId: string; userId: string; roomId: string }>) {
+    const maintenant = new Date();
+    await Promise.all(entrees.map((e) => this.prisma.roomPresence.upsert({
+      where: { socketId: e.socketId },
+      update: { userId: e.userId, roomId: e.roomId, lastSeenAt: maintenant },
+      create: { socketId: e.socketId, userId: e.userId, roomId: e.roomId },
+    })));
+  }
+
   async leave(socketId: string) {
     const current = await this.prisma.roomPresence.findUnique({ where: { socketId } });
     if (!current) return null;
 
-    await this.prisma.roomPresence.delete({ where: { socketId } });
+    // deleteMany, pas delete : prune() peut avoir effacé la ligne juste après
+    // le findUnique, et delete() lèverait alors P2025.
+    await this.prisma.roomPresence.deleteMany({ where: { socketId } });
     const remaining = await this.prisma.roomPresence.count({
       where: { roomId: current.roomId, userId: current.userId, lastSeenAt: { gt: this.activeSince() } },
     });

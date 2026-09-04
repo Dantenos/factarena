@@ -1,0 +1,28 @@
+# Regroupe les identités git multiples d'une même personne.
+#
+# Le sujet demande que le dépôt montre des commits de tous les membres. Avec
+# neuf identités pour cinq personnes, un correcteur qui lance « git shortlog »
+# pouvait mal compter. Ce fichier n'altère pas l'historique : il ne change que
+# l'affichage de git log, shortlog et blame.
+#
+# Le nom retenu est le login 42, celui que le README utilise, pour qu'on passe
+# du tableau de l'équipe aux commits sans traduction.
+
+elanteno <lantenois.edouard@gmail.com>
+elanteno <lantenois.edouard@gmail.com> <Lantenois.edouard@gmail.com>
+elanteno <lantenois.edouard@gmail.com> Dantenos <lantenois.edouard@gmail.com>
+elanteno <lantenois.edouard@gmail.com> Edouard Lantenois <Lantenois.edouard@gmail.com>
+elanteno <lantenois.edouard@gmail.com> elanteno <Dantenos>
+
+slario <42isbased@gmail.com>
+slario <42isbased@gmail.com> Scynia <42isbased@gmail.com>
+slario <42isbased@gmail.com> Scynia <159270167+Scynia@users.noreply.github.com>
+
+alaroque <alaroque@student.42.fr>
+alaroque <alaroque@student.42.fr> Ana-Lrq <arrageois10@gmail.com>
+
+krfranco <krystal.francois2@hotmail.com>
+krfranco <krystal.francois2@hotmail.com> Krystal <krystal.francois2@hotmail.com>
+
+oztozdem <oztozdem@student.42.fr>
+oztozdem <oztozdem@student.42.fr> ozkainry <oztozdem@student.42.fr>

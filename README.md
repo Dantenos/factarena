@@ -1,10 +1,6 @@
-*This project has been created as part of the 42 curriculum by `<login-devops>`, `alaroque`, `<login-ai>`, `<login-front-ui>`, `oztozdem`.*
+*This project has been created as part of the 42 curriculum by slario, alaroque, elanteno, krfranco, oztozdem.*
 
 # FactArena — Live Fake-News Fact-Checking Arena
-
-> TODO before first evaluation: replace the three remaining `<login-...>` placeholders
-> with the real 42 logins, and fill in the per-member sections at the end.
-> The subject requires this README to be complete, honest and written in English.
 
 ## Team — start here
 
@@ -60,6 +56,12 @@ Key features:
   everything (build included) happens inside the containers.
 - A `.env` file at the root — copy `.env.example` and fill in the values
   (never commit `.env`, it is git-ignored)
+- For the 42 login button: an OAuth application created on
+  `profile.intra.42.fr/oauth/applications/new`, with `public` as its only scope and
+  `https://localhost:8443/api/auth/42/callback` as its redirect URI — it must match to the
+  character, port included. Its UID and secret go into `FORTYTWO_CLIENT_ID` and
+  `FORTYTWO_CLIENT_SECRET`. Without them the button answers a clean 503 and the rest of the
+  application keeps working.
 
 ### Run (production — this is what a grader runs)
 ```bash
@@ -108,21 +110,28 @@ several players in the same room.
 
 | Login | Role(s) | Responsibilities |
 |---|---|---|
-| `<login-devops>` | DevOps — **PM / Scrum Master** | Docker, nginx/HTTPS, CI, meetings, deadlines |
+| `slario` | DevOps — **PM / Scrum Master** | Docker Compose, nginx and TLS, GitHub Actions CI, meetings, deadlines |
 | `alaroque` | **Back-end Core** | NestJS, auth, WebSockets, round state machine, credits, PostgreSQL |
-| `<login-ai>` | **Tech Lead / Architect** — AI (Python) | FastAPI, RAG corpus, LLM streaming, moderation |
-| `<login-front-ui>` | Front-end UI & Access — **Product Owner** | Product vision, backlog, React UI, WCAG, legal pages |
-| `oztozdem` | Front-end Real-time & UX | Room/betting UI, chat integration, live vote tally |
+| `elanteno` | **Tech Lead / Architect** — AI (Python) | FastAPI, RAG corpus, LLM streaming, moderation, front/back integration |
+| `krfranco` | Front-end UI & Access — **Product Owner** | Product vision, design system, page layouts, Tailwind theme |
+| `oztozdem` | Front-end Real-time & UX | Room screen and its components: chat, betting panel, stats bar, reveal |
 
 All members are **Developers**: they write code, review each other's PRs, test and document
 their scope.
 
 ## Project Management
 
-- **Task tracking**: GitHub Issues + Projects board — TODO: paste the board link
-- **Communication**: Discord server, weekly sync meeting — TODO: state the day and time
-- **Workflow**: feature branches `feat/<scope>-<desc>`, PR review by at least one other
-  member before merge into `main`
+- **Work breakdown**: one scope per member (DevOps, back-end core, AI service, front-end
+  UI, front-end real-time), each with its own long-lived branch — `DevOps/slario_Scynia`,
+  `Ana_backend`, `feat/service-ia-rag-llm`, `Krystal_frontend`, `feat/frontend-tr`. The
+  branch names in the repository are the actual record of who owned what.
+- **Task tracking**: GitHub pull requests. Every merge into `main` went through a PR, which
+  is also where disagreements were settled — PR #6 was reverted after it broke the stack on
+  the school machines, and the ELK stack was removed by PR after it turned out `podman`
+  cannot create containers using the `gelf` log driver.
+- **Communication**: Discord, for daily coordination and for warning the owner of a scope
+  before touching their files.
+- **Code review**: at least one other member reviews a PR before it is merged.
 
 ## Technical Stack
 
@@ -146,7 +155,7 @@ rate limiting stay in one place.
 
 **PostgreSQL with pgvector, not a separate vector database.** Adding a dedicated vector
 store would mean a second database to deploy, back up and keep consistent. pgvector keeps
-the 72 000 corpus passages next to the relational data, in one container. The boundary is
+the corpus passages next to the relational data, in one container. The boundary is
 logical: Prisma owns the `public` schema, the AI service owns the `rag` schema — Prisma
 handles the `vector` type poorly, so it never sees it.
 
@@ -163,7 +172,7 @@ hallucination can never change a game's outcome.
 
 ## Database Schema
 
-Twelve relational tables managed by Prisma, plus one vector table owned by the AI service.
+Thirteen relational tables managed by Prisma, plus one vector table owned by the AI service.
 
 ```
 User ──1─N── Bet              one stake per player per round
@@ -180,7 +189,7 @@ Room ──1─N── RoomPresence     who is connected, by socket
 ```
 
 Key fields. **Claim** carries `truthLabel` (TRUE/FALSE), the editorial answer key, plus
-`mediaRef`, `videoStartS`/`videoEndS`, `sourceUrl` and `sourceKey` (unique, makes imports
+`mediaRef`, `videoEndS`, `sourceUrl` and `sourceKey` (unique, makes imports
 idempotent). **Round** moves through `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`.
 **Bet** holds the stake and the payout; **ClipVote** holds one `isFake` per claim, unique
 per `(user, round, claim)`. **Transaction** records every credit movement with a
@@ -191,21 +200,23 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 
 ## Features List
 
-| Feature | Description |
-|---|---|
-| Account & authentication | Sign-up and sign-in by email and password (bcrypt, salted), plus 42 OAuth; JWT issued for both the REST API and the WebSocket |
-| Live rooms | Create or join a room, see members appear and leave in real time, presence persisted server-side so a reconnection restores the player |
-| Round state machine | Server-authoritative `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`, driven by a 250 ms server loop that advances rounds even with no client connected |
-| Clip drafting | The server draws the round's clips itself, balanced at roughly 60 % false and excluding clips already played in that room |
-| Good/fake voting | One vote per clip while the round is open, one stake per round |
-| Accuracy-race scoring | Whoever judges the most clips correctly takes the shared pot, split on a tie; settlement is a single atomic PostgreSQL transaction |
-| Virtual credit ledger | Every debit and payout is journalled with the resulting balance; payouts are idempotent |
-| Room chat | Send and receive messages in real time |
-| AI moderation | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
-| Questionable AI bot | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
-| Sourced fact-check corpus | 72 000 passages across six sources: French Wikipedia, political Wikipedia, published fact-checks, and live figures from INSEE, Eurostat and the World Bank |
-| Profile & stats | Profile editing, avatar upload, friends with online status, leaderboard and match history |
-| Observability | Application logs shipped to Elasticsearch through Logstash, browsable in Kibana |
+| Feature | Member(s) | Description |
+|---|---|---|
+| Account & authentication | alaroque | Sign-up and sign-in by email and password (bcrypt, salted), plus 42 OAuth; JWT issued for both the REST API and the WebSocket |
+| Live rooms | alaroque | Create or join a room, see members appear and leave in real time, presence persisted server-side so a reconnection restores the player |
+| Round state machine | alaroque, elanteno | Server-authoritative `COUNTDOWN → OPEN → LOCKED → REVEALED → FINISHED`, driven by a 250 ms server loop that advances rounds even with no client connected. A round also locks early as soon as every player who staked has judged every clip, so nobody waits out the timer once the game is over. |
+| Clip drafting | alaroque, elanteno | The server draws the round's clips itself, balanced at roughly 60 % false and excluding clips already played in that room |
+| Good/fake voting | alaroque, elanteno | One vote per clip while the round is open, and one stake per round chosen from the room screen before judging |
+| Accuracy-race scoring | alaroque | Whoever judges the most clips correctly takes the shared pot, split on a tie; settlement is a single atomic PostgreSQL transaction |
+| Virtual credit ledger | alaroque | Every debit and payout is journalled with the resulting balance; payouts are idempotent |
+| Room chat | oztozdem, alaroque | Send and receive messages in real time |
+| AI moderation | elanteno, alaroque | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
+| Questionable AI bot | elanteno | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
+| Sourced fact-check corpus | elanteno | 1 849 passages shipped with the repository, loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run: the ClaimReview records of published fact-checks, the full text of the 32 articles that established the verdict of the playable clips, and figures from INSEE, Eurostat and the World Bank. The ingestion scripts can grow it further. |
+| Profile & stats | krfranco, alaroque, elanteno | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload; match history listing each finished round with its date, room, opponents, stake and net gain |
+| Friends | elanteno | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
+| Playable clip corpus | elanteno | 63 hand-curated clips with a playable video, 57 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped. |
+| Responsive layout | krfranco, elanteno | Every page adapts from 320 px upwards: the multi-column grids stack, the navigation wraps, and the room's chat moves below the video. Verified with no element overflowing the viewport at 320, 390, 768 and 1024 px. |
 
 ## Modules
 
@@ -215,17 +226,17 @@ for the audited rationale and per-module subject references.
 
 | Module | Type | Pts | Member(s) | Status |
 |---|---|---|---|---|
-| Framework frontend + backend | Major | 2 | | Not started |
-| Real-time via WebSockets | Major | 2 | | Not started |
-| User interaction (chat, profile, friends) | Major | 2 | | Not started |
-| Standard user management | Major | 2 | | Not started |
-| Complete RAG system | Major | 2 | | Not started |
-| LLM interface (streaming) | Major | 2 | | Not started |
-| Web-based game (live fact-check arena) | Major | 2 | | Not started — **needs staff validation** |
-| ORM (Prisma) | Minor | 1 | | Not started |
-| OAuth 2.0 (42) | Minor | 1 | | Not started |
-| AI content moderation | Minor | 1 | | Not started |
-| Game statistics & match history | Minor | 1 | | Not started (depends on the game module) |
+| Framework frontend + backend | Major | 2 | krfranco, oztozdem, alaroque | Done |
+| Real-time via WebSockets | Major | 2 | alaroque | Done |
+| User interaction (chat, profile, friends) | Major | 2 | oztozdem, krfranco, elanteno | Done |
+| Standard user management | Major | 2 | alaroque, elanteno | Done |
+| Complete RAG system | Major | 2 | elanteno | Done |
+| LLM interface (streaming) | Major | 2 | elanteno | Done |
+| Web-based game (live fact-check arena) | Major | 2 | alaroque, oztozdem, elanteno | Done — **needs staff validation** |
+| ORM (Prisma) | Minor | 1 | alaroque | Done |
+| OAuth 2.0 (42) | Minor | 1 | alaroque, elanteno | Done |
+| AI content moderation | Minor | 1 | elanteno, alaroque | Done |
+| Game statistics & match history | Minor | 1 | alaroque, elanteno | Done |
 
 ### How each module is implemented
 
@@ -245,11 +256,17 @@ alongside.
 **Standard user management.** Profile editing, avatar upload, friends list and online
 status — distinct from the basic authentication required by the subject.
 
-**Complete RAG system.** 72 000 embedded passages across six sources, cosine search over
-pgvector, answers grounded in retrieved passages and always citing their URL. The corpus
-mixes general knowledge (Wikipedia), published fact-checks (AFP, franceinfo, TF1, dpa) and
-live official indicators (INSEE, Eurostat, World Bank), which lets the bot answer national,
-European and international claims with a dated, sourced figure.
+**Complete RAG system.** Cosine search over pgvector, answers grounded in the retrieved
+passages and citing their URL. The repository ships 1 849 passages with their pre-computed
+vectors, so a freshly cloned installation answers with sources without running any ingestion.
+The corpus mixes published fact-checks (AFP, Snopes, franceinfo, dpa…) — both their
+ClaimReview records and the full article text for the clips in play — with live official
+indicators from INSEE, Eurostat and the World Bank.
+
+When no retrieved passage covers the question, the assistant answers from its own knowledge
+and says so, and the interface then shows no citation: the vector search always returns its
+six nearest neighbours, relevant or not, and displaying unrelated sources under an answer
+would suggest they support it.
 
 **LLM interface.** Streaming generation from free user input, with retrieval switched off —
 this is what makes it demonstrably distinct from the RAG surface — plus a server-side rate
@@ -262,18 +279,61 @@ worth explaining.
 **Web-based game.** Rounds run live, players compete against each other, rules are written
 and the win condition is deterministic because it comes from the editorial answer key.
 
-**ORM, OAuth 2.0, game statistics.** Prisma with five versioned migrations; 42 login in
+**ORM, OAuth 2.0, game statistics.** Prisma with six versioned migrations; 42 login in
 addition to — never instead of — email and password; wins, losses, ranking and match
 history computed from the bet ledger.
 
 ## Individual Contributions
 
-TODO for each member: what you built, the problems you hit, and how you solved them. This
-section is graded and cannot be written by anyone else — fill in your own paragraph.
+Every contribution and difficulty described below is traceable in the git history of
+`main` — commit messages, branch names and reverted pull requests.
+
+**`slario` — DevOps, PM · 27 commits.** Owns `docker-compose.yml`, nginx and its TLS
+certificates, the container entrypoints and the GitHub Actions workflows. Built the complete
+ELK logging stack over two weeks — Logstash, index retention, automatic certificate
+generation, SSL between every component — then removed it by pull request once we established
+that `podman`, which the school machines run, refuses to even *create* a container declaring
+the `gelf` log driver: the stack could not have started during an evaluation. Also fixed two
+problems specific to the 42 machines, in three successive attempts: the `chown` in the images
+fails on the school filesystem, and port 443 is privileged, so nginx publishes 8443.
+
+**`alaroque` — Back-end core · 13 commits.** Wrote essentially the whole NestJS application:
+database schema and migrations, email/password authentication, 42 OAuth, the
+server-authoritative game loop and the JWT-authenticated Socket.IO gateway, rooms and
+presence, the betting module with server-side stake and balance validation, the atomic
+settlement, the credit ledger, statistics and leaderboard, and the relay that keeps every AI
+call behind NestJS so authentication and rate limiting stay in one place. Two commits are
+explicit security-hardening passes after review. Also the person who merged most pull
+requests into `main`.
+
+**`elanteno` — Tech Lead / Architect, AI · 38 commits.** Built the FastAPI service: pgvector
+schema and HNSW index, embeddings, retrieval, SSE streaming for the RAG and free-form LLM
+surfaces, the moderation policy on top of Mistral, and the rate limiter. Assembled and
+curated the game's content from the Google Fact Check Tools API, INSEE, Eurostat, the World
+Bank and Wikipedia. Three problems shaped that work: Chrome dropped Theora in v123, silently
+breaking every Wikimedia `.ogv` clip; Facebook embeds render `/videos/` but not `/posts/`;
+and the corpus lived only in a local database, so a fresh clone had nothing to play — it is
+now exported to the repository with its pre-computed vectors. On the front, wired the pages
+to the real API and added the friends screen, the match history, the OAuth callback and the
+responsive pass.
+
+**`krfranco` — Front-end UI, Product Owner · 13 commits.** Owns the visual identity: the
+Tailwind theme and colour tokens, the shared layout, and the home, login, profile and lobby
+pages. Defined the component vocabulary — the button, card and panel classes — that every
+screen added later reuses, which is why the friends page, the match history and the OAuth
+callback needed no new styles. The visual pass was delivered before the API existed, with the
+buttons left to be wired with the back-end.
+
+**`oztozdem` — Front-end real-time and UX · 8 commits.** Built the room screen and its
+components from the design mock-up: the chat panel with per-author colouring and its
+moderation badge, the betting panel, the statistics bar, the clip progress bar, the results
+reveal and the video player. Also wrote `mocks/gameData.ts`, the shared data shapes — a
+deliberate call that let the room UI be built and reviewed before the WebSocket contract was
+settled, at the cost of a long-lived branch that had to absorb `main` repeatedly.
 
 ## Resources
 
-- Project subject: `docs/subject.pdf` (source of truth)
+- Project subject: the PDF handed out by the school (not vendored here)
 - Architecture & module rationale: `docs/ARCHITECTURE.md`
 - AI service roadmap and decisions: `docs/AI.md`
 - Game content specification: `docs/CLAIMS.md`
@@ -295,5 +355,3 @@ generated output was wrong it was corrected and the reason recorded in the commi
 instance, an early verdict-mapping heuristic labelled a demonstrably false claim as true
 because the fact-checker's rating was written as prose containing the word "confirmed"; the
 mapper now accepts only short verdict labels and discards ambiguous ones.
-
-TODO for each member: add the parts where you used AI and what you changed afterwards.

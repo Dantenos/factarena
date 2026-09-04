@@ -2,12 +2,13 @@
 // navigateur) pour pouvoir styliser librement. S'adapte automatiquement au
 // format de la vidéo (large 16:9 ou vertical façon TikTok/Instagram 9:16) en
 // détectant le ratio réel au chargement des métadonnées, plutôt que de le
-// figer en dur. La synchronisation multi-joueurs (plusieurs clients sur le
-// même timecode) reste à faire une fois le protocole WebSocket fixé avec le
-// Back Core.
+// figer en dur.
+//
+// La lecture n'est volontairement pas synchronisée entre joueurs : c'est le
+// serveur qui tient la fenêtre de vote, chacun regarde le clip à son rythme.
 //
 // Props :
-// - src          : URL de la vidéo à lire (mock pour l'instant, cf mocks/gameData.ts)
+// - src          : URL de la vidéo à lire
 // - onEnded      : callback déclenché à la fin de la vidéo
 // - onTimeUpdate : callback déclenché en continu pendant la lecture
 import { useEffect, useRef, useState } from "react";
@@ -47,6 +48,10 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
+  // Vidéo illisible (lien mort, format refusé par le navigateur). On l'affiche
+  // dans le lecteur plutôt que dans la console : le sujet interdit tout
+  // message console, et un cadre noir muet ferait croire à un bug.
+  const [enErreur, setEnErreur] = useState(false);
   // Ratio largeur/hauteur réel de la vidéo, calculé au chargement des
   // métadonnées. null tant que la vidéo n'a pas encore chargé (on utilise
   // alors un ratio par défaut pour éviter un conteneur qui saute visuellement).
@@ -88,6 +93,7 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     setIsPlaying(false);
     setIsBuffering(false);
     setShowControls(true);
+    setEnErreur(false);
     video.load();
   }, [src]);
 
@@ -321,13 +327,18 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
           onTimeUpdate?.(e.currentTarget.currentTime);
         }}
         onEnded={onEnded}
-        // Évite qu'une vidéo manquante ne génère une erreur console non gérée
-        // (règle du projet : console toujours propre).
-        onError={() => console.warn("Vidéo indisponible")}
+        onError={() => setEnErreur(true)}
       />
 
+      {enErreur && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 text-center px-4">
+          <p className="text-white/80 text-sm">Cette vidéo n'est plus disponible.</p>
+          <p className="text-white/40 text-xs">Signale-la pour qu'on la retire de la partie.</p>
+        </div>
+      )}
+
       {/* Spinner affiché pendant le buffering (chargement en cours de lecture) */}
-      {isBuffering && (
+      {isBuffering && !enErreur && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
         </div>

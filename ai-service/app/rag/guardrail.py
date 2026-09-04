@@ -67,9 +67,11 @@ def is_about_live_topics(question: str, live_topics: list[str]) -> bool:
 async def judged_about_live_clips(question: str, live_claims: list[str]) -> bool:
     """Demande au LLM si la question porte sur l'une des affirmations de la manche.
 
-    On instruit le modèle de répondre UNIQUEMENT OUI/NON, et de répondre OUI EN CAS
-    DE DOUTE (on préfère un faux refus à un spoil). `live_claims` = les textes des
-    affirmations en jeu, fournis par le Back Core.
+    Il ne s'agit PAS de savoir si la question effleure le thème d'un clip — on veut
+    justement que le bot renseigne dessus — mais si elle en réclame le VERDICT. Un
+    filtre plus large refusait tout pendant une manche, y compris « comment
+    reconnaît-on une vidéo générée par IA ? », et rendait le bot inutile au seul
+    moment où on le sollicite. `live_claims` = les textes des affirmations en jeu.
     """
     # Import local : garde ce module utilisable hors conteneur pour tester la
     # couche 1 (le juge LLM, lui, a besoin de la clé Mistral).
@@ -82,9 +84,14 @@ async def judged_about_live_clips(question: str, live_claims: list[str]) -> bool
             "content": (
                 "Tu es un filtre anti-spoil pour un jeu de fact-checking. On te donne "
                 "les affirmations d'une manche EN COURS. Réponds UNIQUEMENT par OUI ou "
-                "par NON, rien d'autre. Réponds OUI si la question cherche à savoir si "
-                "l'une de ces affirmations est vraie ou fausse, ou porte sur leur sujet "
-                "précis ; sinon NON. En cas de doute, réponds OUI."
+                "par NON, rien d'autre.\n"
+                "OUI seulement si la question demande le VERDICT de l'une de ces "
+                "affirmations : si elle est vraie, fausse, authentique, truquée, ou si "
+                "elle reprend l'affirmation pour la faire confirmer ou infirmer.\n"
+                "NON pour tout le reste, y compris quand la question porte sur le même "
+                "thème : demander des connaissances générales, du contexte historique, "
+                "ou comment vérifier ce genre de vidéo n'est PAS un spoil — c'est même "
+                "le but du jeu. En cas de doute sur cette distinction, réponds NON."
             ),
         },
         {
@@ -97,6 +104,18 @@ async def judged_about_live_clips(question: str, live_claims: list[str]) -> bool
 
 
 # ---------------------------------------------------------------------------
+# Tournures qui réclament explicitement le verdict d'un clip en jeu, sans le
+# citer. On les attrape avant le juge LLM, qui ne peut pas les reconnaître :
+# la question ne ressemble à aucune des affirmations qu'on lui soumet.
+_DEMANDE_DE_VERDICT = re.compile(
+    r"\b(clip|vid[ée]o|extrait|affirmation|manche)\b[^?]{0,80}"
+    r"\b(vrai|faux|authentique|truqu\w*|fake|r[ée]ponse|verdict|r[ée]el\w*)\b"
+    r"|\b(vrai|faux|authentique|truqu\w*|fake|r[ée]ponse|verdict)\b[^?]{0,80}"
+    r"\b(clip|vid[ée]o|extrait|affirmation|manche)\b",
+    re.IGNORECASE,
+)
+
+
 # La décision finale : couche 1 OU couche 2.
 # ---------------------------------------------------------------------------
 async def is_blocked(
@@ -109,10 +128,17 @@ async def is_blocked(
     Cascade : d'abord la couche thématique (gratuite, instantanée) ; si elle ne
     bloque pas, le juge LLM tranche. Hors manche (rien à protéger) -> False.
     """
-    if is_about_live_topics(question, live_topics):
-        return True
+    # La couche 1 thématique ne refuse PLUS à elle seule : toucher au sujet d'un
+    # clip est justement ce qu'on veut autoriser. Elle sert en amont, où elle
+    # déclenche l'exclusion des articles de fact-check.
     if not live_claims:
         return False
+    # Demande de verdict formulée en désignant le clip plutôt qu'en reprenant
+    # l'affirmation (« le clip 1 est vrai ou faux ? »). Le juge ne la voyait pas
+    # passer : rien dans la question ne ressemble aux affirmations qu'on lui
+    # donne. Déterministe, donc gratuit et sans faux négatif sur cette tournure.
+    if _DEMANDE_DE_VERDICT.search(question):
+        return True
     return await judged_about_live_clips(question, live_claims)
 
 

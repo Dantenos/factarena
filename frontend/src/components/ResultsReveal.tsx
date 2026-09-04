@@ -1,8 +1,7 @@
-// Écran de révélation des résultats en fin de compilation : bannière de
-// score global, détail clip par clip avec verdict + explication IA (RAG),
-// et classement des joueurs ("course à la précision"). Données mockées pour
-// l'instant (cf mocks/gameData.ts) — alimenté par le vrai résultat de
-// session une fois le WebSocket branché.
+// Écran de révélation des résultats en fin de compilation : bannière de score
+// global, détail clip par clip avec verdict et explication sourcée, et
+// classement des joueurs (« course à la précision »). Tout est alimenté par le
+// résultat que le serveur envoie à la révélation.
 import { ClipResult, ClipVerdict, LeaderboardEntry } from "../mocks/gameData";
 
 interface ResultsRevealProps {
@@ -58,7 +57,8 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
                   {!clip.userVoted && <span className="text-white/40 text-xs">(pas voté)</span>}
                 </div>
                 <p className="text-white/50 text-xs mt-1 ml-1">
-                  IA-RAG ▸ <span className="text-white/70">{clip.explanation}</span> — {clip.source}
+                  {clip.explanationSource === 'editorial' ? 'Vérification' : 'IA-RAG'} ▸{' '}
+                  <span className="text-white/70">{clip.explanation}</span> — {clip.source}
                 </p>
 
                 {/* Second avis : ce que l'IA aurait répondu si elle avait joué,

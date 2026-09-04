@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AiService } from '../ai/ai.service';
 
 /**
  * Faux joueurs qui animent le chat pendant une manche.
@@ -34,7 +35,93 @@ export class BotsService {
   // quand plusieurs joueurs votent en même temps.
   private readonly dernierMessage = new Map<string, number>();
 
-  constructor(private readonly prisma: PrismaService) {}
+  // Derniers échanges du salon, joueurs ET bots. Les messages de bots ne sont
+  // jamais enregistrés en base : sans cette mémoire vive, ils ne pourraient pas
+  // se répondre entre eux.
+  private readonly conversation = new Map<string, Array<{ auteur: string; contenu: string }>>();
+  // Dernier appel au LLM par salon : le limiteur est à 10/min, on s'auto-freine
+  // bien avant pour qu'un joueur bavard n'épuise pas le budget en dix secondes.
+  private readonly dernierLLM = new Map<string, number>();
+  private static readonly ECART_LLM_MS = 5_000;
+  private static readonly MEMOIRE = 8;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ai: AiService,
+  ) {}
+
+  /**
+   * Caractères des faux joueurs. Ils décrivent une manière de parler, jamais
+   * un savoir : la position que le bot défend est décidée ailleurs, et le
+   * modèle n'apprend jamais la bonne réponse.
+   */
+  private static readonly PERSONNAGES: Record<string, string> = {
+    mreynaud: "Tu es mreynaud, un joueur sûr de lui qui tranche vite et déteste "
+      + "qu'on le contredise. Tu parles sec, tu balances des arguments d'autorité.",
+    lchen: "Tu es lchen, un joueur qui se pique de tout reconnaître : montage, "
+      + "IA, recyclage d'une vieille vidéo. Tu es condescendant et un peu jargonneux.",
+    adiallo: "Tu es adiallo, un joueur distrait qui suit mal, se plaint de sa "
+      + "connexion, demande qu'on répète et lâche des remarques à côté.",
+  };
+
+  /** Mémorise un message pour que les bots puissent y réagir ensuite. */
+  noter(roomId: string, auteur: string, contenu: string): void {
+    const fil = this.conversation.get(roomId) ?? [];
+    fil.push({ auteur, contenu });
+    this.conversation.set(roomId, fil.slice(-BotsService.MEMOIRE));
+  }
+
+  /**
+   * Fait parler un bot par le LLM. Renvoie null dès que quelque chose cloche —
+   * quota, réseau, réponse vide : l'appelant retombe alors sur ses formules
+   * pré-écrites, et le chat n'est jamais muet.
+   */
+  private async phraseLLM(roomId: string, bot: string, consigne: string): Promise<string | null> {
+    const maintenant = Date.now();
+    if (maintenant - (this.dernierLLM.get(roomId) ?? 0) < BotsService.ECART_LLM_MS) return null;
+    this.dernierLLM.set(roomId, maintenant);
+
+    const fil = (this.conversation.get(roomId) ?? [])
+      .map((m) => `${m.auteur}: ${m.contenu}`)
+      .join('\n');
+
+    const prompt = [
+      BotsService.PERSONNAGES[bot] ?? 'Tu es un joueur ordinaire.',
+      "Tu joues à un jeu où l'on regarde de courtes vidéos et où l'on dit si elles sont",
+      "authentiques ou trompeuses. Tu discutes dans le chat avec les autres joueurs.",
+      '',
+      fil ? `Derniers messages du chat :\n${fil}` : '',
+      '',
+      consigne,
+      '',
+      `Tu écris SOUS le pseudo « ${bot} ». Ne te cite jamais toi-même à la `
+        + "troisième personne et ne commence pas ta phrase par ton propre pseudo.",
+      'Réponds en UNE seule phrase courte, en français, sur le ton du chat de jeu :',
+      "minuscules, pas de ponctuation soignée, pas d'emoji, aucune source, aucun lien.",
+      "Tu n'es pas un assistant et tu ne le dis jamais. Écris seulement la phrase.",
+    ].join('\n');
+
+    try {
+      const reponse = await this.ai.chat(prompt, undefined, `bots:${roomId}`);
+      const donnees = reponse?.data as { answer?: string; text?: string } | undefined;
+      const brut = (donnees?.answer ?? donnees?.text ?? '').trim();
+      if (!brut) return null;
+      // Une seule ligne, bornée : le modèle part parfois en paragraphe, et un
+      // pavé dans le fil trahirait immédiatement la machine.
+      const phrase = brut.split('\n').find((l) => l.trim().length > 0)?.trim() ?? '';
+      let propre = phrase.replace(/^["'«»\s-]+|["'«»\s]+$/g, '');
+      // Filet : le modèle préfixe parfois quand même son pseudo, ce qui donne
+      // « lchen: lchen a raison » à l'écran.
+      propre = propre.replace(new RegExp(`^@?${bot}\\s*[:,-]?\\s*`, 'i'), '').trim();
+      // Et il lui arrive de s'approuver lui-même : cette phrase-là n'a aucun
+      // sens dans le fil, mieux vaut retomber sur une formule pré-écrite.
+      if (new RegExp(`^@?${bot}\\b`, 'i').test(propre)) return null;
+      return propre.length >= 3 ? propre.slice(0, 180) : null;
+    } catch (error) {
+      this.logger.debug(`Bot LLM indisponible : ${String(error)}`);
+      return null;
+    }
+  }
 
   /** Deux trompeurs, un bavard. Pseudos volontairement quelconques. */
   private static readonly TROMPEURS = ['mreynaud', 'lchen'];
@@ -377,10 +464,23 @@ export class BotsService {
           : pioches.generique());
 
     const delai = 900 + Math.random() * 2200;
-    const minuterie = setTimeout(
-      () => emettre({ author: auteur, content: modele.replace('{r}', reponse) }),
-      delai,
+    // Le LLM ne choisit jamais la position — elle est arrêtée juste au-dessus,
+    // et les bots doivent se tromper souvent. Il ne fait que l'exprimer, avec
+    // le clip et le fil sous les yeux.
+    const genere = await this.phraseLLM(
+      roomId,
+      auteur,
+      `Le clip affirme : « ${claim.text.slice(0, 300)} ». Tu es convaincu que c'est `
+        + `${reponse === 'fake' ? 'une intox' : 'authentique'} et tu le dis au chat, `
+        + 'sans jamais prétendre connaître la réponse officielle.',
     );
+    const contenu = genere ?? modele.replace('{r}', reponse);
+
+    const minuterie = setTimeout(() => {
+      this.noter(roomId, auteur, contenu);
+      emettre({ author: auteur, content: contenu });
+      if (genere && Math.random() < 0.35) this.rebondir(roomId, auteur, contenu, emettre);
+    }, delai);
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
 
     // Le bot vote comme il vient de parler : sinon un joueur attentif verrait
@@ -431,11 +531,13 @@ export class BotsService {
    * Pas de modèle de langage ici — un bot qui argumente finirait par livrer la
    * réponse à qui insiste, et l'assistant @bot perdrait son intérêt.
    */
-  interpeller(
+  async interpeller(
     roomId: string,
     contenu: string,
     emettre: (message: { author: string; content: string }) => void,
-  ): boolean {
+    joueur = 'un joueur',
+  ): Promise<boolean> {
+    this.noter(roomId, joueur, contenu);
     const normalise = contenu.toLowerCase();
     const cible = [...BotsService.TROMPEURS, BotsService.BAVARD].find((pseudo) =>
       // Le pseudo doit apparaître comme un mot entier : sans cette limite,
@@ -444,26 +546,67 @@ export class BotsService {
     );
     if (!cible) return false;
 
-    // Tirage sans remise, comme pour les autres réservoirs : interpeller deux
-    // fois le même bot renvoyait sinon la même phrase mot pour mot, ce qui se
-    // voit immédiatement.
+    // On tente d'abord une vraie réponse : c'est le seul endroit où le bot
+    // peut tenir compte de ce qui vient d'être écrit. Le tirage sans remise
+    // reste le filet, pour que deux interpellations ne donnent jamais la même
+    // phrase mot pour mot.
     const pioches = this.pioches.get(roomId);
-    const reponse =
+    const repli = () =>
       cible === BotsService.BAVARD
         ? (pioches?.esquive?.() ?? BotsService.piocher(BotsService.ESQUIVES))
         : (pioches?.riposte?.() ?? BotsService.piocher(BotsService.RIPOSTES));
-    // Un délai de frappe : une réponse instantanée trahirait la machine.
-    const minuterie = setTimeout(
-      () => emettre({ author: cible, content: reponse }),
-      1200 + Math.random() * 2500,
+
+    const genere = await this.phraseLLM(
+      roomId,
+      cible,
+      `${joueur} vient de t'écrire : « ${contenu} ». Réponds-lui directement, `
+        + 'sans changer d\'avis et sans révéler si la vidéo est vraie ou fausse.',
     );
+    const reponse = genere ?? repli();
+
+    // Un délai de frappe : une réponse instantanée trahirait la machine.
+    const minuterie = setTimeout(() => {
+      this.noter(roomId, cible, reponse);
+      emettre({ author: cible, content: reponse });
+      // Un autre bot rebondit parfois sur la réponse : c'est ce qui donne
+      // l'impression qu'ils se parlent entre eux. Un seul rebond, sinon ils
+      // discuteraient entre eux sans fin par-dessus les joueurs.
+      if (genere && Math.random() < 0.45) this.rebondir(roomId, cible, reponse, emettre);
+    }, 1200 + Math.random() * 2500);
     // On la range avec les autres pour qu'un verrouillage de manche l'annule.
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
     return true;
   }
 
+  /** Un bot réagit à ce qu'un autre vient de dire. */
+  private rebondir(
+    roomId: string,
+    auteurPrecedent: string,
+    ditPrecedent: string,
+    emettre: (message: { author: string; content: string }) => void,
+  ): void {
+    const autres = [...BotsService.TROMPEURS, BotsService.BAVARD].filter((p) => p !== auteurPrecedent);
+    const bot = BotsService.piocher(autres);
+    const minuterie = setTimeout(() => {
+      void (async () => {
+        const phrase = await this.phraseLLM(
+          roomId,
+          bot,
+          `${auteurPrecedent} vient de dire : « ${ditPrecedent} ». Réagis à lui, `
+            + 'en le nommant, pour approuver ou contredire selon ton caractère.',
+        );
+        if (!phrase) return;
+        this.noter(roomId, bot, phrase);
+        emettre({ author: bot, content: phrase });
+      })();
+    }, 2500 + Math.random() * 3500);
+    this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
+  }
+
   /** Annule les messages en attente d'un salon. */
   arreter(roomId: string): void {
+    // On oublie aussi le fil : sans ça, un bot citerait la manche précédente.
+    this.conversation.delete(roomId);
     const existantes = this.minuteries.get(roomId);
     existantes?.forEach(clearTimeout);
     this.minuteries.delete(roomId);

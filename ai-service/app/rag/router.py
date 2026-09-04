@@ -51,6 +51,12 @@ class AskRequest(BaseModel):
     #   - live_claims : les TEXTES des affirmations en jeu (couche 2, juge LLM).
     # Bornés (une manche ~10 clips) pour ne pas gonfler la requête.
     live_topics: list[str] = Field(default_factory=list, max_length=100)
+
+    # URLs des articles qui ont établi le verdict des clips EN JEU, à écarter de
+    # la recherche. Sans ça, demander « est-ce qu'on a déjà teinté la Seine ? »
+    # pendant la manche remonte l'article de fact-check du clip, et la réponse
+    # donne la solution. Même principe que `exclure_url` sur /second-avis.
+    exclure_urls: list[str] = Field(default_factory=list, max_length=30)
     live_claims: list[str] = Field(default_factory=list, max_length=20)
 
 
@@ -63,11 +69,24 @@ def _build_messages(question: str, passages: list[dict]) -> list[dict]:
     contexte = "\n\n".join(
         f"[{i + 1}] {p['title']}\n{p['content']}" for i, p in enumerate(passages)
     )
+    # Le corpus ne contient que des fact-checks et des indicateurs officiels : il
+    # ne sait pas ce qu'est un orage. Une consigne strictement ancrée faisait donc
+    # refuser toute question de culture générale, ce qui rendait le bot inutile
+    # pour ce qu'on lui demande le plus souvent. Il répond maintenant de ses
+    # propres connaissances quand les passages ne suffisent pas — mais il doit le
+    # DIRE, pour qu'on ne prenne pas une réponse non sourcée pour une réponse
+    # vérifiée. C'est cette phrase que le front détecte pour masquer les
+    # citations, qui n'auraient alors aucun rapport.
     systeme = (
-        "Tu es un assistant de fact-checking. Réponds à la question EN FRANÇAIS "
-        "en t'appuyant UNIQUEMENT sur les passages fournis ci-dessous. "
-        "Si les passages ne permettent pas de répondre, dis-le clairement au lieu "
-        "d'inventer. Sois concis et factuel."
+        "Tu es un assistant de fact-checking. Réponds EN FRANÇAIS, de façon concise "
+        "et factuelle.\n"
+        "Quand les passages fournis couvrent la question, appuie-toi dessus et "
+        "renvoie-y explicitement.\n"
+        "Quand ils ne la couvrent pas — c'est fréquent, le corpus ne contient que "
+        "des vérifications et des statistiques — réponds quand même à partir de tes "
+        "propres connaissances, mais commence par « Sans source dans mon corpus : » "
+        "afin qu'on sache que cette réponse-là n'est pas vérifiée.\n"
+        "N'invente jamais de source ni de citation."
     )
     return [
         {"role": "system", "content": systeme},
@@ -84,9 +103,15 @@ def _sse(event: str, data) -> str:
 
 
 # Message renvoyé quand le garde-fou bloque (question à propos d'un clip vivant).
+# Un refus sec rendait le bot inutile pendant une manche, c'est-à-dire au seul
+# moment où on le sollicite. Il ne tranche toujours pas le clip — ce serait
+# donner la réponse — mais il propose la méthode, ce qui est le propos du jeu :
+# apprendre à juger plutôt que se faire juger à sa place.
 _REFUS = (
-    "Je ne commente pas les clips de la manche en cours 🤐 — repose-moi la "
-    "question après la révélation, ou demande-moi autre chose."
+    "Je ne me prononce pas sur un clip de la manche en cours — ce serait te "
+    "donner la réponse. En revanche je peux t'aider à la trouver : demande-moi "
+    "comment reconnaître une vidéo générée par IA, un montage, ou une image "
+    "authentique sortie de son contexte."
 )
 
 
@@ -206,12 +231,30 @@ async def ask(req: AskRequest, request: Request):
 
     # 1. Récupération. Si Mistral (embed) ou la base est en panne, ça échoue ICI,
     #    AVANT le streaming : on peut donc renvoyer un vrai code HTTP propre.
+    #    On demande plus de passages que nécessaire quand il y en a à écarter.
+    marge = TOP_K + 4 if req.exclure_urls else TOP_K
     try:
-        passages = await search_similar(req.question, k=TOP_K)
+        passages = await search_similar(req.question, k=marge)
     except Exception:
         raise HTTPException(status_code=503, detail="Service RAG indisponible (recherche).")
 
+    if req.exclure_urls:
+        interdits = {u.rstrip("/") for u in req.exclure_urls}
+        passages = [p for p in passages if (p.get("url") or "").rstrip("/") not in interdits]
+    passages = passages[:TOP_K]
+
+    # Manche en cours : le bot renseigne sur le sujet mais ne se prononce jamais
+    # sur l'authenticité d'une vidéo précise — ce serait donner la réponse.
+    en_manche = bool(req.live_claims or req.live_topics)
     messages = _build_messages(req.question, passages)
+    if en_manche and messages and messages[0].get("role") == "system":
+        messages[0] = {
+            **messages[0],
+            "content": messages[0]["content"]
+            + "\n\nUne partie est en cours. Explique le sujet, le contexte et les "
+            "techniques de vérification, mais ne dis JAMAIS si une vidéo précise "
+            "est authentique ou truquée, même si les passages le laissent penser.",
+        }
 
     async def event_stream():
         # On envoie d'abord les SOURCES : le front peut les afficher tout de

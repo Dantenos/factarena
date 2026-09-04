@@ -36,6 +36,10 @@ interface ContexteAuth {
   seConnecter: (email: string, motDePasse: string) => Promise<void>;
   sInscrire: (email: string, motDePasse: string) => Promise<void>;
   seDeconnecter: () => void;
+  /** Relit le profil depuis le back. Après une modification de pseudo ou
+   *  d'avatar, l'utilisateur en mémoire est périmé et l'en-tête afficherait
+   *  encore l'ancienne valeur. */
+  rafraichir: () => Promise<void>;
 }
 
 const Contexte = createContext<ContexteAuth | null>(null);
@@ -95,9 +99,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUtilisateur(null);
   }, []);
 
+  const rafraichir = useCallback(async () => {
+    try {
+      setUtilisateur(await profil());
+    } catch {
+      // Profil indisponible : on garde l'utilisateur en mémoire plutôt que de
+      // déconnecter sur un incident réseau passager.
+    }
+  }, []);
+
   const valeur = useMemo(
-    () => ({ utilisateur, chargement, seConnecter, sInscrire, seDeconnecter }),
-    [utilisateur, chargement, seConnecter, sInscrire, seDeconnecter],
+    () => ({ utilisateur, chargement, seConnecter, sInscrire, seDeconnecter, rafraichir }),
+    [utilisateur, chargement, seConnecter, sInscrire, seDeconnecter, rafraichir],
   );
 
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
