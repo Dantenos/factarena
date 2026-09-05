@@ -114,6 +114,11 @@ export interface ReponseInscriptionDejaExistante {
   message: string;
 }
 
+export interface ReponseInscriptionPseudoDejaUtilise {
+  pseudoAlreadyExists: true;
+  message: string;
+}
+
 /** ⚠️ Le back attend un EMAIL, pas un pseudo (cf. LoginDto / RegisterDto). */
 export function connexion(email: string, motDePasse: string) {
   return api<ReponseAuth>('/auth/login', {
@@ -122,10 +127,10 @@ export function connexion(email: string, motDePasse: string) {
   });
 }
 
-export function inscription(email: string, motDePasse: string) {
-  return api<ReponseAuth | ReponseInscriptionDejaExistante>('/auth/register', {
+export function inscription(email: string, motDePasse: string, pseudo: string) {
+  return api<ReponseAuth | ReponseInscriptionDejaExistante | ReponseInscriptionPseudoDejaUtilise>('/auth/register', {
     method: 'POST',
-    body: { email, password: motDePasse },
+    body: { email, password: motDePasse, displayName: pseudo },
   });
 }
 
@@ -161,17 +166,34 @@ export interface Ami {
   currentRoomId?: string | null;
 }
 
+export interface DemandesAmis {
+  received: (Ami & { id: string })[];
+  sent: (Ami & { id: string })[];
+}
+
 /** On demande /presence plutôt que /friends : même liste, plus le salon en
  *  cours de chacun. Le sujet demande de voir la présence des amis. */
 export function listeAmis() {
   return api<Ami[]>('/friends/presence');
 }
 
+export function demandesAmis() {
+  return api<DemandesAmis>('/friends/requests');
+}
+
 export function ajouterAmi(friendId: string) {
-  return api<Ami & { alreadyFriends?: boolean }>('/friends', {
+  return api<Ami & { alreadyFriends?: boolean; requestPending?: boolean }>('/friends', {
     method: 'POST',
     body: { friendId },
   });
+}
+
+export function accepterDemande(requestId: string) {
+  return api<unknown>(`/friends/requests/${requestId}/accept`, { method: 'POST' });
+}
+
+export function refuserDemande(requestId: string) {
+  return api<unknown>(`/friends/requests/${requestId}`, { method: 'DELETE' });
 }
 
 export function retirerAmi(friendId: string) {

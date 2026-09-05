@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { LedgerModule } from '../ledger/ledger.module';
 import { BetsModule } from '../bets/bets.module';
@@ -10,9 +10,12 @@ import { AiModule } from '../ai/ai.module';
 import { RealtimeGateway } from './realtime.gateway';
 import { GameLoopService } from './game-loop.service';
 import { BotsService } from './bots.service';
+import { UsersModule } from '../users/users.module';
+import { StatsModule } from '../stats/stats.module';
 
 @Module({
-  imports: [AuthModule, LedgerModule, BetsModule, ClipVotesModule, RoomsModule, RoundsModule, ChatModule, AiModule],
+  imports: [forwardRef(() => UsersModule), StatsModule, AuthModule, forwardRef(() => LedgerModule), forwardRef(() => RoomsModule), forwardRef(() => BetsModule), ClipVotesModule, forwardRef(() => RoundsModule), forwardRef(() => ChatModule), AiModule],
   providers: [RealtimeGateway, GameLoopService, BotsService],
+  exports: [RealtimeGateway],
 })
 export class RealtimeModule {}

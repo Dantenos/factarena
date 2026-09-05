@@ -1,11 +1,14 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RoundsService {
-  constructor(private readonly prisma: PrismaService, private readonly ledger: LedgerService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => LedgerService)) private readonly ledger: LedgerService,
+  ) {}
 
   /**
    * Ensures that a round is addressed through its owning room.

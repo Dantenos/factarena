@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 
 interface Salon {
   id: string;
@@ -15,10 +16,28 @@ interface Salon {
 
 export default function Play() {
   const navigate = useNavigate();
+  const { utilisateur } = useAuth();
   const [salons, setSalons] = useState<Salon[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [creation, setCreation] = useState(false);
+  const [roomPleine, setRoomPleine] = useState<string | null>(null);
+
+  async function rejoindreSalon(salon: Salon) {
+    setErreur(null);
+    setRoomPleine(null);
+    try {
+      const membres = await api<Array<{ id: string }>>(`/rooms/${salon.id}/members`);
+      const dejaDansLaRoom = membres.some((membre) => membre.id === utilisateur?.id);
+      if (membres.length >= 5 && !dejaDansLaRoom) {
+        setRoomPleine(salon.id);
+        return;
+      }
+      navigate(`/room/${salon.id}`);
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : 'Impossible de rejoindre la room');
+    }
+  }
 
   const charger = useCallback(() => {
     setChargement(true);
@@ -29,6 +48,12 @@ export default function Play() {
   }, []);
 
   useEffect(charger, [charger]);
+
+  useEffect(() => {
+    const mettreAJourSalons = () => charger();
+    window.addEventListener('factarena:rooms-update', mettreAJourSalons);
+    return () => window.removeEventListener('factarena:rooms-update', mettreAJourSalons);
+  }, [charger]);
 
   async function creerSalon() {
     setCreation(true);
@@ -66,11 +91,16 @@ export default function Play() {
             <button
               key={salon.id}
               type="button"
-              onClick={() => navigate(`/room/${salon.id}`)}
+              onClick={() => rejoindreSalon(salon)}
               className="bg-noir-krystal rounded-xl text-white px-4 py-3 text-left hover:bg-grisclair-krystal transition-colors"
             >
               <span className="font-semibold">{salon.name}</span>
               <span className="text-sm text-gray-400 ml-3">{salon.status}</span>
+              {roomPleine === salon.id && (
+                <span role="alert" className="block text-red-l text-sm mt-1">
+                  La room est pleine (5 joueurs maximum).
+                </span>
+              )}
             </button>
           ))}
 

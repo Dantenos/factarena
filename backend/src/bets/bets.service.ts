@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,7 +6,11 @@ import { RoomPresenceService } from '../rooms/room-presence.service';
 
 @Injectable()
 export class BetsService {
-  constructor(private readonly prisma: PrismaService, private readonly ledger: LedgerService, private readonly presence: RoomPresenceService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => LedgerService)) private readonly ledger: LedgerService,
+    private readonly presence: RoomPresenceService,
+  ) {}
 
   async create(data: { roundId: string; stake: number }, userId: string) {
     if (!Number.isSafeInteger(data.stake) || data.stake <= 0) throw new BadRequestException('La mise doit être un entier positif');

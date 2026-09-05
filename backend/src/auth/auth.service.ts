@@ -39,6 +39,13 @@ export class AuthService {
       return { alreadyExists: true, message: 'Adresse e-mail déjà utilisée' };
     }
 
+    const existingPseudo = await this.prisma.user.findUnique({
+      where: { displayName: dto.displayName },
+    });
+    if (existingPseudo) {
+      return { pseudoAlreadyExists: true, message: 'Pseudo déjà utilisé par un autre joueur.' };
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     let user: AuthUser;
@@ -48,10 +55,15 @@ export class AuthService {
           email,
           passwordHash,
           role: 'USER',
+          displayName: dto.displayName,
         },
       });
     } catch (error: unknown) {
       if ((error as { code?: string }).code === 'P2002') {
+        const target = (error as { meta?: { target?: string[] | string } }).meta?.target;
+        if (Array.isArray(target) ? target.includes('displayName') : target === 'displayName') {
+          return { pseudoAlreadyExists: true, message: 'Pseudo déjà utilisé par un autre joueur.' };
+        }
         return { alreadyExists: true, message: 'Adresse e-mail déjà utilisée' };
       }
       throw error;
@@ -62,6 +74,9 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const email = this.normalizeEmail(dto.email);
+    if ((email.split('@')[0] ?? '').length > 64) {
+      throw new BadRequestException('L’adresse e-mail doit être valide.');
+    }
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -152,7 +167,10 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        displayName: user.displayName,
+        // Les comptes créés par e-mail peuvent ne pas encore avoir de pseudo.
+        // On fournit alors un pseudo d’affichage borné à 30 caractères, sans
+        // modifier le pseudo personnalisé déjà enregistré.
+        displayName: user.displayName || user.email.split('@')[0].slice(0, 30),
         avatarUrl: user.avatarUrl,
         status: user.status,
         role: user.role,

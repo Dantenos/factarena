@@ -10,9 +10,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  accepterDemande,
   ajouterAmi,
   chercherJoueurs,
+  demandesAmis,
   listeAmis,
+  refuserDemande,
   retirerAmi,
   type Ami,
 } from '../api/client';
@@ -42,6 +45,8 @@ export default function Friends() {
   const [recherche, setRecherche] = useState('');
   const [resultats, setResultats] = useState<Ami[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [demandesRecues, setDemandesRecues] = useState<(Ami & { id: string })[]>([]);
+  const [demandesEnvoyees, setDemandesEnvoyees] = useState<(Ami & { id: string })[]>([]);
 
   const rafraichir = useCallback(() => {
     // Pas de console.error : une liste vide n'est pas une anomalie, et le
@@ -50,6 +55,57 @@ export default function Friends() {
   }, []);
 
   useEffect(rafraichir, [rafraichir]);
+
+  const rafraichirDemandes = useCallback(() => {
+    demandesAmis().then((demandes) => {
+      setDemandesRecues(demandes.received);
+      setDemandesEnvoyees(demandes.sent);
+    }).catch(() => { setDemandesRecues([]); setDemandesEnvoyees([]); });
+  }, []);
+
+  useEffect(() => {
+    rafraichirDemandes();
+    window.dispatchEvent(new Event('factarena:friends-viewed'));
+    const mettreAJourDemandes = (event: Event) => {
+      // La demande est déjà visible sur cette page : elle ne doit pas laisser
+      // une notification « ! » apparaître après navigation vers une autre page.
+      window.dispatchEvent(new Event('factarena:friends-viewed'));
+      const detail = (event as CustomEvent<{ type?: string; requestId?: string }>).detail;
+      if (detail?.requestId && (detail.type === 'request_accepted' || detail.type === 'request_declined')) {
+        setDemandesEnvoyees((precedentes) => precedentes.filter((demande) => demande.id !== detail.requestId));
+      }
+      rafraichir();
+      rafraichirDemandes();
+    };
+    window.addEventListener('factarena:friend-update', mettreAJourDemandes);
+    return () => window.removeEventListener('factarena:friend-update', mettreAJourDemandes);
+  }, [rafraichirDemandes]);
+
+  useEffect(() => {
+    const mettreAJourProfil = (event: Event) => {
+      const profilMisAJour = (event as CustomEvent<{ id?: string; displayName?: string | null; avatarUrl?: string | null }>).detail;
+      if (!profilMisAJour?.id) return;
+      const mettreAJour = (joueurs: Ami[]) => joueurs.map((joueur) => joueur.id === profilMisAJour.id
+        ? { ...joueur, displayName: profilMisAJour.displayName ?? joueur.displayName, avatarUrl: profilMisAJour.avatarUrl ?? joueur.avatarUrl }
+        : joueur);
+      setAmis(mettreAJour);
+      setResultats(mettreAJour);
+    };
+    window.addEventListener('factarena:profile-update', mettreAJourProfil);
+    return () => window.removeEventListener('factarena:profile-update', mettreAJourProfil);
+  }, []);
+
+  useEffect(() => {
+    const mettreAJourPresence = (event: Event) => {
+      const presence = (event as CustomEvent<{ userId?: string; status?: string; currentRoomId?: string | null }>).detail;
+      if (!presence?.userId || !presence.status) return;
+      setAmis((precedent) => precedent.map((ami) => ami.id === presence.userId
+        ? { ...ami, status: presence.status as string, currentRoomId: presence.currentRoomId }
+        : ami));
+    };
+    window.addEventListener('factarena:presence-update', mettreAJourPresence);
+    return () => window.removeEventListener('factarena:presence-update', mettreAJourPresence);
+  }, []);
 
   // Le back refuse une recherche de moins de deux caractères. On applique la
   // même règle ici pour ne pas provoquer un 400 à chaque frappe : la
@@ -78,6 +134,12 @@ export default function Friends() {
         setMessage('Déjà dans ta liste d\'amis.');
         return;
       }
+      if (resultat.requestPending) {
+        setMessage('Invitation envoyée, en attente de réponse.');
+        setResultats((r) => r.filter((x) => x.id !== joueur.id));
+        rafraichirDemandes();
+        return;
+      }
       setResultats((r) => r.filter((x) => x.id !== joueur.id));
       rafraichir();
     } catch (e) {
@@ -85,6 +147,21 @@ export default function Friends() {
       // le bouton sans effet apparent.
       setMessage(e instanceof Error ? e.message : 'Ajout impossible');
     }
+  }
+
+  async function accepter(request: Ami & { id: string }) {
+    try {
+      await accepterDemande(request.id);
+      rafraichir();
+      rafraichirDemandes();
+    } catch (e) { setMessage(e instanceof Error ? e.message : 'Acceptation impossible'); }
+  }
+
+  async function refuser(request: Ami & { id: string }) {
+    try {
+      await refuserDemande(request.id);
+      rafraichirDemandes();
+    } catch (e) { setMessage(e instanceof Error ? e.message : 'Refus impossible'); }
   }
 
   async function retirer(joueur: Ami) {
@@ -108,6 +185,19 @@ export default function Friends() {
           <h2 className="font-semibold mb-4">
             Liste <span className="text-white/40 font-normal">({amis.length})</span>
           </h2>
+          {demandesEnvoyees.length > 0 && (
+            <div className="mb-4">
+              <p className="text-white/50 text-sm mb-2">Invitations en attente</p>
+              <ul className="flex flex-col gap-2">
+                {demandesEnvoyees.map((demande) => (
+                  <li key={demande.id} className="bg-noir-krystal rounded-xl p-3 flex items-center gap-3">
+                    <span className="min-w-0 flex-1 truncate text-sm">{nomDe(demande)}</span>
+                    <span className="text-xs text-white/40 shrink-0">en attente...</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {amis.length === 0 ? (
             <p className="text-white/30 text-sm">
               Personne pour l'instant. Cherche un joueur par son e-mail à droite.
@@ -155,6 +245,20 @@ export default function Friends() {
         </div>
 
         <div className="bg-gris-krystal rounded-xl p-6">
+          {demandesRecues.length > 0 && (
+            <div className="mb-6">
+              <h2 className="font-semibold mb-3">Invitations reçues</h2>
+              <ul className="flex flex-col gap-2">
+                {demandesRecues.map((demande) => (
+                  <li key={demande.id} className="bg-noir-krystal rounded-xl p-3 flex items-center gap-3">
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">{nomDe(demande)}</span>
+                    <button type="button" onClick={() => accepter(demande)} className="text-xs text-bleu-l hover:underline shrink-0">accepter</button>
+                    <button type="button" onClick={() => refuser(demande)} className="text-xs text-white/40 hover:text-red-l shrink-0">refuser</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <h2 className="font-semibold mb-4">Ajouter un ami</h2>
           <form onSubmit={chercher} className="flex gap-2 mb-4">
             <label htmlFor="recherche" className="sr-only">
@@ -187,7 +291,6 @@ export default function Friends() {
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{nomDe(joueur)}</p>
-                  <Presence statut={joueur.status} />
                 </div>
                 <button
                   type="button"

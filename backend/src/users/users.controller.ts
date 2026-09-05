@@ -49,7 +49,7 @@ export class UsersController {
     }),
     limits: { fileSize: 5 * 1024 * 1024, files: 1 },
     fileFilter: (_req: unknown, file: { mimetype: string }, cb: (error: Error | null, acceptFile: boolean) => void) => {
-      cb(null, ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.mimetype));
+      cb(null, ['image/png', 'image/jpeg'].includes(file.mimetype));
     },
   }))
   uploadAvatar(

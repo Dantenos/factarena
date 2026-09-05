@@ -5,9 +5,10 @@ import { ChatModule } from '../chat/chat.module';
 import { RoomsController } from './rooms.controller';
 import { RoomPresenceService } from './room-presence.service';
 import { RoomsService } from './rooms.service';
+import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
-  imports: [forwardRef(() => BetsModule), forwardRef(() => ChatModule), RoomPresenceModule],
+  imports: [forwardRef(() => BetsModule), forwardRef(() => ChatModule), forwardRef(() => RealtimeModule), RoomPresenceModule],
   controllers: [RoomsController],
   providers: [RoomsService],
   exports: [RoomsService, RoomPresenceModule],

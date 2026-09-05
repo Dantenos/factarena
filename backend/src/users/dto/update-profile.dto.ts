@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsUrl, Length, MaxLength, ValidateIf } from 'clas
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
-  @Length(1, 100)
+  @Length(2, 30, { message: 'Le pseudo doit faire entre 2 et 30 caractères.' })
   displayName?: string;
 
   @IsOptional()

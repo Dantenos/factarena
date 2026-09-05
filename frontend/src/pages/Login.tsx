@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 // Page de connexion, branchée sur le VRAI back.
@@ -16,30 +16,58 @@ import { useAuth } from '../auth/AuthContext';
 // de laisser l'utilisateur découvrir l'erreur après coup.
 export default function Login() {
   const navigate = useNavigate();
-  const emplacement = useLocation();
   const { seConnecter, sInscrire } = useAuth();
 
   const [modeInscription, setModeInscription] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [champManquant, setChampManquant] = useState<'displayName' | 'email' | 'password' | null>(null);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErreur(null);
+    setChampManquant(null);
 
     const donnees = new FormData(event.currentTarget);
     const email = String(donnees.get('email') ?? '').trim();
     const motDePasse = String(donnees.get('password') ?? '');
+    const pseudo = String(donnees.get('displayName') ?? '').trim();
+
+    if (modeInscription && !pseudo) {
+      setChampManquant('displayName');
+      return;
+    }
+    if (modeInscription && (pseudo.length < 2 || pseudo.length > 30)) {
+      setErreur('Le pseudo doit faire entre 2 et 30 caractères.');
+      return;
+    }
+    if (!email) {
+      setChampManquant('email');
+      return;
+    }
+    const champEmail = event.currentTarget.elements.namedItem('email') as HTMLInputElement | null;
+    const partieLocale = email.split('@')[0] ?? '';
+    const formatEmailValide = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!champEmail?.validity.valid || !formatEmailValide || partieLocale.length > 64 || email.length > 254) {
+      setErreur('L’adresse e-mail doit être valide.');
+      return;
+    }
+    if (!motDePasse) {
+      setChampManquant('password');
+      return;
+    }
+    if (motDePasse.length < 8) {
+      setErreur('Le mot de passe doit faire au moins 8 caractères.');
+      return;
+    }
 
     setEnvoiEnCours(true);
     try {
-      if (modeInscription) await sInscrire(email, motDePasse);
+      if (modeInscription) await sInscrire(email, motDePasse, pseudo);
       else await seConnecter(email, motDePasse);
 
-      // Retour sur la page initialement demandée (posée par ProtectedRoute),
-      // ou le profil par défaut.
-      const destination = (emplacement.state as { depuis?: string } | null)?.depuis;
-      navigate(destination ?? '/profile', { replace: true });
+      // Après chaque connexion ou inscription, on revient toujours à l'accueil.
+      navigate('/', { replace: true });
     } catch (e) {
       // Message du back (identifiants invalides, email déjà pris, mot de passe
       // trop court...). On l'affiche à l'utilisateur au lieu de le passer en
@@ -58,7 +86,30 @@ export default function Login() {
       </h1>
 
       <div className="p-5 w-full max-w-sm md:w-[30%] md:max-w-none md:min-w-[320px] bg-gris-krystal text-white rounded-xl">
-        <form onSubmit={handleSubmit} className="text-white gap-1 items-center">
+        <form onSubmit={handleSubmit} noValidate className="text-white gap-1 items-center">
+          {modeInscription && (
+            <div className="flex mt-6 flex-col">
+              <label htmlFor="displayName" className="font-semibold">Pseudo</label>
+              <input
+                type="text"
+                id="displayName"
+                name="displayName"
+                minLength={2}
+                maxLength={30}
+                autoComplete="username"
+                className="bg-grisclair-krystal py-1 rounded-md px-2"
+                required
+              />
+              <span className="text-xs text-gray-400 mt-1">2 à 30 caractères</span>
+              {champManquant === 'displayName' && (
+                <p role="alert" className="text-red-l text-xs mt-1">Veuillez renseigner ce champ.</p>
+              )}
+              {erreur === 'Le pseudo doit faire entre 2 et 30 caractères.' && (
+                <p role="alert" className="text-red-l text-xs mt-1">{erreur}</p>
+              )}
+            </div>
+          )}
+
           <div className="flex mt-6 flex-col">
             <label htmlFor="email" className="font-semibold">Adresse e-mail</label>
             <input
@@ -69,6 +120,11 @@ export default function Login() {
               className="bg-grisclair-krystal py-1 rounded-md px-2"
               required
             />
+            {(champManquant === 'email' || erreur === 'L’adresse e-mail doit être valide.') && (
+              <p role="alert" className="text-red-l text-xs mt-1">
+                {champManquant === 'email' ? 'Veuillez renseigner ce champ.' : erreur}
+              </p>
+            )}
           </div>
 
           <div className="flex mt-6 flex-col">
@@ -85,6 +141,11 @@ export default function Login() {
               required
             />
             <span className="text-xs text-gray-400 mt-1">8 caractères minimum</span>
+            {(champManquant === 'password' || erreur === 'Le mot de passe doit faire au moins 8 caractères.') && (
+              <p role="alert" className="text-red-l text-xs mt-1">
+                {champManquant === 'password' ? 'Veuillez renseigner ce champ.' : erreur}
+              </p>
+            )}
           </div>
 
           {/* role="alert" : le message est annoncé aux lecteurs d'écran
@@ -100,7 +161,7 @@ export default function Login() {
             Se connecter avec 42
           </a>
 
-          {erreur && (
+          {erreur && erreur !== 'L’adresse e-mail doit être valide.' && erreur !== 'Le mot de passe doit faire au moins 8 caractères.' && erreur !== 'Le pseudo doit faire entre 2 et 30 caractères.' && (
             <p role="alert" className="mt-4 text-red-l text-sm">{erreur}</p>
           )}
 
@@ -117,7 +178,7 @@ export default function Login() {
           <span>{modeInscription ? 'Déjà un compte ?' : 'Pas de compte ?'}</span>
           <button
             type="button"
-            onClick={() => { setModeInscription((v) => !v); setErreur(null); }}
+            onClick={() => { setModeInscription((v) => !v); setErreur(null); setChampManquant(null); }}
             className="text-bleu-l hover:underline font-semibold"
           >
             {modeInscription ? 'Se connecter' : 'Inscris-toi'}

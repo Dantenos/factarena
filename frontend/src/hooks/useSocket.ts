@@ -22,6 +22,7 @@ export function useSocket(roomId: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const [connecte, setConnecte] = useState(false);
   const [etat, setEtat] = useState<EtatSalon | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   // Écart (ms) entre l'horloge du serveur et celle du navigateur.
   const decalageRef = useRef(0);
 
@@ -46,6 +47,9 @@ export function useSocket(roomId: string | null) {
       socket.emit('room:join', { roomId });
     });
     socket.on('disconnect', () => setConnecte(false));
+    socket.on('room:error', (donnees: { message?: string }) => {
+      setErreur(donnees?.message ?? 'Impossible de rejoindre la room.');
+    });
 
     const majEtat = (nouvel: EtatSalon) => {
       if (nouvel?.serverTime) {
@@ -97,5 +101,5 @@ export function useSocket(roomId: string | null) {
   /** Heure du SERVEUR estimée : à utiliser pour la fenêtre de vote. */
   const maintenantServeur = useCallback(() => Date.now() + decalageRef.current, []);
 
-  return { connecte, etat, emettre, ecouter, maintenantServeur };
+  return { connecte, etat, erreur, emettre, ecouter, maintenantServeur };
 }

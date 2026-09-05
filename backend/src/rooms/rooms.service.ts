@@ -4,6 +4,7 @@ import { ChatService } from '../chat/chat.service';
 import { BetsService } from '../bets/bets.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RoomPresenceService } from './room-presence.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 type RoundWithDetails = Round & {
   roundClaims: Array<RoundClaim & { claim: Claim }>;
@@ -19,10 +20,13 @@ export class RoomsService {
     @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
     private readonly roomPresence: RoomPresenceService,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly realtimeGateway: RealtimeGateway,
   ) {}
 
   async create(data: { name: string }, createdBy: string) {
-    return this.prisma.room.create({ data: { name: data.name, createdBy, status: 'WAITING' } });
+    const room = await this.prisma.room.create({ data: { name: data.name, createdBy, status: 'WAITING' } });
+    this.realtimeGateway.broadcastRoomListUpdate();
+    return room;
   }
 
   async findAll() {

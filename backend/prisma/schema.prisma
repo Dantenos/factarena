@@ -58,10 +58,15 @@ enum TransactionType {
   REFUND
 }
 
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+}
+
 model User {
   id           String        @id @default(cuid())
   email          String        @unique // identifiant de connexion (auth email + mot de passe)
-  displayName    String?       // nom affiché dans l'application
+  displayName    String?       @unique // pseudo affiché dans l'application
   role           String        @default("USER")
   passwordHash   String?       // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
   oauthProvider  String?       // fournisseur OAuth lié (ex. 42)
@@ -89,6 +94,7 @@ model Friend {
   id        String   @id @default(cuid())
   userId    String
   friendId  String
+  status    FriendStatus @default(ACCEPTED)
   createdAt DateTime @default(now())
 
   user   User @relation("Friendships", fields: [userId], references: [id])

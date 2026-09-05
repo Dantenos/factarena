@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import { useAuth } from '../auth/AuthContext';
 
@@ -11,7 +11,9 @@ import { useAuth } from '../auth/AuthContext';
 // qui reflète un vrai jeton vérifié auprès du back.
 export default function Layout() {
   const navigate = useNavigate();
-  const { utilisateur, seDeconnecter } = useAuth();
+  const location = useLocation();
+  const { utilisateur, seDeconnecter, notificationsAmis } = useAuth();
+  const pseudo = utilisateur?.displayName || utilisateur?.email.split('@')[0].slice(0, 30);
 
   function handleLogout() {
     seDeconnecter();
@@ -34,19 +36,23 @@ export default function Layout() {
             <>
               <Link to="/play" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Jouer</Link>
               <Link to="/profile" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Profil</Link>
-              <Link to="/friends" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Amis</Link>
-              {/* On affiche qui est connecté : utile en soutenance pour
-                  démontrer plusieurs comptes simultanés dans deux navigateurs. */}
-              <span className="hidden lg:block lg:absolute lg:right-48 text-sm text-gray-300">
-                {utilisateur.displayName || utilisateur.email}
-              </span>
-              <button
-                type="button"
-                className="text-base sm:text-lg ml-auto sm:ml-0 sm:absolute sm:right-8 button-red-d px-3 sm:px-5 py-1"
-                onClick={handleLogout}
-              >
-                Déconnexion
-              </button>
+              <Link to="/friends" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">
+                Amis{notificationsAmis > 0 && location.pathname !== '/friends' ? ' (!)' : ''}
+              </Link>
+              <div className="ml-auto sm:ml-0 sm:absolute sm:right-8 flex min-w-0 max-w-[calc(100vw-2rem)] items-center gap-3">
+                {/* Le pseudo reste à gauche du bouton et se tronque s'il est
+                    trop long, sans jamais empiéter sur lui. */}
+                <span className="hidden lg:block min-w-0 max-w-[40vw] truncate text-sm text-gray-300" title={pseudo}>
+                  {pseudo}
+                </span>
+                <button
+                  type="button"
+                  className="text-base sm:text-lg shrink-0 button-red-d px-3 sm:px-5 py-1 font-normal"
+                  onClick={handleLogout}
+                >
+                  Déconnexion
+                </button>
+              </div>
             </>
           )}
         </nav>

@@ -1,6 +1,7 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Injectable()
 export class LedgerService {
@@ -10,7 +11,10 @@ export class LedgerService {
   static readonly SEUIL_RATTRAPAGE = 50;
   static readonly MONTANT_RATTRAPAGE = 200;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   async getBalance(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { virtualBalance: true } });
@@ -96,6 +100,7 @@ export class LedgerService {
         balanceAfter: misAJour.virtualBalance,
       },
     });
+    await this.realtimeGateway.broadcastBalanceUpdate(userId);
     return { virtualBalance: misAJour.virtualBalance, credite: LedgerService.MONTANT_RATTRAPAGE };
   }
 

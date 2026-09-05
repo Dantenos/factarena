@@ -1,0 +1,3 @@
+CREATE TYPE "FriendStatus" AS ENUM ('PENDING', 'ACCEPTED');
+
+ALTER TABLE "Friend" ADD COLUMN "status" "FriendStatus" NOT NULL DEFAULT 'ACCEPTED';

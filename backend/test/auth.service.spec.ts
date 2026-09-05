@@ -21,7 +21,7 @@ describe('AuthService', () => {
     };
     const service = new AuthService(prisma as never, { sign: jest.fn() } as never);
 
-    await service.register({ email: '  Person@Example.COM  ', password: 'password123' });
+    await service.register({ email: '  Person@Example.COM  ', password: 'password123', displayName: 'Person' });
 
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: 'person@example.com' } });
     expect(prisma.user.create).toHaveBeenCalledWith({
@@ -57,7 +57,7 @@ describe('AuthService', () => {
     };
     const service = new AuthService(prisma as never, { sign: jest.fn() } as never);
 
-    await expect(service.register({ email: ' New@Example.com ', password: 'password123' }))
+    await expect(service.register({ email: ' New@Example.com ', password: 'password123', displayName: 'New player' }))
       .resolves.toEqual({ alreadyExists: true, message: 'Adresse e-mail déjà utilisée' });
   });
 

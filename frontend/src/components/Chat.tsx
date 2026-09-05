@@ -112,6 +112,8 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
       {/* Champ de saisie + bouton d'envoi */}
       <div className="flex gap-2 mt-3">
         <input
+          id="chat-message"
+          name="message"
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
