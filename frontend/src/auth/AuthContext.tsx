@@ -69,7 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let annule = false;
     profil()
       .then((u) => {
-        if (!annule) setUtilisateur(u);
+        if (annule) return;
+        if (u) {
+          setUtilisateur(u);
+        } else {
+          clearToken();
+          setUtilisateur(null);
+        }
       })
       .catch(() => {
         // Jeton invalide ou expiré : on nettoie sans bruit. Pas de console.error
@@ -151,6 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const seConnecter = useCallback(async (email: string, motDePasse: string) => {
     const reponse = await apiConnexion(email, motDePasse);
+    if ('loginFailed' in reponse && reponse.loginFailed) {
+      throw new Error(reponse.message);
+    }
     setToken(reponse.accessToken);
     setUtilisateur(reponse.user);
   }, []);
@@ -174,7 +183,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const rafraichir = useCallback(async () => {
     try {
-      setUtilisateur(await profil());
+      const profilActuel = await profil();
+      if (profilActuel) {
+        setUtilisateur(profilActuel);
+      } else {
+        clearToken();
+        setUtilisateur(null);
+      }
     } catch {
       // Profil indisponible : on garde l'utilisateur en mémoire plutôt que de
       // déconnecter sur un incident réseau passager.

@@ -98,7 +98,7 @@ export class RealtimeGateway
     }
   }
 
-  notifyFriendUpdate(userId: string, update: { type: string; requestId: string }) {
+  notifyFriendUpdate(userId: string, update: { type: string; requestId?: string; friendId?: string }) {
     for (const socketId of this.socketsByUser.get(userId) ?? []) {
       this.server?.to(socketId).emit('friend:update', update);
     }

@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   StreamableFile,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -30,8 +31,18 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Request() req: { user: { userId: string } }) {
-    return this.usersService.findById(req.user.userId);
+  async me(@Request() req: { user: { userId: string } }) {
+    try {
+      return await this.usersService.findById(req.user.userId);
+    } catch (error) {
+      // A validly signed JWT can outlive the account it identifies. Return a
+      // successful empty response so session cleanup does not create a browser
+      // console error for an expected stale-session case.
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   @Post('me/avatar')

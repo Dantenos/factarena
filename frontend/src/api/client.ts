@@ -109,6 +109,11 @@ export interface ReponseAuth {
   user: Utilisateur;
 }
 
+export interface ReponseLoginEchec {
+  loginFailed: true;
+  message: string;
+}
+
 export interface ReponseInscriptionDejaExistante {
   alreadyExists: true;
   message: string;
@@ -121,7 +126,7 @@ export interface ReponseInscriptionPseudoDejaUtilise {
 
 /** ⚠️ Le back attend un EMAIL, pas un pseudo (cf. LoginDto / RegisterDto). */
 export function connexion(email: string, motDePasse: string) {
-  return api<ReponseAuth>('/auth/login', {
+  return api<ReponseAuth | ReponseLoginEchec>('/auth/login', {
     method: 'POST',
     body: { email, password: motDePasse },
   });
@@ -135,7 +140,7 @@ export function inscription(email: string, motDePasse: string, pseudo: string) {
 }
 
 export function profil() {
-  return api<Utilisateur>('/users/me');
+  return api<Utilisateur | null>('/users/me');
 }
 
 /** ⚠️ Le back renvoie `virtualBalance`, pas `balance` : se tromper de nom

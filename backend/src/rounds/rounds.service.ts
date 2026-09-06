@@ -1,13 +1,15 @@
-import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RoomPresenceService } from '../rooms/room-presence.service';
 
 @Injectable()
 export class RoundsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => LedgerService)) private readonly ledger: LedgerService,
+    @Optional() private readonly roomPresence?: RoomPresenceService,
   ) {}
 
   /**
@@ -164,6 +166,10 @@ export class RoundsService {
     }
     if (imposees && imposees.length === 0) {
       throw new BadRequestException('Une manche doit contenir au moins une affirmation');
+    }
+    const joueursPresents = await this.roomPresence?.getMemberIds(data.roomId);
+    if (joueursPresents && joueursPresents.length < 2) {
+      throw new BadRequestException('Il faut au moins 2 joueurs présents pour lancer une manche');
     }
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Verrouille la room pendant la création : deux hôtes ne doivent pas

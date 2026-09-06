@@ -91,6 +91,7 @@ export default function Room() {
   const clips = round?.roundClaims ?? [];
   const clipCourant = clips[indexClip]?.claim ?? null;
   const manchOuverte = round?.status === 'OPEN';
+  const nombreJoueurs = etat?.members?.length ?? 0;
 
   // Solde de crédits : il ne transite pas par le WebSocket, on le lit via l'API
   // et on le rafraîchit à chaque révélation (les gains viennent d'être versés).
@@ -382,6 +383,7 @@ export default function Room() {
           correctAnswers: bonnesReponses,
           pot: etat?.pot ?? 0,
           balance,
+          playerCount: Math.min(etat?.members?.length ?? 0, 5),
         }}
       />
 
@@ -423,11 +425,14 @@ export default function Room() {
               <button
                 type="button"
                 onClick={lancerManche}
-                disabled={lancement || !connecte}
+                disabled={lancement || !connecte || nombreJoueurs < 2}
                 className="button-blue-d px-4 py-3 disabled:opacity-40"
               >
                 {lancement ? 'Lancement...' : `Lancer une manche (${CLIPS_PAR_MANCHE} clips)`}
               </button>
+              {connecte && nombreJoueurs < 2 && (
+                <p className="text-white/50 text-sm">Il faut au moins 2 joueurs présents pour lancer une manche.</p>
+              )}
               {erreurManche && (
                 <p role="alert" className="text-red-l text-sm">{erreurManche}</p>
               )}

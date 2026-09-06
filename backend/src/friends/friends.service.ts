@@ -71,6 +71,8 @@ export class FriendsService {
   async remove(userId: string, friendId: string) {
     const deleted = await this.prisma.friend.deleteMany({ where: { OR: [{ userId, friendId }, { userId: friendId, friendId: userId }] } });
     if (deleted.count === 0) throw new NotFoundException('Relation d’amitié introuvable');
+    this.realtimeGateway.notifyFriendUpdate(userId, { type: 'friend_removed', friendId });
+    this.realtimeGateway.notifyFriendUpdate(friendId, { type: 'friend_removed', friendId: userId });
     return { success: true };
   }
 }

@@ -11,6 +11,7 @@ interface ProfilJoueur {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
+  createdAt: string;
 }
 
 /** Retour de /stats/me — voir StatsService.computeStats côté back. */
@@ -360,11 +361,7 @@ export default function Profile() {
                       {joueur.netGain >= 0 ? '+' : ''}{joueur.netGain} cr
                     </span>
                   </>
-                ) : (
-                  // Tant que personne n'a joué, on le dit au lieu de laisser une
-                  // marche vide qui ressemble à un affichage cassé.
-                  <span className="text-white/25 text-xs text-center">place à prendre</span>
-                )}
+                ) : null}
               </div>
             );
           })}

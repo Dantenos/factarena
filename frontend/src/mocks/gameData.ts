@@ -32,6 +32,7 @@ export interface SessionStats {
   correctAnswers: number; // bonnes réponses du joueur sur la session
   pot: number;            // pot commun accumulé par tous les joueurs
   balance: number;        // solde de crédits du joueur
+  playerCount: number;    // joueurs actuellement présents dans le salon
 }
 
 // --- Résultats clip par clip ---

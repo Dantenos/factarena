@@ -5,6 +5,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
@@ -26,8 +27,18 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(AuthRateLimitGuard)
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto) {
+    try {
+      return await this.authService.login(dto);
+    } catch (error) {
+      // Invalid credentials are an expected form outcome. Returning a normal
+      // response keeps the browser console clear; the client still displays
+      // the same authentication error to the user.
+      if (error instanceof UnauthorizedException) {
+        return { loginFailed: true, message: error.message };
+      }
+      throw error;
+    }
   }
 
   @Get('42')
