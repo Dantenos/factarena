@@ -272,7 +272,16 @@ async def ask(req: AskRequest, request: Request):
     async def event_stream():
         # On envoie d'abord les SOURCES : le front peut les afficher tout de
         # suite, avant même que la réponse commence à s'écrire.
-        yield _sse("sources", [{"title": p["title"], "url": p["url"]} for p in passages])
+        # Un article long donne plusieurs passages : sans dédoublonnage on
+        # affichait quatre fois le même lien sous la réponse.
+        vues: set[str] = set()
+        sources = []
+        for p in passages:
+            if p["url"] in vues:
+                continue
+            vues.add(p["url"])
+            sources.append({"title": p["title"], "url": p["url"]})
+        yield _sse("sources", sources)
         try:
             async for token in chat_stream(messages):
                 yield _sse("token", {"text": token})
