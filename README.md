@@ -215,7 +215,7 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 | Sourced fact-check corpus | elanteno | 1 849 passages shipped with the repository, loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run: the ClaimReview records of published fact-checks, the full text of the 32 articles that established the verdict of the playable clips, and figures from INSEE, Eurostat and the World Bank. The ingestion scripts can grow it further. |
 | Profile & stats | krfranco, alaroque, elanteno | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload; match history listing each finished round with its date, room, opponents, stake and net gain |
 | Friends | elanteno | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
-| Playable clip corpus | elanteno | 63 hand-curated clips with a playable video, 57 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped. |
+| Playable clip corpus | elanteno | 54 hand-curated clips with a playable video, 46 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped, as were war footage, partisan political content, and any subject requiring a content warning. |
 | Responsive layout | krfranco, elanteno | Every page adapts from 320 px upwards: the multi-column grids stack, the navigation wraps, and the room's chat moves below the video. Verified with no element overflowing the viewport at 320, 390, 768 and 1024 px. |
 
 ## Modules
