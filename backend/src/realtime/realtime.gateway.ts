@@ -377,15 +377,12 @@ export class RealtimeGateway
     }
     await this.assertInRoom(socket, body.roomId);
     const botPrompt = body.content.replace(/^\s*(?:@bot|\/ask)\s*/i, '').trim();
-    if (botPrompt !== body.content.trim() && botPrompt.length > 0) {
-      try {
-        for await (const event of this.chatService.streamBot(socket.data.userId, body.roomId, botPrompt)) socket.emit(`ai:${event.type}`, event.data);
-        return { action: 'bot' };
-      } catch (error) {
-        socket.emit('ai:error', { message: error instanceof Error ? error.message : 'La requête du bot a échoué' });
-        throw error;
-      }
-    }
+    const questionAuBot = botPrompt !== body.content.trim() && botPrompt.length > 0;
+
+    // Une question au bot part d'abord dans le salon comme n'importe quel
+    // message. Elle était jusqu'ici avalée : on voyait la réponse sans la
+    // question, et les autres joueurs ne voyaient qu'un monologue. Passer par
+    // le même chemin la soumet aussi à la modération.
     const message = await this.chatService.sendMessage(socket.data.userId, body.roomId, body.content);
     // Message supprimé par la modération : rien ne part dans le salon, mais on
     // prévient son auteur. Sans ça il tapait, envoyait, et il ne se passait
@@ -395,8 +392,20 @@ export class RealtimeGateway
       return message;
     }
     this.server.to(this.roomChannel(body.roomId)).emit('chat:message', message);
+
+    if (questionAuBot) {
+      try {
+        for await (const event of this.chatService.streamBot(socket.data.userId, body.roomId, botPrompt)) socket.emit(`ai:${event.type}`, event.data);
+        return { action: 'bot' };
+      } catch (error) {
+        socket.emit('ai:error', { message: error instanceof Error ? error.message : 'La requête du bot a échoué' });
+        throw error;
+      }
+    }
+
     // Si le joueur a nommé un des faux joueurs, celui-ci répond. Diffusé après
-    // le message d'origine pour que l'ordre d'affichage reste cohérent.
+    // le message d'origine pour que l'ordre d'affichage reste cohérent. Une
+    // question adressée au bot ne les concerne pas.
     void this.botsService.interpeller(
       body.roomId,
       body.content,
