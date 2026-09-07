@@ -285,7 +285,9 @@ export default function Room() {
             explanation: explication?.trim() || "Explication en cours de génération.",
             source: v.sourceUrl ?? '',
             explanationSource: v.explanationSource,
-            userVoted: mesVotes[v.claimId] !== undefined,
+            userVote: mesVotes[v.claimId] === undefined
+              ? undefined
+              : mesVotes[v.claimId] ? 'FAUX' : 'VRAI',
             aiGuess,
             aiGuessWhy,
           };

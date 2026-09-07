@@ -40,7 +40,14 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
 
       {/* Détail clip par clip, avec verdict IA et explication sourcée */}
       <div className="bg-gris-krystal rounded-xl p-4">
-        <h3 className="text-white font-semibold mb-3">Clip par clip — ta réponse vs la vérité (+ explication IA)</h3>
+        <h3 className="text-white font-semibold">Clip par clip</h3>
+        {/* Trois lignes se suivent et se ressemblaient : le verdict, l'IA qui
+            l'explique, l'IA qui devine. On dit une fois laquelle décide du
+            score, plutôt que de le répéter sur chaque clip. */}
+        <p className="text-white/40 text-xs mb-3">
+          Le badge coloré est le verdict du fact-checkeur — lui seul décide de ton score.
+          Les lignes en dessous sont l'IA.
+        </p>
         <ul className="space-y-3">
           {clipResults.map((clip) => {
             const verdict = VERDICT_STYLES[clip.verdict];
@@ -51,11 +58,28 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
                     {verdict.label}
                   </span>
                   <span className="text-white/90 text-sm">« {clip.title} »</span>
-                  {/* Affiche "(pas voté)" seulement si le joueur n'a pas
-                      participé à ce clip précis — évite de surcharger
-                      l'affichage quand il a bien voté. */}
-                  {!clip.userVoted && <span className="text-white/40 text-xs">(pas voté)</span>}
                 </div>
+
+                {/* La réponse du joueur, à côté du verdict : c'est ce que le
+                    titre de la section promettait sans jamais le montrer. */}
+                <p className="text-xs mt-1 ml-1">
+                  {clip.userVote ? (
+                    <>
+                      <span className="text-white/40">Ta réponse ▸ </span>
+                      <span
+                        className={
+                          clip.userVote === clip.verdict
+                            ? 'text-emerald-400 font-semibold'
+                            : 'text-red-400 font-semibold'
+                        }
+                      >
+                        {clip.userVote} {clip.userVote === clip.verdict ? '✓' : '✗'}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-white/40">Tu n'as pas voté sur ce clip.</span>
+                  )}
+                </p>
                 <p className="text-white/50 text-xs mt-1 ml-1">
                   {clip.explanationSource === 'editorial' ? 'Vérification' : 'IA-RAG'} ▸{' '}
                   <span className="text-white/70">{clip.explanation}</span> — {clip.source}
