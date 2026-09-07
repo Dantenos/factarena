@@ -132,13 +132,6 @@ export default function Chat({ messages, roomLabel = "Chat du salon", onSendMess
           envoyer
         </button>
       </div>
-      {/* Ce que fait l'assistant, dit une fois : il renseigne sur le sujet mais
-          ne donne jamais le verdict d'un clip en jeu. Sans ce rappel, son refus
-          ponctuel passerait pour un bug. */}
-      <p className="text-white/30 text-xs mt-2">
-        @bot cite ses sources et peut t'éclairer sur le sujet — mais il ne dira pas si un
-        clip en cours est vrai ou faux.
-      </p>
     </div>
   );
 }

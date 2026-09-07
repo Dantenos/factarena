@@ -14,7 +14,7 @@ export default function Terms() {
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">Conditions générales d'utilisation</h1>
           <p className="text-sm text-gray-400">
-            Dernière mise à jour : août 2026 — en utilisant FactArena, vous
+            Dernière mise à jour : août 2026. En utilisant FactArena, vous
             acceptez les conditions ci-dessous.
           </p>
         </header>
@@ -71,7 +71,7 @@ export default function Terms() {
 
         <article className="flex flex-col gap-3">
           <h2 className="text-xl font-semibold text-bleu-l">
-            4. Crédits virtuels — absence de valeur monétaire
+            4. Crédits virtuels : absence de valeur monétaire
           </h2>
           <p>
             Les crédits utilisés dans FactArena sont <strong>entièrement fictifs</strong>.

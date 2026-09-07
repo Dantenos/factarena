@@ -2,6 +2,7 @@
 // global, détail clip par clip avec verdict et explication sourcée, et
 // classement des joueurs (« course à la précision »). Tout est alimenté par le
 // résultat que le serveur envoie à la révélation.
+import { useState } from "react";
 import { ClipResult, ClipVerdict, LeaderboardEntry } from "../mocks/gameData";
 
 interface ResultsRevealProps {
@@ -15,16 +16,30 @@ interface ResultsRevealProps {
 // Centralisé ici plutôt que dans un switch/if répété, pour n'avoir qu'un
 // seul endroit à modifier si un verdict change de libellé ou de couleur.
 const VERDICT_STYLES: Record<ClipVerdict, { label: string; className: string }> = {
-  FAUX: { label: "FAUX", className: "bg-red-500" },
-  VRAI: { label: "VRAI", className: "bg-emerald-500" },
-  TROMPEUR: { label: "TROMPEUR", className: "bg-amber-500" },
-  HORS_CONTEXTE: { label: "HORS CONTEXTE", className: "bg-purple-500" },
+  FAUX: { label: "FAKE NEWS", className: "text-red-400" },
+  VRAI: { label: "GOOD NEWS", className: "text-emerald-400" },
+  TROMPEUR: { label: "TROMPEUR", className: "text-amber-400" },
+  HORS_CONTEXTE: { label: "HORS CONTEXTE", className: "text-purple-400" },
 };
+
+function libelleVote(vote?: ClipVerdict): string {
+  if (vote === 'VRAI') return 'Good news';
+  if (vote === 'FAUX') return 'Fake news';
+  return "Pas de réponse";
+}
+
+function libelleAvisIa(avis?: ClipResult['aiGuess']): string {
+  if (avis === 'VRAI') return 'Good news';
+  if (avis === 'FAUX') return 'Fake news';
+  if (avis === 'INCERTAIN') return 'Incertain';
+  return "Pas d'avis";
+}
 
 export default function ResultsReveal({ correctCount, totalClips, clipResults, leaderboard }: ResultsRevealProps) {
   // Détermine si le score du joueur est "bon" (au moins la moitié des clips
   // correctement évalués), pour choisir la couleur/le message de la bannière.
   const isGoodScore = correctCount >= totalClips / 2;
+  const [detailsOuverts, setDetailsOuverts] = useState<Record<string, boolean>>({});
 
   return (
     <div className="space-y-4">
@@ -34,82 +49,88 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
           isGoodScore ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
         }`}
       >
-        Tu as trouvé {correctCount}/{totalClips}
-        {isGoodScore ? " — bien joué !" : " — pas le meilleur cette fois"}
+        Tu as {correctCount}/{totalClips} bonne(s) réponse(s).
       </div>
 
       {/* Détail clip par clip, avec verdict IA et explication sourcée */}
       <div className="bg-gris-krystal rounded-xl p-4">
-        <h3 className="text-white font-semibold">Clip par clip</h3>
+        <div className="text-center">
+          <h3 className="text-white font-semibold">Clip par clip</h3>
+          <p className="text-white/40 text-xs mt-1 mb-3">
+            Seul le verdict du fact-checker affiché devant le titre de la vidéo fait foi.
+          </p>
+        </div>
         {/* Trois lignes se suivent et se ressemblaient : le verdict, l'IA qui
             l'explique, l'IA qui devine. On dit une fois laquelle décide du
             score, plutôt que de le répéter sur chaque clip. */}
-        <p className="text-white/40 text-xs mb-3">
-          Le badge coloré est le verdict du fact-checkeur — lui seul décide de ton score.
-          Les lignes en dessous sont l'IA.
-        </p>
         <ul className="space-y-3">
           {clipResults.map((clip) => {
             const verdict = VERDICT_STYLES[clip.verdict];
+            const reponseCorrecte = clip.userVote === clip.verdict;
+            const detailsOuvertsPourCeClip = detailsOuverts[clip.id] === true;
             return (
-              <li key={clip.id} className="border-b border-white/10 pb-2 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className={`${verdict.className} text-white text-xs font-bold px-2 py-0.5 rounded`}>
+              <li key={clip.id} className="rounded-lg border border-white/10 bg-noir-krystal/40 overflow-hidden">
+                <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-3">
+                  <span className={`text-xs font-bold tracking-wide ${verdict.className}`}>
                     {verdict.label}
                   </span>
-                  <span className="text-white/90 text-sm">« {clip.title} »</span>
+                  <p className="text-white font-medium">« {clip.title} »</p>
                 </div>
 
-                {/* La réponse du joueur, à côté du verdict : c'est ce que le
-                    titre de la section promettait sans jamais le montrer. */}
-                <p className="text-xs mt-1 ml-1">
-                  {clip.userVote ? (
-                    <>
-                      <span className="text-white/40">Ta réponse ▸ </span>
-                      <span
-                        className={
-                          clip.userVote === clip.verdict
-                            ? 'text-emerald-400 font-semibold'
-                            : 'text-red-400 font-semibold'
-                        }
-                      >
-                        {clip.userVote} {clip.userVote === clip.verdict ? '✓' : '✗'}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-white/40">Tu n'as pas voté sur ce clip.</span>
-                  )}
-                </p>
-                <p className="text-white/50 text-xs mt-1 ml-1">
-                  {clip.explanationSource === 'editorial' ? 'Vérification' : 'IA-RAG'} ▸{' '}
-                  <span className="text-white/70">{clip.explanation}</span> — {clip.source}
-                </p>
-
-                {/* Second avis : ce que l'IA aurait répondu si elle avait joué,
-                    privée de la clé ET de son article source. On le distingue
-                    nettement du verdict officiel, qui seul décide du score.
-                    Afficher ses erreurs est volontaire : mesurée sur un
-                    échantillon, elle ne voit juste qu'une fois sur quatre. */}
-                {clip.aiGuess && (
-                  <p className="text-xs mt-1 ml-1">
-                    <span className="text-white/40">Si l'IA avait joué ▸ </span>
-                    <span
-                      className={
-                        clip.aiGuess === 'INCERTAIN'
-                          ? 'text-white/60 font-semibold'
-                          : clip.aiGuess === clip.verdict
-                            ? 'text-emerald-400 font-semibold'
-                            : 'text-red-400 font-semibold'
-                      }
-                    >
-                      {clip.aiGuess}
-                      {clip.aiGuess !== 'INCERTAIN' &&
-                        (clip.aiGuess === clip.verdict ? ' ✓' : ' ✗ elle s\'est trompée')}
+                <div className="mx-4 mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-white">
+                  <p>
+                    <span className="inline-flex rounded-full border border-slate-300 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-200">
+                      Ta réponse
                     </span>
-                    {clip.aiGuessWhy && (
-                      <span className="text-white/40"> — {clip.aiGuessWhy}</span>
+                  </p>
+                  <p className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold">
+                    <span>{libelleVote(clip.userVote)}{clip.userVote ? ' :' : ''}</span>
+                    {clip.userVote && (
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold text-white ${reponseCorrecte ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                        {reponseCorrecte ? "Tu as bon, bravo à toi !" : "Tu as faux, dommage !"}
+                      </span>
                     )}
                   </p>
+                </div>
+
+                <button
+                  type="button"
+                  aria-expanded={detailsOuvertsPourCeClip}
+                  aria-label={detailsOuvertsPourCeClip ? "Masquer les détails de l'IA-RAG" : "Afficher les détails de l'IA-RAG"}
+                  onClick={() => setDetailsOuverts((ouverts) => ({
+                    ...ouverts,
+                    [clip.id]: !ouverts[clip.id],
+                  }))}
+                  className="mx-4 flex w-[calc(100%-2rem)] items-center justify-start gap-2 py-2 text-white/80 hover:text-white"
+                >
+                  <span className="text-sm font-semibold">Réponse IA</span>
+                  <span
+                    aria-hidden="true"
+                    className={`h-3 w-3 border-r-2 border-b-2 border-white/80 transition-transform ${
+                      detailsOuvertsPourCeClip ? '-rotate-[135deg] translate-y-1' : 'rotate-45 -translate-y-1'
+                    }`}
+                  />
+                </button>
+
+                {detailsOuvertsPourCeClip && (
+                  <div className="mx-4 mb-4 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-semibold text-white/60">Verdict de l'IA-RAG</p>
+                      <span className="rounded-full border border-white/20 px-2 py-0.5 text-[11px] text-white/80">
+                        {libelleAvisIa(clip.aiGuess)}
+                      </span>
+                    </div>
+                    {clip.aiGuessWhy && (
+                      <p className="mt-2 text-sm text-white/70">{clip.aiGuessWhy}</p>
+                    )}
+                    <p className="mt-2 text-sm text-white/70">
+                      <span className="font-semibold text-white/50">{clip.explanationSource === 'editorial' ? 'Vérification' : 'IA-RAG'} :</span>{' '}
+                      {clip.explanation}
+                    </p>
+                    <p className="mt-2 break-words text-xs text-white/50">
+                      <span className="font-semibold text-white/70">Source(s) :</span> {clip.source}
+                    </p>
+                  </div>
                 )}
               </li>
             );
@@ -118,21 +139,39 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
       </div>
 
       {/* Classement des joueurs de la session */}
-      <div className="bg-gris-krystal rounded-xl p-4">
-        <h3 className="text-white font-semibold mb-3">Course à la précision — le pot va au plus juste</h3>
-        <ul className="space-y-1.5">
-          {leaderboard.map((entry) => (
-            <li key={entry.userId} className="flex justify-between text-sm">
-              <span className="text-white/80">
-                {entry.username} · {entry.correctCount}/{totalClips} bons
-              </span>
-              {/* Vert pour un gain, rouge pour une perte de crédits */}
-              <span className={entry.creditsChange >= 0 ? "text-emerald-400" : "text-red-400"}>
-                {entry.creditsChange >= 0 ? "+" : ""}
-                {entry.creditsChange} cr
-              </span>
-            </li>
-          ))}
+      <div className="bg-gris-krystal rounded-xl p-4 border border-white/10">
+        <h3 className="text-white font-semibold text-center mb-4">Classement des joueurs et gains :</h3>
+        <ul className="space-y-2">
+          {['1er', '2e', '3e', '4e', '5e'].map((position, index) => {
+            const entry = leaderboard[index];
+            const podiumStyle = index === 0
+              ? 'bg-amber-400/10 border-amber-300/20'
+              : index === 1
+                ? 'bg-slate-300/10 border-slate-300/20'
+                : index === 2
+                  ? 'bg-orange-400/10 border-orange-300/20'
+                  : 'bg-white/[0.03] border-white/5';
+            const positionStyle = index === 0
+              ? 'text-amber-300'
+              : index === 1
+                ? 'text-slate-300'
+                : index === 2
+                  ? 'text-orange-300'
+                  : 'text-white/60';
+            return (
+              <li key={position} className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${podiumStyle}`}>
+                <span className={`w-10 shrink-0 font-semibold ${positionStyle}`}>
+                  {position}
+                </span>
+                <span className="flex-1 min-w-0 truncate text-white/90">{entry?.username ?? '—'}</span>
+                {entry && (
+                  <span className={`shrink-0 font-semibold ${entry.creditsChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                    {entry.creditsChange >= 0 ? "+" : ""}{entry.creditsChange} crédits
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

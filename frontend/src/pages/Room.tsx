@@ -64,8 +64,8 @@ function accueilBot(): ChatMessage {
     type: 'bot',
     author: 'FactBot',
     content:
-      "Je suis l'assistant du salon. Écris « @bot » suivi de ta question et je réponds "
-      + "en citant mes sources — les autres joueurs, eux, disent ce qu'ils veulent. "
+      "Je suis l’assistant du salon. Écris « @bot » suivi de ta question et je réponds "
+      + "en citant mes sources. Les autres joueurs, eux, disent ce qu’ils veulent. "
       + "Je ne dis jamais si un clip en cours est vrai ou faux, mais je peux t'éclairer "
       + 'sur le sujet et sur la façon de le vérifier.',
     timestamp: Date.now(),
@@ -78,7 +78,7 @@ export default function Room() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([accueilBot()]);
   const [balance, setBalance] = useState(0);
-  const [aMise, setAMise] = useState(false);
+  const [mise, setMise] = useState<number | null>(null);
   const [indexClip, setIndexClip] = useState(0);
   // Vote du joueur par claim : sert à griser les boutons déjà utilisés.
   const [mesVotes, setMesVotes] = useState<Record<string, boolean>>({});
@@ -108,14 +108,17 @@ export default function Room() {
   // déjà misé sur la manche en cours, on demande ses propres mises.
   const idManche = (etat?.round as { id?: string } | null)?.id;
   useEffect(() => {
-    if (!idManche) { setAMise(false); return; }
-    api<unknown[]>(`/bets/round/${idManche}`)
-      .then((liste) => setAMise(liste.length > 0))
-      .catch(() => setAMise(false));
+    if (!idManche) { setMise(null); return; }
+    api<Array<{ stake?: number }>>(`/bets/round/${idManche}`)
+      .then((liste) => {
+        const montant = liste[0]?.stake;
+        setMise(typeof montant === 'number' ? montant : null);
+      })
+      .catch(() => setMise(null));
   }, [idManche]);
 
   function miser(montant: number) {
-    if (!roomId || !idManche || aMise || montant > balance) return;
+    if (!roomId || !idManche || mise !== null || montant > balance) return;
     emettre('bet:place', { roomId, roundId: idManche, stake: montant });
   }
 
@@ -244,7 +247,11 @@ export default function Room() {
       ecouter('bet:updated', () => {
         if (!idManche) return;
         api<unknown[]>(`/bets/round/${idManche}`)
-          .then((liste) => { setAMise(liste.length > 0); rafraichirSolde(); })
+          .then((liste) => {
+            const montant = (liste[0] as { stake?: number } | undefined)?.stake;
+            setMise(typeof montant === 'number' ? montant : null);
+            rafraichirSolde();
+          })
           .catch(() => { /* sans réponse, on laisse l'état inchangé */ });
       }),
       // Révélation : le back publie les verdicts, on peut enfin les afficher.
@@ -426,9 +433,6 @@ export default function Room() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-gris-krystal rounded-xl p-3 space-y-3">
           <div className="relative">
-            <span className="absolute top-2 left-2 z-10 text-xs text-red-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-red-500 rounded-full" /> LIVE
-            </span>
             {clipCourant?.mediaRef ? (
               <VideoPlayer src={clipCourant.mediaRef} />
             ) : (
@@ -470,7 +474,7 @@ export default function Room() {
               début, mais rien ne l'émettait : le pot restait donc à zéro et les
               crédits ne servaient à rien. Une seule mise par manche, posée
               pendant que la fenêtre est ouverte. */}
-          {round && manchOuverte && !aMise && (
+          {round && manchOuverte && mise === null && (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-white/50 text-sm">Ta mise :</span>
               {MISES.map((montant) => (
@@ -488,9 +492,9 @@ export default function Room() {
               <span className="text-white/30 text-xs">solde {balance}</span>
             </div>
           )}
-          {round && aMise && (
+          {round && mise !== null && (
             <p className="text-emerald-400/80 text-sm">
-              Mise enregistrée — pot commun : {etat?.pot ?? 0} crédits.
+              Mise enregistrée : {mise}.
             </p>
           )}
 
@@ -518,37 +522,12 @@ export default function Room() {
             <p className="text-gray-400 text-sm">Vote enregistré pour ce clip.</p>
           )}
 
-          {/* Navigation entre clips. Jusqu'ici on n'avançait qu'en votant, ce
-              qui empêchait de revenir sur un clip et rendait impossible de
-              parcourir la compilation pour la trier. */}
-          <div className="flex gap-3 items-center text-sm">
-            <button
-              type="button"
-              onClick={() => setIndexClip((i) => Math.max(0, i - 1))}
-              disabled={indexClip === 0}
-              className="text-gray-400 hover:text-white disabled:text-gray-700"
-            >
-              ← précédent
-            </button>
-            <span className="text-gray-600">
-              {clips.length > 0 ? `${indexClip + 1} / ${clips.length}` : '—'}
-            </span>
-            <button
-              type="button"
-              onClick={() => setIndexClip((i) => Math.min(clips.length - 1, i + 1))}
-              disabled={indexClip >= clips.length - 1}
-              className="text-gray-400 hover:text-white disabled:text-gray-700"
-            >
-              suivant →
-            </button>
-          </div>
-
           {/* Tous les clips votés, manche encore ouverte : sans ce message on
               croit l'application bloquée, alors qu'on attend simplement la fin
               du chronomètre pour la révélation. */}
           {manchOuverte && clips.length > 0 && Object.keys(mesVotes).length >= clips.length && (
             <p className="text-emerald-400/80 text-sm">
-              Tu as voté sur tous les clips — la révélation arrive à la fin du temps imparti.
+              Tu as voté sur tous les clips. La révélation arrive à la fin du temps imparti.
             </p>
           )}
 
@@ -573,7 +552,7 @@ export default function Room() {
         <div className="h-[60vh] lg:h-auto lg:col-span-1">
           <Chat
             messages={messages}
-            roomLabel={etat?.room?.name ? `Chat — ${etat.room.name}` : 'Chat du salon'}
+            roomLabel={etat?.room?.name ? `Chat : ${etat.room.name}` : 'Chat du salon'}
             onSendMessage={envoyerMessage}
           />
         </div>

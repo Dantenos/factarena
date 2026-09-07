@@ -33,7 +33,7 @@ export default function Layout() {
               className="text-base sm:text-lg button-red-d px-3 sm:px-5 py-1"
               onClick={() => navigate('/play')}
             >
-              Quitter la room
+              Quitter la partie
             </button>
           ) : (
             <Link to="/" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Accueil</Link>
@@ -45,13 +45,17 @@ export default function Layout() {
             </Link>
           )}
 
-          {utilisateur && !dansUneRoom && (
+          {utilisateur && (
             <>
-              <Link to="/play" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Jouer</Link>
-              <Link to="/profile" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Profil</Link>
-              <Link to="/friends" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">
-                Amis{notificationsAmis > 0 && location.pathname !== '/friends' ? ' (!)' : ''}
-              </Link>
+              {!dansUneRoom && (
+                <>
+                  <Link to="/play" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Jouer</Link>
+                  <Link to="/profile" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">Profil</Link>
+                  <Link to="/friends" className="text-base sm:text-lg button-blue-d px-3 sm:px-5 py-1">
+                    Amis{notificationsAmis > 0 && location.pathname !== '/friends' ? ' (!)' : ''}
+                  </Link>
+                </>
+              )}
               <div className="ml-auto sm:ml-0 sm:absolute sm:right-8 flex min-w-0 max-w-[calc(100vw-2rem)] items-center gap-3">
                 {/* Le pseudo reste à gauche du bouton et se tronque s'il est
                     trop long, sans jamais empiéter sur lui. */}
