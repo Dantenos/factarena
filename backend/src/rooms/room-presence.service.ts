@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 const PRESENCE_TTL_MS = 45_000;
+const MAX_ROOM_PLAYERS = 5;
 
 type PresenceEntry = {
   socketId: string;
@@ -24,20 +25,33 @@ export class RoomPresenceService {
   }
 
   async join(socketId: string, userId: string, roomId: string) {
+    await this.prune();
     const previous = await this.prisma.roomPresence.findUnique({ where: { socketId } });
+
+    const activeMembers = await this.prisma.roomPresence.findMany({
+      where: { roomId, lastSeenAt: { gt: this.activeSince() } },
+      distinct: ['userId'],
+      select: { userId: true },
+    });
+    const joueurDejaDansLaRoom = activeMembers.some((entry) => entry.userId === userId);
+    if (!joueurDejaDansLaRoom && activeMembers.length >= MAX_ROOM_PLAYERS) {
+      throw new ConflictException(`La room est pleine (${MAX_ROOM_PLAYERS} joueurs maximum).`);
+    }
+
+    // Un joueur ne conserve qu'une présence par room : un nouvel onglet ou un
+    // autre navigateur remplace l'ancienne socket au lieu de créer un doublon.
+    await this.prisma.roomPresence.deleteMany({
+      where: { roomId, userId, socketId: { not: socketId } },
+    });
     await this.prisma.roomPresence.upsert({
       where: { socketId },
       update: { userId, roomId, lastSeenAt: new Date() },
       create: { socketId, userId, roomId },
     });
 
-    const alreadyPresent = await this.prisma.roomPresence.count({
-      where: { roomId, userId, lastSeenAt: { gt: this.activeSince() }, socketId: { not: socketId } },
-    });
-
     return {
       previousRoomId: previous?.roomId,
-      joinedRoom: alreadyPresent === 0,
+      joinedRoom: !joueurDejaDansLaRoom,
     };
   }
 

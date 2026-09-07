@@ -30,7 +30,7 @@ interface ClipEnJeu {
 // les joueurs plutôt que de récompenser un coup de chance. La constante sert
 // aussi au libellé du bouton, qui annonçait un chiffre différent de celui
 // réellement demandé au serveur.
-const CLIPS_PAR_MANCHE = 10;
+const CLIPS_PAR_MANCHE = 5;
 
 // Trois paliers plutôt qu'un champ libre : rien à valider, et le joueur choisit
 // en un clic pendant que la fenêtre de vote tourne.
@@ -74,7 +74,7 @@ function accueilBot(): ChatMessage {
 
 export default function Room() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { connecte, etat, emettre, ecouter } = useSocket(roomId ?? null);
+  const { connecte, etat, erreur: erreurConnexion, emettre, ecouter } = useSocket(roomId ?? null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([accueilBot()]);
   const [balance, setBalance] = useState(0);
@@ -91,6 +91,7 @@ export default function Room() {
   const clips = round?.roundClaims ?? [];
   const clipCourant = clips[indexClip]?.claim ?? null;
   const manchOuverte = round?.status === 'OPEN';
+  const nombreJoueurs = etat?.members?.length ?? 0;
 
   // Solde de crédits : il ne transite pas par le WebSocket, on le lit via l'API
   // et on le rafraîchit à chaque révélation (les gains viennent d'être versés).
@@ -283,6 +284,29 @@ export default function Room() {
     return () => arret.forEach((stop) => stop());
   }, [connecte, ecouter, mesVotes, rafraichirSolde, idManche, roomId]);
 
+  // Le classement de fin de manche contient un nom figé au moment de la
+  // révélation. On le corrige aussi lorsqu'un joueur renomme son compte.
+  useEffect(() => ecouter('profile:update', (profilMisAJour: {
+    id?: string;
+    displayName?: string | null;
+  }) => {
+    if (!profilMisAJour?.id || !profilMisAJour.displayName) return;
+    setClassement((precedent) => precedent.map((entree) => entree.userId === profilMisAJour.id
+      ? { ...entree, username: profilMisAJour.displayName as string }
+      : entree));
+  }), [ecouter]);
+
+  useEffect(() => {
+    const mettreAJourSolde = (event: Event) => {
+      const soldeMisAJour = (event as CustomEvent<{ userId?: string; virtualBalance?: number }>).detail;
+      if (soldeMisAJour?.userId !== undefined && typeof soldeMisAJour.virtualBalance === 'number') {
+        setBalance(soldeMisAJour.virtualBalance);
+      }
+    };
+    window.addEventListener('factarena:balance-update', mettreAJourSolde);
+    return () => window.removeEventListener('factarena:balance-update', mettreAJourSolde);
+  }, []);
+
   function voter(estFake: boolean) {
     if (!clipCourant || !round?.id || !roomId) return;
     emettre('clip-vote:submit', { roomId, roundId: round.id, claimId: clipCourant.id, isFake: estFake });
@@ -318,10 +342,14 @@ export default function Room() {
     setLancement(true);
     setErreurManche(null);
     try {
-      await api('/rounds', {
+      const resultat = await api<{ alreadyActive?: boolean }>('/rounds', {
         method: 'POST',
         body: { roomId, claimCount: CLIPS_PAR_MANCHE, durationSeconds: 300 },
       });
+      if (resultat.alreadyActive) {
+        setErreurManche('Une manche est déjà en cours.');
+        return;
+      }
       // Pas besoin de recharger : le serveur diffuse le nouvel état par
       // WebSocket, la page se met à jour toute seule.
       setIndexClip(0);
@@ -351,10 +379,11 @@ export default function Room() {
       <StatsBar
         stats={{
           clipIndex: Math.min(indexClip + 1, clips.length),
-          totalClips: clips.length,
+          totalClips: clips.length || CLIPS_PAR_MANCHE,
           correctAnswers: bonnesReponses,
           pot: etat?.pot ?? 0,
           balance,
+          playerCount: Math.min(etat?.members?.length ?? 0, 5),
         }}
       />
 
@@ -362,6 +391,9 @@ export default function Room() {
           bouge si le réseau est coupé, plutôt que de voir une page figée. */}
       {!connecte && (
         <p className="text-amber-400 text-sm">Connexion au salon en cours...</p>
+      )}
+      {erreurConnexion && (
+        <p role="alert" className="text-red-l text-sm">{erreurConnexion}</p>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -393,11 +425,14 @@ export default function Room() {
               <button
                 type="button"
                 onClick={lancerManche}
-                disabled={lancement || !connecte}
+                disabled={lancement || !connecte || nombreJoueurs < 2}
                 className="button-blue-d px-4 py-3 disabled:opacity-40"
               >
                 {lancement ? 'Lancement...' : `Lancer une manche (${CLIPS_PAR_MANCHE} clips)`}
               </button>
+              {connecte && nombreJoueurs < 2 && (
+                <p className="text-white/50 text-sm">Il faut au moins 2 joueurs présents pour lancer une manche.</p>
+              )}
               {erreurManche && (
                 <p role="alert" className="text-red-l text-sm">{erreurManche}</p>
               )}

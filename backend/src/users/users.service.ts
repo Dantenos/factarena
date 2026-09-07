@@ -4,6 +4,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Inject, forwardRef } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -13,8 +15,9 @@ import { readFile, rename, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import { StreamableFile } from '@nestjs/common';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
-type AvatarFormat = 'png' | 'jpg' | 'gif' | 'webp';
+type AvatarFormat = 'png' | 'jpg';
 type AvatarInfo = { format: AvatarFormat; width: number; height: number };
 
 const MAX_AVATAR_WIDTH = 2048;
@@ -24,7 +27,10 @@ const TEMP_FILE_MAX_AGE_MS = 60 * 60_000;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -41,7 +47,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User ${id} not found`);
+      throw new NotFoundException(`Utilisateur ${id} introuvable`);
     }
 
     return user;
@@ -88,22 +94,31 @@ export class UsersService {
     }
 
     if (Object.keys(updateData).length === 0) {
-      throw new BadRequestException('No profile fields provided');
+      throw new BadRequestException('Aucun champ de profil fourni');
     }
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        avatarUrl: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    try {
+      const user = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          avatarUrl: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      this.realtimeGateway.broadcastProfileUpdate(user);
+      return user;
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException('Pseudo déjà utilisé par un autre joueur.');
+      }
+      throw error;
+    }
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
@@ -113,17 +128,17 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Utilisateur introuvable');
     }
 
     if (user.passwordHash) {
       if (!dto.currentPassword) {
-        throw new BadRequestException('Current password is required');
+        throw new BadRequestException('Le mot de passe actuel est obligatoire');
       }
 
       const currentMatches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
       if (!currentMatches) {
-        throw new UnauthorizedException('Current password is invalid');
+        throw new UnauthorizedException('Le mot de passe actuel est invalide');
       }
     }
 
@@ -137,9 +152,9 @@ export class UsersService {
   }
 
   async setAvatar(userId: string, filename: string) {
-    if (!this.isAvatarFilename(filename)) throw new BadRequestException('Invalid avatar file');
+    if (!this.isAvatarFilename(filename)) throw new BadRequestException('Fichier avatar invalide');
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
 
     const avatarUrl = `/api/users/avatars/${filename}`;
     const previous = user.avatarUrl?.match(/^\/api\/users\/avatars\/([a-zA-Z0-9._-]+)$/)?.[1];
@@ -148,7 +163,9 @@ export class UsersService {
       const previousPath = join(this.avatarDirectory(), previous);
       if (existsSync(previousPath)) await this.removeFile(previousPath);
     }
-    return this.findById(userId);
+    const updatedUser = await this.findById(userId);
+    this.realtimeGateway.broadcastProfileUpdate(updatedUser);
+    return updatedUser;
   }
 
   async setAvatarFromUpload(userId: string, temporaryPath: string) {
@@ -174,7 +191,7 @@ export class UsersService {
     });
     const referenced = new Set(
       users
-        .map(({ avatarUrl }) => avatarUrl?.match(/^\/api\/users\/avatars\/([a-zA-Z0-9_-]+\.(?:png|jpe?g|gif|webp))$/i)?.[1])
+        .map(({ avatarUrl }) => avatarUrl?.match(/^\/api\/users\/avatars\/([a-zA-Z0-9_-]+\.(?:png|jpe?g))$/i)?.[1])
         .filter((filename): filename is string => Boolean(filename)),
     );
     let removed = 0;
@@ -195,11 +212,11 @@ export class UsersService {
   }
 
   getAvatar(filename: string) {
-    if (!/^[a-zA-Z0-9_-]+\.(png|jpe?g|gif|webp)$/i.test(filename)) {
-      throw new NotFoundException('Avatar not found');
+    if (!/^[a-zA-Z0-9_-]+\.(png|jpe?g)$/i.test(filename)) {
+      throw new NotFoundException('Avatar introuvable');
     }
     const filePath = join(this.avatarDirectory(), filename);
-    if (!existsSync(filePath)) throw new NotFoundException('Avatar not found');
+    if (!existsSync(filePath)) throw new NotFoundException('Avatar introuvable');
     return new StreamableFile(createReadStream(filePath));
   }
 
@@ -210,9 +227,9 @@ export class UsersService {
   private async inspectAvatar(filePath: string): Promise<AvatarInfo> {
     const bytes = await readFile(filePath);
     const avatar = this.detectAvatar(bytes);
-    if (!avatar) throw new BadRequestException('The uploaded file is not a supported image');
+    if (!avatar) throw new BadRequestException('Le fichier envoyé n’est pas une image prise en charge');
     if (avatar.width < 1 || avatar.height < 1 || avatar.width > MAX_AVATAR_WIDTH || avatar.height > MAX_AVATAR_HEIGHT || avatar.width * avatar.height > MAX_AVATAR_PIXELS) {
-      throw new BadRequestException('Avatar dimensions are too large');
+      throw new BadRequestException('Les dimensions de l’avatar sont trop grandes');
     }
     return avatar;
   }
@@ -221,32 +238,8 @@ export class UsersService {
     if (bytes.length >= 24 && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) && bytes.toString('ascii', 12, 16) === 'IHDR') {
       return { format: 'png', width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
     }
-    if (bytes.length >= 10 && (bytes.toString('ascii', 0, 6) === 'GIF87a' || bytes.toString('ascii', 0, 6) === 'GIF89a')) {
-      return { format: 'gif', width: bytes.readUInt16LE(6), height: bytes.readUInt16LE(8) };
-    }
-    if (bytes.length >= 12 && bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP') {
-      return this.detectWebp(bytes);
-    }
     if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xd8) {
       return this.detectJpeg(bytes);
-    }
-    return null;
-  }
-
-  private detectWebp(bytes: Buffer): AvatarInfo | null {
-    const chunk = bytes.toString('ascii', 12, 16);
-    if (chunk === 'VP8X' && bytes.length >= 30) {
-      const width = 1 + bytes[24] + (bytes[25] << 8) + (bytes[26] << 16);
-      const height = 1 + bytes[27] + (bytes[28] << 8) + (bytes[29] << 16);
-      return { format: 'webp', width, height };
-    }
-    if (chunk === 'VP8 ' && bytes.length >= 30 && bytes[23] === 0x9d && bytes[24] === 0x01 && bytes[25] === 0x2a) {
-      return { format: 'webp', width: bytes.readUInt16LE(26), height: bytes.readUInt16LE(28) };
-    }
-    if (chunk === 'VP8L' && bytes.length >= 26 && bytes[21] === 0x2f) {
-      const width = 1 + bytes[22] + ((bytes[23] & 0x3f) << 8);
-      const height = 1 + ((bytes[23] >> 6) & 0x03) + (bytes[24] << 2) + ((bytes[25] & 0x0f) << 10);
-      return { format: 'webp', width, height };
     }
     return null;
   }
@@ -271,7 +264,7 @@ export class UsersService {
   }
 
   private isAvatarFilename(filename: string): boolean {
-    return /^[a-zA-Z0-9_-]+\.(png|jpe?g|gif|webp)$/i.test(filename);
+    return /^[a-zA-Z0-9_-]+\.(png|jpe?g)$/i.test(filename);
   }
 
   private async removeFile(filePath: string) {

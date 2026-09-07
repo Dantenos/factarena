@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   StreamableFile,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -30,8 +31,18 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Request() req: { user: { userId: string } }) {
-    return this.usersService.findById(req.user.userId);
+  async me(@Request() req: { user: { userId: string } }) {
+    try {
+      return await this.usersService.findById(req.user.userId);
+    } catch (error) {
+      // A validly signed JWT can outlive the account it identifies. Return a
+      // successful empty response so session cleanup does not create a browser
+      // console error for an expected stale-session case.
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   @Post('me/avatar')
@@ -49,14 +60,14 @@ export class UsersController {
     }),
     limits: { fileSize: 5 * 1024 * 1024, files: 1 },
     fileFilter: (_req: unknown, file: { mimetype: string }, cb: (error: Error | null, acceptFile: boolean) => void) => {
-      cb(null, ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.mimetype));
+      cb(null, ['image/png', 'image/jpeg'].includes(file.mimetype));
     },
   }))
   uploadAvatar(
     @Request() req: { user: { userId: string } },
     @UploadedFile() file?: { path: string },
   ) {
-    if (!file) throw new BadRequestException('A valid image avatar is required');
+    if (!file) throw new BadRequestException('Une image d’avatar valide est obligatoire');
     return this.usersService.setAvatarFromUpload(req.user.userId, file.path);
   }
 

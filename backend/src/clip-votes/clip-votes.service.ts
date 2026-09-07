@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RoomPresenceService } from '../rooms/room-presence.service';
@@ -8,7 +8,7 @@ export class ClipVotesService {
   constructor(private readonly prisma: PrismaService, private readonly presence: RoomPresenceService) {}
 
   async create(data: { roundId: string; claimId: string; isFake: boolean }, userId: string) {
-    if (typeof data.isFake !== 'boolean') throw new BadRequestException('isFake must be boolean');
+    if (typeof data.isFake !== 'boolean') throw new BadRequestException('Le champ isFake doit être booléen');
     // Vérifications hors transaction. isMember() passe par une AUTRE instance
     // Prisma : appelée à l'intérieur, elle réclamait une seconde connexion du
     // pool alors que la transaction en tenait déjà une. Quand plusieurs joueurs
@@ -19,24 +19,33 @@ export class ClipVotesService {
       where: { id: data.roundId },
       include: { roundClaims: { where: { claimId: data.claimId }, select: { claimId: true } } },
     });
-    if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
-    if (round.roundClaims.length !== 1) throw new BadRequestException('The clip is not part of this round');
-    if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Join the room before voting');
+    if (!round) throw new NotFoundException(`La manche ${data.roundId} est introuvable`);
+    if (round.roundClaims.length !== 1) throw new BadRequestException('Le clip ne fait pas partie de cette manche');
+    if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Rejoignez le salon avant de voter');
+    const existingVote = await this.prisma.clipVote.findUnique({
+      where: { userId_roundId_claimId: { userId, roundId: data.roundId, claimId: data.claimId } },
+    });
+    if (existingVote) return { ...existingVote, alreadyVoted: true };
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const open = await tx.round.updateMany({ where: { id: data.roundId, status: 'OPEN', locksAt: { gt: new Date() }, room: { status: { not: 'FINISHED' } } }, data: { updatedAt: new Date() } });
-        if (open.count !== 1) throw new BadRequestException('Voting is closed for this round');
+        if (open.count !== 1) throw new BadRequestException('Les votes sont clos pour cette manche');
         return tx.clipVote.create({ data: { roundId: data.roundId, claimId: data.claimId, userId, isFake: data.isFake } });
       });
     } catch (error: unknown) {
-      if ((error as { code?: string }).code === 'P2002') throw new ConflictException('A vote already exists for this clip');
+      if ((error as { code?: string }).code === 'P2002') {
+        const vote = await this.prisma.clipVote.findUnique({
+          where: { userId_roundId_claimId: { userId, roundId: data.roundId, claimId: data.claimId } },
+        });
+        if (vote) return { ...vote, alreadyVoted: true };
+      }
       throw error;
     }
   }
 
   async findByRound(roundId: string, userId: string) {
     const round = await this.prisma.round.findUnique({ where: { id: roundId }, select: { status: true } });
-    if (!round) throw new NotFoundException(`Round ${roundId} not found`);
+    if (!round) throw new NotFoundException(`La manche ${roundId} est introuvable`);
     return this.prisma.clipVote.findMany({ where: { roundId, ...(round.status === 'REVEALED' || round.status === 'FINISHED' ? {} : { userId }) }, select: { id: true, userId: true, roundId: true, claimId: true, isFake: true, createdAt: true } });
   }
 }

@@ -2,8 +2,7 @@
 // grille et on la remplit avec /stats/me et /stats/leaderboard, qui existent
 // déjà côté back (backend/src/stats/).
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { api, envoyerAvatar, modifierProfil, reclamerRattrapage } from '../api/client';
+import { api, chercherJoueurs, envoyerAvatar, modifierProfil, reclamerRattrapage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
 /** Profil réduit renvoyé par le back à l'intérieur des statistiques. */
@@ -12,6 +11,7 @@ interface ProfilJoueur {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
+  createdAt: string;
 }
 
 /** Retour de /stats/me — voir StatsService.computeStats côté back. */
@@ -98,9 +98,59 @@ export default function Profile() {
       .catch(() => setHistorique([]));
   }, []);
 
+  useEffect(() => {
+    const mettreAJourHistorique = () => {
+      api<MancheJouee[]>('/stats/me/round-history').then(setHistorique).catch(() => undefined);
+    };
+    window.addEventListener('factarena:history-update', mettreAJourHistorique);
+    return () => window.removeEventListener('factarena:history-update', mettreAJourHistorique);
+  }, []);
+
+  useEffect(() => {
+    const mettreAJourSolde = (event: Event) => {
+      const soldeMisAJour = (event as CustomEvent<{ userId?: string; virtualBalance?: number }>).detail;
+      if (soldeMisAJour?.userId !== utilisateur?.id || typeof soldeMisAJour.virtualBalance !== 'number') return;
+      setStats((precedent) => precedent
+        ? { ...precedent, virtualBalance: soldeMisAJour.virtualBalance }
+        : precedent);
+    };
+    window.addEventListener('factarena:balance-update', mettreAJourSolde);
+    return () => window.removeEventListener('factarena:balance-update', mettreAJourSolde);
+  }, [utilisateur?.id]);
+
+  useEffect(() => {
+    const mettreAJourProfil = (event: Event) => {
+      const profilMisAJour = (event as CustomEvent<{ id?: string; displayName?: string | null; avatarUrl?: string | null }>).detail;
+      if (!profilMisAJour?.id) return;
+      setStats((precedent) => precedent && precedent.user.id === profilMisAJour.id
+        ? { ...precedent, user: { ...precedent.user, displayName: profilMisAJour.displayName ?? precedent.user.displayName, avatarUrl: profilMisAJour.avatarUrl ?? precedent.user.avatarUrl } }
+        : precedent);
+      setPodium((precedent) => precedent.map((ligne) => ligne.user.id === profilMisAJour.id
+        ? { ...ligne, user: { ...ligne.user, displayName: profilMisAJour.displayName ?? ligne.user.displayName } }
+        : ligne));
+    };
+    window.addEventListener('factarena:profile-update', mettreAJourProfil);
+    return () => window.removeEventListener('factarena:profile-update', mettreAJourProfil);
+  }, []);
+
+  useEffect(() => {
+    const mettreAJourClassement = (event: Event) => {
+      const classement = (event as CustomEvent<LigneClassement[]>).detail;
+      if (!Array.isArray(classement)) return;
+      setPodium(classement.slice(0, 3));
+      setStats((precedent) => {
+        if (!precedent) return precedent;
+        const ligne = classement.find((entree) => entree.user.id === precedent.user.id);
+        return ligne ? { ...precedent, ...ligne } : precedent;
+      });
+    };
+    window.addEventListener('factarena:leaderboard-update', mettreAJourClassement);
+    return () => window.removeEventListener('factarena:leaderboard-update', mettreAJourClassement);
+  }, []);
+
   const nomDe = (profil?: ProfilJoueur | null, secours?: string) =>
-    profil?.displayName || profil?.email?.split('@')[0] || secours || 'joueur';
-  const pseudo = nomDe(stats?.user, utilisateur?.displayName || utilisateur?.email?.split('@')[0]);
+    profil?.displayName || profil?.email?.split('@')[0]?.slice(0, 30) || secours || 'joueur';
+  const pseudo = nomDe(stats?.user, utilisateur?.displayName || utilisateur?.email?.split('@')[0]?.slice(0, 30));
 
   // Le back borne déjà le pseudo, on applique la même règle ici : la
   // validation est double, formulaire et serveur.
@@ -113,7 +163,29 @@ export default function Profile() {
       return;
     }
     try {
+      // Vérification préalable pour éviter une requête PATCH vouée à renvoyer
+      // 400 et donc affichée comme erreur par le navigateur. Le back conserve
+      // sa contrainte unique pour gérer les courses entre deux requêtes.
+      const joueursCorrespondants = await chercherJoueurs(valeur);
+      const pseudoDejaUtilise = joueursCorrespondants.some((joueur) =>
+        joueur.displayName?.toLocaleLowerCase() === valeur.toLocaleLowerCase(),
+      );
+      if (pseudoDejaUtilise) {
+        setMessageProfil('Pseudo déjà utilisé par un autre joueur.');
+        return;
+      }
       await modifierProfil({ displayName: valeur });
+      // La fiche utilise stats.user en priorité pour afficher le pseudo.
+      // Mettre aussi cette copie locale à jour évite d'attendre un rechargement
+      // de /stats/me pour voir le nouveau pseudo sur la page Profil.
+      setStats((precedent) => precedent
+        ? { ...precedent, user: { ...precedent.user, displayName: valeur } }
+        : precedent);
+      setPodium((precedent) => precedent.map((ligne) => (
+        ligne.user.id === utilisateur?.id
+          ? { ...ligne, user: { ...ligne.user, displayName: valeur } }
+          : ligne
+      )));
       await rafraichir();
       setEdition(false);
     } catch (e) {
@@ -126,6 +198,25 @@ export default function Profile() {
     if (!fichier) return;
     setMessageProfil(null);
     try {
+      if (!['image/png', 'image/jpeg'].includes(fichier.type)) {
+        setMessageProfil('Format accepté : PNG ou JPEG/JPG.');
+        return;
+      }
+      if (fichier.size > 5 * 1024 * 1024) {
+        setMessageProfil('Le fichier avatar ne doit pas dépasser 5 Mo.');
+        return;
+      }
+      const url = URL.createObjectURL(fichier);
+      const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+        image.onerror = () => reject(new Error('Image invalide.'));
+        image.src = url;
+      }).finally(() => URL.revokeObjectURL(url));
+      if (dimensions.width < 1 || dimensions.height < 1 || dimensions.width > 2048 || dimensions.height > 2048 || dimensions.width * dimensions.height > 4_000_000) {
+        setMessageProfil('Les dimensions de l’avatar ne doivent pas dépasser 2048 × 2048 pixels.');
+        return;
+      }
       await envoyerAvatar(fichier);
       await rafraichir();
     } catch (e) {
@@ -216,8 +307,8 @@ export default function Profile() {
             {/* L'envoi part dès la sélection du fichier : un bouton « envoyer »
                 séparé n'apporterait rien pour un seul champ. */}
             <label className="text-xs text-white/30 hover:text-white cursor-pointer">
-              changer d'avatar
-              <input type="file" accept="image/*" className="hidden" onChange={choisirAvatar} />
+              changer d'avatar (5 Mo max, PNG, JPEG/JPG, 2048 × 2048 max)
+              <input id="avatar" name="avatar" type="file" accept="image/png,image/jpeg" className="hidden" onChange={choisirAvatar} />
             </label>
             {messageProfil && <p className="text-red-l text-xs mt-1">{messageProfil}</p>}
           </div>
@@ -248,13 +339,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="grid justify-center items-center lg:grid-rows-3 lg:col-span-1">
-        <Link to="/play" className="lg:row-start-2 button-blue-d px-10 sm:px-15 py-3 text-2xl sm:text-[30px]">
-          Jouer
-        </Link>
-      </div>
-
-      <div className="lg:col-span-2 lg:col-start-4">
+      <div className="lg:col-span-3 lg:col-start-3 lg:pl-6">
         <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-full lg:w-[46%] text-white font-semibold rounded-xl">
           Top players
         </h1>
@@ -264,23 +349,19 @@ export default function Profile() {
             return (
               <div
                 key={position}
-                className={`${position} bg-noir-krystal rounded-xl text-white flex flex-col items-center justify-end p-3 gap-1`}
+                className={`${position} min-w-0 max-w-full overflow-hidden bg-noir-krystal rounded-xl text-white flex flex-col items-center justify-end p-3 gap-1`}
               >
                 {joueur ? (
                   <>
                     <span className="text-white/40 text-xs">#{joueur.rank}</span>
-                    <span className="font-semibold text-sm text-center break-words">
+                    <span className="min-w-0 max-w-full font-semibold text-sm text-center break-all">
                       {nomDe(joueur.user)}
                     </span>
                     <span className={joueur.netGain >= 0 ? 'text-emerald-400 text-xs' : 'text-red-400 text-xs'}>
                       {joueur.netGain >= 0 ? '+' : ''}{joueur.netGain} cr
                     </span>
                   </>
-                ) : (
-                  // Tant que personne n'a joué, on le dit au lieu de laisser une
-                  // marche vide qui ressemble à un affichage cassé.
-                  <span className="text-white/25 text-xs text-center">place à prendre</span>
-                )}
+                ) : null}
               </div>
             );
           })}

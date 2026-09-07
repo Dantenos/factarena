@@ -22,12 +22,12 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || typeof authHeader !== 'string') {
-      throw new UnauthorizedException('Missing bearer token');
+      throw new UnauthorizedException('Jeton d’authentification manquant');
     }
 
     const [scheme, token] = authHeader.split(' ');
     if (scheme !== 'Bearer' || !token) {
-      throw new UnauthorizedException('Invalid bearer token');
+      throw new UnauthorizedException('Jeton d’authentification invalide');
     }
 
     try {
@@ -38,7 +38,7 @@ export class JwtAuthGuard implements CanActivate {
         (payload.email !== undefined && typeof payload.email !== 'string') ||
         (payload.role !== undefined && typeof payload.role !== 'string')
       ) {
-        throw new UnauthorizedException('Invalid token payload');
+        throw new UnauthorizedException('Contenu du jeton invalide');
       }
 
       (request as Request & { user: { userId: string; email?: string; role?: string } }).user = {
@@ -49,7 +49,7 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Jeton invalide ou expiré');
     }
   }
 }

@@ -2,11 +2,11 @@ import { ExecutionContext, HttpException } from '@nestjs/common';
 import { AuthRateLimitGuard } from '../src/auth/guards/auth-rate-limit.guard';
 import { RateLimitService } from '../src/common/rate-limit.service';
 
-function context(handlerName: string, ip = '203.0.113.10'): ExecutionContext {
+function context(handlerName: string, ip = '203.0.113.10', email?: string): ExecutionContext {
   return {
     getHandler: () => ({ name: handlerName }),
     switchToHttp: () => ({
-      getRequest: () => ({ ip, socket: { remoteAddress: ip } }),
+      getRequest: () => ({ ip, body: email ? { email } : {}, socket: { remoteAddress: ip } }),
     }),
   } as unknown as ExecutionContext;
 }
@@ -22,14 +22,15 @@ describe('AuthRateLimitGuard', () => {
     expect(() => guard.canActivate(request)).toThrow(HttpException);
   });
 
-  it('keeps separate buckets for different IPs and registration', () => {
+  it('keeps separate email buckets for registration', () => {
     const guard = new AuthRateLimitGuard(new RateLimitService());
 
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      expect(guard.canActivate(context('register', '203.0.113.11'))).toBe(true);
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      expect(guard.canActivate(context('register', '203.0.113.11', 'one@example.com'))).toBe(true);
     }
-    expect(() => guard.canActivate(context('register', '203.0.113.11'))).toThrow(HttpException);
-    expect(guard.canActivate(context('register', '203.0.113.12'))).toBe(true);
+    expect(() => guard.canActivate(context('register', '203.0.113.11', 'one@example.com'))).toThrow(HttpException);
+    expect(guard.canActivate(context('register', '203.0.113.11', 'two@example.com'))).toBe(true);
+    expect(guard.canActivate(context('register', '203.0.113.12', 'one@example.com'))).toBe(true);
     expect(guard.canActivate(context('login', '203.0.113.11'))).toBe(true);
   });
 });

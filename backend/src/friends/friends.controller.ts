@@ -25,9 +25,24 @@ export class FriendsController {
     return this.friendsService.presence(req.user.userId);
   }
 
+  @Get('requests')
+  requests(@Request() req: { user: { userId: string } }) {
+    return this.friendsService.pending(req.user.userId);
+  }
+
   @Post()
   add(@Request() req: { user: { userId: string } }, @Body() body: AddFriendDto) {
     return this.friendsService.add(req.user.userId, body.friendId);
+  }
+
+  @Post('requests/:requestId/accept')
+  accept(@Request() req: { user: { userId: string } }, @Param('requestId', CuidParamPipe) requestId: string) {
+    return this.friendsService.accept(req.user.userId, requestId);
+  }
+
+  @Delete('requests/:requestId')
+  decline(@Request() req: { user: { userId: string } }, @Param('requestId', CuidParamPipe) requestId: string) {
+    return this.friendsService.decline(req.user.userId, requestId);
   }
 
   @Delete(':friendId')

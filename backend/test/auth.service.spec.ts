@@ -21,7 +21,7 @@ describe('AuthService', () => {
     };
     const service = new AuthService(prisma as never, { sign: jest.fn() } as never);
 
-    await service.register({ email: '  Person@Example.COM  ', password: 'password123' });
+    await service.register({ email: '  Person@Example.COM  ', password: 'password123', displayName: 'Person' });
 
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: 'person@example.com' } });
     expect(prisma.user.create).toHaveBeenCalledWith({
@@ -48,7 +48,7 @@ describe('AuthService', () => {
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: 'person@example.com' } });
   });
 
-  it('converts a concurrent normalized-email collision into a conflict', async () => {
+  it('reports a concurrent normalized-email collision without throwing', async () => {
     const prisma = {
       user: {
         findUnique: jest.fn().mockResolvedValue(null),
@@ -57,8 +57,8 @@ describe('AuthService', () => {
     };
     const service = new AuthService(prisma as never, { sign: jest.fn() } as never);
 
-    await expect(service.register({ email: ' New@Example.com ', password: 'password123' }))
-      .rejects.toBeInstanceOf(ConflictException);
+    await expect(service.register({ email: ' New@Example.com ', password: 'password123', displayName: 'New player' }))
+      .resolves.toEqual({ alreadyExists: true, message: 'Adresse e-mail déjà utilisée' });
   });
 
   it('does not authenticate an invalid password', async () => {
@@ -121,7 +121,7 @@ describe('AuthService', () => {
       provider: '42',
       providerId: ' ',
       email: 'person@example.com',
-    })).rejects.toThrow('OAuth provider identity is invalid');
+    })).rejects.toThrow('Identité du fournisseur OAuth invalide');
 
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });

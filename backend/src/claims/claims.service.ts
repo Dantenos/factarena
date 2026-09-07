@@ -18,7 +18,7 @@ export class ClaimsService {
   async findById(id: string) {
     const claim = await this.prisma.claim.findUnique({ where: { id }, select: this.publicClaimSelect() });
     if (!claim) {
-      throw new NotFoundException(`Claim ${id} not found`);
+      throw new NotFoundException(`Affirmation ${id} introuvable`);
     }
     return claim;
   }
@@ -29,7 +29,7 @@ export class ClaimsService {
       include: { roundClaims: { include: { claim: true }, orderBy: { orderIndex: 'asc' } } },
     });
     if (!round) {
-      throw new NotFoundException(`Round ${roundId} not found`);
+      throw new NotFoundException(`La manche ${roundId} est introuvable`);
     }
     const revealed = round.status === 'REVEALED' || round.status === 'FINISHED';
     return round.roundClaims.map((roundClaim) => ({
@@ -50,10 +50,10 @@ export class ClaimsService {
   async update(id: string, dto: UpdateClaimDto) {
     const claim = await this.prisma.claim.findUnique({ where: { id }, include: { roundClaims: true } });
     if (!claim) {
-      throw new NotFoundException(`Claim ${id} not found`);
+      throw new NotFoundException(`Affirmation ${id} introuvable`);
     }
     if (claim.roundClaims.length > 0) {
-      throw new ConflictException('A claim used by a round cannot be modified');
+      throw new ConflictException('Une affirmation utilisée dans une manche ne peut pas être modifiée');
     }
     return this.prisma.claim.update({
       where: { id },
@@ -66,10 +66,10 @@ export class ClaimsService {
   async remove(id: string) {
     const claim = await this.prisma.claim.findUnique({ where: { id }, include: { roundClaims: true } });
     if (!claim) {
-      throw new NotFoundException(`Claim ${id} not found`);
+      throw new NotFoundException(`Affirmation ${id} introuvable`);
     }
     if (claim.roundClaims.length > 0) {
-      throw new ConflictException('A claim used by a round cannot be deleted');
+      throw new ConflictException('Une affirmation utilisée dans une manche ne peut pas être supprimée');
     }
     return this.prisma.claim.delete({ where: { id } });
   }

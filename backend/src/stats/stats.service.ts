@@ -8,12 +8,18 @@ type UserSummary = {
   displayName: string | null;
   avatarUrl: string | null;
   status: string;
+  createdAt: Date;
 };
 
 type PredictionForStats = {
   stake: number;
   payout: number | null;
   result: PredictionResult | null;
+};
+
+type BetForLeaderboard = PredictionForStats & {
+  createdAt: Date;
+  round: { revealedAt: Date | null; createdAt: Date };
 };
 
 type ComputedStats = {
@@ -40,7 +46,13 @@ export class StatsService {
         virtualBalance: true,
         bets: {
           where: { result: { not: null } },
-          select: { stake: true, payout: true, result: true },
+          select: {
+            stake: true,
+            payout: true,
+            result: true,
+            createdAt: true,
+            round: { select: { revealedAt: true, createdAt: true } },
+          },
         },
       },
     });
@@ -53,16 +65,15 @@ export class StatsService {
           user: profile,
           virtualBalance,
           ...this.computeStats(bets),
+          scoreReachedAt: this.scoreReachedAt(profile.createdAt, bets),
         };
       })
       .sort((left, right) =>
         right.netGain - left.netGain ||
-        right.victories - left.victories ||
-        right.winRate - left.winRate ||
-        right.totalPayout - left.totalPayout ||
-        left.user.email.localeCompare(right.user.email),
+        left.scoreReachedAt.getTime() - right.scoreReachedAt.getTime() ||
+          left.user.id.localeCompare(right.user.id),
       )
-      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+      .map(({ scoreReachedAt: _scoreReachedAt, ...entry }, index) => ({ ...entry, rank: index + 1 }));
   }
 
   async getUserStats(userId: string) {
@@ -78,7 +89,7 @@ export class StatsService {
       },
     });
 
-    if (!user) throw new NotFoundException(`User ${userId} not found`);
+    if (!user) throw new NotFoundException(`Utilisateur ${userId} introuvable`);
 
     const { bets, virtualBalance, ...profile } = user;
     return {
@@ -98,7 +109,7 @@ export class StatsService {
 
   async getUserRoundHistory(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-    if (!user) throw new NotFoundException(`User ${userId} not found`);
+    if (!user) throw new NotFoundException(`Utilisateur ${userId} introuvable`);
 
     return this.prisma.bet.findMany({
       where: { userId, result: { not: null } },
@@ -128,6 +139,26 @@ export class StatsService {
     return { roundsPlayed, victories, defeats, totalStake, totalPayout, netGain, winRate };
   }
 
+  private scoreReachedAt(createdAt: Date, bets: BetForLeaderboard[]): Date {
+    const netGain = this.computeStats(bets).netGain;
+    let runningScore = 0;
+    let reachedAt = createdAt;
+    const orderedBets = [...bets].sort((left, right) => {
+      const leftDate = left.round.revealedAt ?? left.round.createdAt;
+      const rightDate = right.round.revealedAt ?? right.round.createdAt;
+      return leftDate.getTime() - rightDate.getTime() || left.createdAt.getTime() - right.createdAt.getTime();
+    });
+
+    for (const bet of orderedBets) {
+      runningScore += (bet.payout ?? 0) - bet.stake;
+      if (runningScore === netGain) {
+        reachedAt = bet.round.revealedAt ?? bet.round.createdAt;
+        break;
+      }
+    }
+    return reachedAt;
+  }
+
   private userSelect(): Record<keyof UserSummary, true> {
     return {
       id: true,
@@ -135,6 +166,7 @@ export class StatsService {
       displayName: true,
       avatarUrl: true,
       status: true,
+      createdAt: true,
     };
   }
 

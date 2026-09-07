@@ -31,6 +31,17 @@ describe('RoundsService room ownership', () => {
 });
 
 describe('RoundsService settlement', () => {
+  it('requires two active room members to create a round', async () => {
+    const service = new RoundsService(
+      {} as never,
+      {} as never,
+      { getMemberIds: jest.fn().mockResolvedValue(['host-1']) } as never,
+    );
+
+    await expect(service.create({ roomId: 'room-1', claimIds: ['claim-1'], durationSeconds: 30 }, 'host-1'))
+      .rejects.toThrow('Il faut au moins 2 joueurs présents pour lancer une manche');
+  });
+
   it('does not reopen an already open round or relock an already locked round', async () => {
     const prisma = {
       round: {

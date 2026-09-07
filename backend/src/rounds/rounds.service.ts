@@ -1,11 +1,16 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { LedgerService } from '../ledger/ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RoomPresenceService } from '../rooms/room-presence.service';
 
 @Injectable()
 export class RoundsService {
-  constructor(private readonly prisma: PrismaService, private readonly ledger: LedgerService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => LedgerService)) private readonly ledger: LedgerService,
+    @Optional() private readonly roomPresence?: RoomPresenceService,
+  ) {}
 
   /**
    * Ensures that a round is addressed through its owning room.
@@ -22,7 +27,7 @@ export class RoundsService {
     });
 
     if (!round) {
-      throw new NotFoundException(`Round ${roundId} not found in room ${roomId}`);
+      throw new NotFoundException(`La manche ${roundId} est introuvable dans le salon ${roomId}`);
     }
   }
 
@@ -72,7 +77,7 @@ export class RoundsService {
         : await tx.claim.findMany({ select: { id: true, truthLabel: true, category: true } });
     if (toutes.length < nombre) {
       throw new BadRequestException(
-        `Pas assez de claims en base pour une manche de ${nombre} (${toutes.length} disponibles)`,
+        `Pas assez d’affirmations en base pour une manche de ${nombre} (${toutes.length} disponibles)`,
       );
     }
     const inedites = toutes.filter((c: { id: string }) => !exclues.has(c.id));
@@ -157,23 +162,35 @@ export class RoundsService {
     // transaction (il faut y être pour lire les claims déjà jouées du salon).
     const imposees = data.claimIds ? [...new Set(data.claimIds)] : null;
     if (imposees && imposees.length !== data.claimIds!.length) {
-      throw new BadRequestException('A claim may appear only once in a round');
+      throw new BadRequestException('Une affirmation ne peut apparaître qu’une seule fois dans une manche');
     }
     if (imposees && imposees.length === 0) {
-      throw new BadRequestException('A round must contain at least one claim');
+      throw new BadRequestException('Une manche doit contenir au moins une affirmation');
+    }
+    const joueursPresents = await this.roomPresence?.getMemberIds(data.roomId);
+    if (joueursPresents && joueursPresents.length < 2) {
+      throw new BadRequestException('Il faut au moins 2 joueurs présents pour lancer une manche');
     }
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Verrouille la room pendant la création : deux hôtes ne doivent pas
+      // pouvoir observer simultanément « aucune manche active » et créer deux
+      // manches concurrentes.
+      const roomLock = await tx.room.updateMany({
+        where: { id: data.roomId },
+        data: { updatedAt: new Date() },
+      });
+      if (roomLock.count !== 1) throw new NotFoundException(`Salon ${data.roomId} introuvable`);
       const room = await tx.room.findUnique({ where: { id: data.roomId } });
-      if (!room) throw new NotFoundException(`Room ${data.roomId} not found`);
-      if (room.createdBy !== createdById) throw new ForbiddenException('Only the room host may create rounds');
-      if (room.status === 'FINISHED') throw new BadRequestException('Cannot add rounds to a finished room');
+      if (!room) throw new NotFoundException(`Salon ${data.roomId} introuvable`);
+      if (room.createdBy !== createdById) throw new ForbiddenException('Seul l’hôte du salon peut créer des manches');
+      if (room.status === 'FINISHED') throw new BadRequestException('Impossible d’ajouter une manche à un salon terminé');
       const activeRound = await tx.round.findFirst({ where: { roomId: data.roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] as any } } });
-      if (activeRound) throw new ConflictException('This room already has an active round');
+      if (activeRound) return { alreadyActive: true as const };
       // Soit la liste imposée, soit un tirage automatique (8 clips par défaut,
       // ce qui donne une manche d'une durée raisonnable).
       const distinctClaimIds = imposees ?? (await this.tirerClaims(tx, data.roomId, data.claimCount ?? 8));
       const claims = await tx.claim.findMany({ where: { id: { in: distinctClaimIds } }, select: { id: true } });
-      if (claims.length !== distinctClaimIds.length) throw new BadRequestException('One or more claims do not exist');
+      if (claims.length !== distinctClaimIds.length) throw new BadRequestException('Une ou plusieurs affirmations sont introuvables');
       const opensAt = new Date(Date.now() + 3_000);
       const locksAt = new Date(opensAt.getTime() + data.durationSeconds * 1000);
       const round = await tx.round.create({ data: { roomId: data.roomId, status: 'COUNTDOWN' as any, opensAt, locksAt } });
@@ -202,7 +219,7 @@ export class RoundsService {
       where: { id },
       include: { roundClaims: { include: { claim: { select: { id: true, text: true, mediaRef: true, videoEndS: true, category: true, sourceUrl: true } } } }, bets: { select: { id: true, userId: true, stake: true, payout: true, result: true, createdAt: true } }, clipVotes: { select: { id: true, userId: true, claimId: true, isFake: true, createdAt: true } } },
     });
-    if (!round) throw new NotFoundException(`Round ${id} not found`);
+    if (!round) throw new NotFoundException(`La manche ${id} est introuvable`);
     const { bets, clipVotes: _clipVotes, ...safeRound } = round;
     const revealed = round.status === 'REVEALED' || String(round.status) === 'FINISHED';
     return revealed ? { ...safeRound, bets } : safeRound;
@@ -210,19 +227,19 @@ export class RoundsService {
 
   async lock(id: string, userId: string) {
     const round = await this.prisma.round.findUnique({ where: { id }, select: { room: { select: { createdBy: true, status: true } } } });
-    if (!round) throw new NotFoundException(`Round ${id} not found`);
-    if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may lock a round');
-    if (round.room.status === 'FINISHED') throw new BadRequestException('Cannot modify a finished room');
+    if (!round) throw new NotFoundException(`La manche ${id} est introuvable`);
+    if (round.room.createdBy !== userId) throw new ForbiddenException('Seul l’hôte du salon peut verrouiller une manche');
+    if (round.room.status === 'FINISHED') throw new BadRequestException('Impossible de modifier un salon terminé');
     const locked = await this.lockIfDueOrOpen(id, true);
-    if (!locked) throw new BadRequestException('Only an open round can be locked');
+    if (!locked) throw new BadRequestException('Seule une manche ouverte peut être verrouillée');
     return locked;
   }
 
   async reveal(id: string, userId: string) {
     const round = await this.prisma.round.findUnique({ where: { id }, include: { room: true } });
-    if (!round) throw new NotFoundException(`Round ${id} not found`);
-    if (round.room.createdBy !== userId) throw new ForbiddenException('Only the room host may reveal a round');
-    if (round.room.status === 'FINISHED') throw new BadRequestException('Cannot modify a finished room');
+    if (!round) throw new NotFoundException(`La manche ${id} est introuvable`);
+    if (round.room.createdBy !== userId) throw new ForbiddenException('Seul l’hôte du salon peut révéler une manche');
+    if (round.room.status === 'FINISHED') throw new BadRequestException('Impossible de modifier un salon terminé');
     return this.revealAndSettle(id);
   }
 
@@ -285,12 +302,12 @@ export class RoundsService {
   async revealAndSettle(id: string) {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const round = await tx.round.findUnique({ where: { id }, include: { room: true, roundClaims: { select: { id: true } }, bets: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }, clipVotes: { include: { claim: { select: { truthLabel: true } } } } } });
-      if (!round) throw new NotFoundException(`Round ${id} not found`);
-      if (round.room?.status === 'FINISHED') throw new BadRequestException('Cannot reveal a round in a finished room');
-      if (round.status !== 'LOCKED') throw new BadRequestException('Only a locked round can be revealed');
-      if (Array.isArray(round.roundClaims) && round.roundClaims.length === 0) throw new BadRequestException('Cannot reveal a round without claims');
+      if (!round) throw new NotFoundException(`La manche ${id} est introuvable`);
+      if (round.room?.status === 'FINISHED') throw new BadRequestException('Impossible de révéler une manche dans un salon terminé');
+      if (round.status !== 'LOCKED') throw new BadRequestException('Seule une manche verrouillée peut être révélée');
+      if (Array.isArray(round.roundClaims) && round.roundClaims.length === 0) throw new BadRequestException('Impossible de révéler une manche sans affirmation');
       const claimed = await tx.round.updateMany({ where: { id, status: 'LOCKED', room: { status: { not: 'FINISHED' } } }, data: { status: 'REVEALED', revealedAt: new Date() } });
-      if (claimed.count !== 1) throw new BadRequestException('Round has already been resolved');
+      if (claimed.count !== 1) throw new BadRequestException('La manche a déjà été réglée');
       if (round.bets.length === 0) return tx.round.findUniqueOrThrow({ where: { id } });
       const scores = round.bets.map((bet) => ({ bet, correct: round.clipVotes.filter((vote) => vote.userId === bet.userId && ((vote.isFake && vote.claim.truthLabel === 'FALSE') || (!vote.isFake && vote.claim.truthLabel === 'TRUE'))).length }));
       const bestScore = Math.max(...scores.map(({ correct }) => correct));

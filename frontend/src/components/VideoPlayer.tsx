@@ -402,6 +402,8 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
             {isMuted || volume === 0 ? "🔇" : "🔊"}
           </button>
           <input
+            id="volume"
+            name="volume"
             type="range"
             min={0}
             max={1}

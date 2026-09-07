@@ -9,6 +9,9 @@ import {
 } from '@nestjs/websockets';
 import {
   BadRequestException,
+  ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
@@ -26,6 +29,8 @@ import { RoundsService } from '../rounds/rounds.service';
 import { ChatService } from '../chat/chat.service';
 import { AiService } from '../ai/ai.service';
 import { BotsService } from './bots.service';
+import { StatsService } from '../stats/stats.service';
+import { LedgerService } from '../ledger/ledger.service';
 import { Server, Socket } from 'socket.io';
 
 type AuthenticatedSocket = Socket & { data: { userId: string; email?: string; roomId?: string } };
@@ -62,24 +67,56 @@ export class RealtimeGateway
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly roomPresence: RoomPresenceService,
-    private readonly roomsService: RoomsService,
-    private readonly roundsService: RoundsService,
-    private readonly betsService: BetsService,
+    @Inject(forwardRef(() => RoomsService)) private readonly roomsService: RoomsService,
+    @Inject(forwardRef(() => RoundsService)) private readonly roundsService: RoundsService,
+    @Inject(forwardRef(() => BetsService)) private readonly betsService: BetsService,
     private readonly clipVotesService: ClipVotesService,
-    private readonly chatService: ChatService,
+    @Inject(forwardRef(() => ChatService)) private readonly chatService: ChatService,
     private readonly aiService: AiService,
     private readonly botsService: BotsService,
+    private readonly statsService: StatsService,
+    @Inject(forwardRef(() => LedgerService)) private readonly ledgerService: LedgerService,
   ) {}
+
+  /** Diffuse les changements de pseudo/avatar à toutes les sessions connectées. */
+  broadcastProfileUpdate(user: { id: string; displayName: string | null; avatarUrl: string | null }) {
+    this.server?.emit('profile:update', user);
+  }
+
+  broadcastRoomListUpdate() {
+    this.server?.emit('rooms:update');
+  }
+
+  broadcastHistoryUpdate() {
+    this.server?.emit('history:update');
+  }
+
+  async broadcastBalanceUpdate(userId: string) {
+    const balance = await this.ledgerService.getBalance(userId);
+    for (const socketId of this.socketsByUser.get(userId) ?? []) {
+      this.server?.to(socketId).emit('balance:update', { userId, virtualBalance: balance.virtualBalance });
+    }
+  }
+
+  notifyFriendUpdate(userId: string, update: { type: string; requestId?: string; friendId?: string }) {
+    for (const socketId of this.socketsByUser.get(userId) ?? []) {
+      this.server?.to(socketId).emit('friend:update', update);
+    }
+  }
+
+  private async broadcastLeaderboardUpdate() {
+    if (this.server) this.server.emit('leaderboard:update', await this.statsService.getLeaderboard());
+  }
 
   async handleConnection(rawSocket: Socket) {
     const socket = rawSocket as AuthenticatedSocket;
     try {
       const token = this.readToken(socket);
       const payload = this.jwtService.verify<{ sub?: string; email?: string }>(token);
-      if (!payload.sub) throw new UnauthorizedException('Token has no subject');
+      if (!payload.sub) throw new UnauthorizedException('Le jeton ne contient aucun sujet');
 
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, email: true } });
-      if (!user) throw new UnauthorizedException('User not found');
+      if (!user) throw new UnauthorizedException('Utilisateur introuvable');
 
       socket.data.userId = user.id;
       socket.data.email = user.email;
@@ -88,6 +125,9 @@ export class RealtimeGateway
 
       socket.emit('connection:ready', { userId: user.id, socketId: socket.id });
       this.broadcastPresence(user.id, 'ONLINE');
+      // Un nouveau joueur peut venir d’être inscrit : son arrivée doit
+      // actualiser le classement affiché sur les pages Profil déjà ouvertes.
+      await this.broadcastLeaderboardUpdate();
       const roomId = socket.handshake.auth?.roomId;
       if (typeof roomId === 'string' && roomId.length > 0) {
         await this.restoreRoom(socket, roomId);
@@ -95,7 +135,7 @@ export class RealtimeGateway
       this.logger.debug(`WebSocket connected: ${socket.id} (${user.id})`);
     } catch (error) {
       this.logger.debug(`Rejected WebSocket connection: ${socket.id}`);
-      socket.emit('error', { code: 'UNAUTHORIZED', message: 'Authentication required' });
+      socket.emit('error', { code: 'UNAUTHORIZED', message: 'Authentification requise' });
       socket.disconnect(true);
       if (error instanceof UnauthorizedException) return;
     }
@@ -160,10 +200,20 @@ export class RealtimeGateway
     this.assertCuid(body?.roomId, 'roomId');
     const room = await this.roomsService.findOne(body?.roomId);
     if (socket.data.roomId) await socket.leave(this.roomChannel(socket.data.roomId));
+    let presence: Awaited<ReturnType<RoomPresenceService['join']>>;
+    try {
+      presence = await this.roomPresence.join(socket.id, socket.data.userId, room.id);
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        socket.emit('room:error', { message: error.message });
+        return { rejected: true, message: error.message };
+      }
+      throw error;
+    }
     socket.data.roomId = room.id;
     await socket.join(this.roomChannel(room.id));
-    const presence = await this.roomPresence.join(socket.id, socket.data.userId, room.id);
     await this.prisma.user.update({ where: { id: socket.data.userId }, data: { status: 'IN_GAME' } });
+    this.broadcastPresence(socket.data.userId, 'IN_GAME', room.id);
 
     if (presence.previousRoomId && presence.previousRoomId !== room.id) {
       this.server.to(this.roomChannel(presence.previousRoomId)).emit('room:member_left', { userId: socket.data.userId });
@@ -187,6 +237,7 @@ export class RealtimeGateway
     const leftPresence = await this.roomPresence.leave(socket.id);
     const currentRoom = await this.roomPresence.getCurrentRoomId(socket.data.userId);
     await this.prisma.user.updateMany({ where: { id: socket.data.userId }, data: { status: currentRoom ? 'IN_GAME' : 'ONLINE' } });
+    this.broadcastPresence(socket.data.userId, currentRoom ? 'IN_GAME' : 'ONLINE', currentRoom);
     if (leftPresence?.leftRoom) this.server.to(this.roomChannel(roomId)).emit('room:member_left', { userId: socket.data.userId });
     this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
     return { roomId };
@@ -209,6 +260,7 @@ export class RealtimeGateway
       roundId: body.roundId,
       stake: body.stake,
     }, socket.data.userId);
+    await this.broadcastBalanceUpdate(socket.data.userId);
     const state = await this.roomsService.getState(body.roomId);
     this.server.to(this.roomChannel(body.roomId)).emit('bet:updated', { bet, ...this.liveStats(state) });
     // Le front tient son état des événements room:state / round:* uniquement.
@@ -220,16 +272,18 @@ export class RealtimeGateway
   @SubscribeMessage('clip-vote:submit')
   async submitClipVote(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: ClipVotePayload) {
     this.assertCuid(body?.roomId, 'roomId'); this.assertCuid(body?.roundId, 'roundId'); this.assertCuid(body?.claimId, 'claimId');
-    if (typeof body?.isFake !== 'boolean') throw new BadRequestException('Invalid isFake');
+    if (typeof body?.isFake !== 'boolean') throw new BadRequestException('Le champ isFake est invalide');
     await this.assertInRoom(socket, body.roomId); await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
     const vote = await this.clipVotesService.create({ roundId: body.roundId, claimId: body.claimId, isFake: body.isFake }, socket.data.userId);
     this.server.to(this.roomChannel(body.roomId)).emit('clip-vote:updated', vote);
     // Les faux joueurs rebondissent sur le vote qui vient d'être émis, plutôt
     // que sur une horloge : c'est le seul moyen qu'ils commentent le clip que
     // le joueur regarde vraiment, puisque chacun avance à son rythme.
-    void this.botsService.reagirAuVote(body.roomId, body.roundId, body.claimId, body.isFake, (m) =>
-      this.diffuserMessageBot(body.roomId, m),
-    );
+    if (!(vote as { alreadyVoted?: boolean }).alreadyVoted) {
+      void this.botsService.reagirAuVote(body.roomId, body.roundId, body.claimId, body.isFake, (m) =>
+        this.diffuserMessageBot(body.roomId, m),
+      );
+    }
     return vote;
   }
 
@@ -245,7 +299,7 @@ export class RealtimeGateway
     this.assertCuid(body?.roomId, 'roomId');
     this.assertCuid(body?.claimId, 'claimId');
     if (body.reason !== undefined && (typeof body.reason !== 'string' || body.reason.length > 300)) {
-      throw new BadRequestException('Invalid reason');
+      throw new BadRequestException('Motif invalide');
     }
     await this.assertInRoom(socket, body.roomId);
     // upsert plutôt que create : recliquer ne doit ni gonfler le compteur ni
@@ -293,7 +347,7 @@ export class RealtimeGateway
   async sendChatMessage(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: ChatPayload) {
     this.assertCuid(body?.roomId, 'roomId');
     if (typeof body?.content !== 'string' || body.content.length === 0 || body.content.length > 1000) {
-      throw new BadRequestException('Invalid content');
+      throw new BadRequestException('Contenu invalide');
     }
     await this.assertInRoom(socket, body.roomId);
     const botPrompt = body.content.replace(/^\s*(?:@bot|\/ask)\s*/i, '').trim();
@@ -302,7 +356,7 @@ export class RealtimeGateway
         for await (const event of this.chatService.streamBot(socket.data.userId, body.roomId, botPrompt)) socket.emit(`ai:${event.type}`, event.data);
         return { action: 'bot' };
       } catch (error) {
-        socket.emit('ai:error', { message: error instanceof Error ? error.message : 'Bot request failed' });
+        socket.emit('ai:error', { message: error instanceof Error ? error.message : 'La requête du bot a échoué' });
         throw error;
       }
     }
@@ -329,7 +383,7 @@ export class RealtimeGateway
   @SubscribeMessage('ai:chat')
   async streamAiChat(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: { prompt?: string; roomId?: string }) {
     if (typeof body?.prompt !== 'string' || body.prompt.trim().length === 0 || body.prompt.length > 4000) {
-      throw new BadRequestException('Invalid prompt');
+      throw new BadRequestException('Invite invalide');
     }
     if (body.roomId) await this.assertInRoom(socket, body.roomId);
 
@@ -362,7 +416,7 @@ export class RealtimeGateway
       }
       return { success: true };
     } catch (error) {
-      socket.emit('ai:error', { message: 'AI streaming failed' });
+      socket.emit('ai:error', { message: 'La diffusion IA a échoué' });
       throw error;
     }
   }
@@ -395,11 +449,16 @@ export class RealtimeGateway
     const state = await this.roomsService.getState(roomId, roundId);
     this.server.to(this.roomChannel(roomId)).emit(event, state);
     this.server.to(this.roomChannel(roomId)).emit('round:state', state);
+    if (event === 'round:revealed' || event === 'round:finished') {
+      await Promise.all(state.members.map((member: { id: string }) => this.broadcastBalanceUpdate(member.id)));
+    }
     return state;
   }
 
   async publishRoundVerdicts(roomId: string, roundId: string, verdicts: unknown[], classement: unknown[] = []) {
     this.server.to(this.roomChannel(roomId)).emit('round:verdicts', { roundId, verdicts, classement });
+    await this.broadcastLeaderboardUpdate();
+    this.broadcastHistoryUpdate();
   }
 
   private liveStats(state: { pot: number; betCount: number }) {
@@ -410,7 +469,7 @@ export class RealtimeGateway
   }
 
   private async assertInRoom(socket: AuthenticatedSocket, roomId: string) {
-    if (!roomId || socket.data.roomId !== roomId) throw new UnauthorizedException('Join the room first');
+    if (!roomId || socket.data.roomId !== roomId) throw new UnauthorizedException('Rejoignez d’abord le salon');
     await this.roomPresence.touch(socket.id);
     await this.roomsService.findOne(roomId);
   }
@@ -422,6 +481,7 @@ export class RealtimeGateway
     await socket.join(this.roomChannel(room.id));
     await this.roomPresence.join(socket.id, socket.data.userId, room.id);
     await this.prisma.user.update({ where: { id: socket.data.userId }, data: { status: 'IN_GAME' } });
+    this.broadcastPresence(socket.data.userId, 'IN_GAME', room.id);
     const state = await this.roomsService.getState(room.id);
     socket.emit('room:reconnected', state);
     return state;
@@ -431,7 +491,7 @@ export class RealtimeGateway
     const authToken = socket.handshake.auth?.token;
     const header = socket.handshake.headers.authorization;
     const token = authToken || (typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : undefined);
-    if (!token || typeof token !== 'string') throw new UnauthorizedException('Missing WebSocket token');
+    if (!token || typeof token !== 'string') throw new UnauthorizedException('Jeton WebSocket manquant');
     return token;
   }
 
@@ -450,25 +510,25 @@ export class RealtimeGateway
     if (sockets.size === 0) this.socketsByUser.delete(userId);
   }
 
-  private broadcastPresence(userId: string, status: 'ONLINE' | 'OFFLINE') {
-    this.server.emit('presence:update', { userId, status });
+  private broadcastPresence(userId: string, status: 'ONLINE' | 'OFFLINE' | 'IN_GAME', currentRoomId: string | null = null) {
+    this.server.emit('presence:update', { userId, status, currentRoomId });
   }
 
   private assertCuid(value: unknown, fieldName: string) {
     if (typeof value !== 'string' || !CUID_PATTERN.test(value)) {
-      throw new BadRequestException(`Invalid ${fieldName}`);
+      throw new BadRequestException(`${fieldName} invalide`);
     }
   }
 
   private assertPositiveInteger(value: unknown, fieldName: string) {
     if (!Number.isInteger(value) || Number(value) < 1) {
-      throw new BadRequestException(`Invalid ${fieldName}`);
+      throw new BadRequestException(`${fieldName} invalide`);
     }
   }
 
   private assertNonNegativeInteger(value: unknown, fieldName: string) {
     if (!Number.isInteger(value) || Number(value) < 0) {
-      throw new BadRequestException(`Invalid ${fieldName}`);
+      throw new BadRequestException(`${fieldName} invalide`);
     }
   }
 }

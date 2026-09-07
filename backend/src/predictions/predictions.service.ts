@@ -6,9 +6,9 @@ export class PredictionsService extends BetsService {}
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const round = await tx.round.findUnique({ where: { id: data.roundId }, include: { roundClaims: true } });
-        if (!round) throw new NotFoundException(`Round ${data.roundId} not found`);
+        if (!round) throw new NotFoundException(`La manche ${data.roundId} est introuvable`);
         if (!(await this.roomPresence.isMember(userId, round.roomId))) {
-          throw new ForbiddenException('Join the room before submitting a prediction');
+          throw new ForbiddenException('Rejoignez le salon avant de soumettre une prédiction');
         }
         const now = new Date();
         const openRound = await tx.round.updateMany({
@@ -18,20 +18,20 @@ export class PredictionsService extends BetsService {}
           // committing after the game loop has locked the round.
           data: { updatedAt: now },
         });
-        if (openRound.count !== 1) throw new BadRequestException('Predictions are closed for this round');
-        if (data.predictedFakeCount > round.roundClaims.length) throw new BadRequestException('Predicted fake count exceeds the number of claims');
+        if (openRound.count !== 1) throw new BadRequestException('Les prédictions sont closes pour cette manche');
+        if (data.predictedFakeCount > round.roundClaims.length) throw new BadRequestException('Le nombre de fausses informations prédit dépasse le nombre de clips');
         await this.ledger.debitForBet(tx, userId, data.stake);
         return tx.prediction.create({ data: { roundId: data.roundId, userId, predictedFakeCount: data.predictedFakeCount, stake: data.stake } });
       });
     } catch (error: unknown) {
-      if ((error as { code?: string }).code === 'P2002') throw new ConflictException('A prediction already exists for this round');
+      if ((error as { code?: string }).code === 'P2002') throw new ConflictException('Une prédiction existe déjà pour cette manche');
       throw error;
     }
   }
 
   async findByRound(roundId: string, userId: string) {
     const round = await this.prisma.round.findUnique({ where: { id: roundId }, select: { status: true } });
-    if (!round) throw new NotFoundException(`Round ${roundId} not found`);
+    if (!round) throw new NotFoundException(`La manche ${roundId} est introuvable`);
 
     const revealed = round.status === 'REVEALED' || round.status === 'FINISHED';
     return this.prisma.prediction.findMany({

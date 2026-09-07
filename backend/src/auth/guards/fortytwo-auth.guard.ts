@@ -16,14 +16,14 @@ import { isFortyTwoEnabled } from '../../common/env';
 export class FortyTwoAuthGuard extends AuthGuard('42') {
   canActivate(context: ExecutionContext) {
     if (!isFortyTwoEnabled()) {
-      throw new ServiceUnavailableException('42 OAuth is not configured');
+      throw new ServiceUnavailableException('OAuth 42 n’est pas configuré');
     }
     return super.canActivate(context);
   }
 
   handleRequest<TUser = unknown>(error: unknown, user: TUser, info: unknown): TUser {
     if (error || !user) {
-      throw new UnauthorizedException('42 OAuth authentication failed');
+      throw new UnauthorizedException('L’authentification OAuth 42 a échoué');
     }
     return user;
   }
