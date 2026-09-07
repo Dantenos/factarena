@@ -14,6 +14,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleDestroy,
   OnModuleInit,
   UnauthorizedException,
@@ -130,7 +131,16 @@ export class RealtimeGateway
       await this.broadcastLeaderboardUpdate();
       const roomId = socket.handshake.auth?.roomId;
       if (typeof roomId === 'string' && roomId.length > 0) {
-        await this.restoreRoom(socket, roomId);
+        // Un salon disparu ne doit pas emporter la connexion avec lui. Sans ce
+        // filet, l'exception remontait au catch ci-dessous, qui fermait le
+        // socket en annonçant un échec d'authentification : le client rouvrait,
+        // échouait de nouveau, et restait sur « connexion en cours » sans fin.
+        try {
+          await this.restoreRoom(socket, roomId);
+        } catch (error) {
+          this.logger.debug(`Salon ${roomId} non restauré: ${String(error)}`);
+          socket.emit('room:error', { message: this.messageSalonInaccessible(error) });
+        }
       }
       this.logger.debug(`WebSocket connected: ${socket.id} (${user.id})`);
     } catch (error) {
@@ -195,10 +205,26 @@ export class RealtimeGateway
     this.logger.debug(`WebSocket disconnected: ${socket.id} (${userId})`);
   }
 
+  /** Ce qu'on dit au joueur quand un salon ne peut pas être rejoint. */
+  private messageSalonInaccessible(error: unknown): string {
+    return error instanceof NotFoundException || error instanceof BadRequestException
+      ? 'Ce salon n’existe plus. Retourne au lobby pour en choisir un autre.'
+      : 'Impossible de rejoindre ce salon.';
+  }
+
   @SubscribeMessage('room:join')
   async joinRoom(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: RoomPayload) {
-    this.assertCuid(body?.roomId, 'roomId');
-    const room = await this.roomsService.findOne(body?.roomId);
+    let room: Awaited<ReturnType<RoomsService['findOne']>>;
+    try {
+      this.assertCuid(body?.roomId, 'roomId');
+      room = await this.roomsService.findOne(body?.roomId);
+    } catch (error) {
+      // Même raison qu'à la connexion : l'exception partait dans un événement
+      // « exception » que le client n'écoute pas.
+      const message = this.messageSalonInaccessible(error);
+      socket.emit('room:error', { message });
+      return { rejected: true, message };
+    }
     if (socket.data.roomId) await socket.leave(this.roomChannel(socket.data.roomId));
     let presence: Awaited<ReturnType<RoomPresenceService['join']>>;
     try {
