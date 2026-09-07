@@ -5,7 +5,7 @@
 // implémente une seule pour toute la manche (opensAt -> locksAt). On suit le
 // comportement réel — le joueur avance à son rythme, ses votes doivent juste
 // tomber avant le verrouillage. À trancher en équipe.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
 import Chat from '../components/Chat';
@@ -86,6 +86,8 @@ export default function Room() {
   const [bonnesReponses, setBonnesReponses] = useState(0);
   // Classement de la manche, calculé par le serveur et transmis avec les verdicts.
   const [classement, setClassement] = useState<LeaderboardEntry[]>([]);
+  // Sources du bot reçues avant sa réponse, en attente d'un message où s'accrocher.
+  const sourcesEnAttente = useRef<Array<{ title?: string; url: string }>>([]);
 
   const round = etat?.round as { id?: string; status?: string; roundClaims?: ClipEnJeu[] } | null;
   const clips = round?.roundClaims ?? [];
@@ -188,19 +190,23 @@ export default function Room() {
           if (dernier?.type === 'bot' && dernier.id === 'bot-en-cours') {
             return [...prec.slice(0, -1), { ...dernier, content: dernier.content + d.text }];
           }
-          return [...prec, { id: 'bot-en-cours', type: 'bot', author: 'FactBot', content: d.text, timestamp: Date.now() }];
+          return [...prec, {
+            id: 'bot-en-cours', type: 'bot', author: 'FactBot', content: d.text,
+            timestamp: Date.now(), sources: sourcesEnAttente.current,
+          }];
         });
       }),
+      // Les sources arrivent avant la réponse. Les afficher tout de suite
+      // donnait une liste de liens orpheline quand la génération échouait
+      // ensuite : on les met de côté et le message n'apparaît qu'au premier
+      // jeton, qui les accroche.
       ecouter('ai:sources', (liste: Array<{ title?: string; url: string }>) => {
-        const sources = Array.isArray(liste) ? liste.filter((s) => s?.url) : [];
-        setMessages((prec) => [
-          ...prec,
-          { id: 'bot-en-cours', type: 'bot', author: 'FactBot', content: '', timestamp: Date.now(), sources },
-        ]);
+        sourcesEnAttente.current = Array.isArray(liste) ? liste.filter((s) => s?.url) : [];
       }),
       ecouter('ai:done', () => {
         // Le message du bot est terminé : on lui donne un identifiant définitif
         // pour que le prochain n'y soit pas concaténé.
+        sourcesEnAttente.current = [];
         setMessages((prec) =>
           prec.map((m) =>
             m.id === 'bot-en-cours'
@@ -212,6 +218,25 @@ export default function Room() {
               : m,
           ),
         );
+      }),
+      // Le serveur émettait cette erreur dans le vide : on écrivait « @bot ... »
+      // et il ne se passait rien, sans rien pour dire pourquoi.
+      ecouter('ai:error', (d: { message?: string }) => {
+        const texte = d?.message?.trim() || "L'assistant n'a pas pu répondre.";
+        sourcesEnAttente.current = [];
+        setMessages((prec) => {
+          // On termine le message en cours au lieu d'en ajouter un second,
+          // sinon la réponse suivante viendrait s'y coller.
+          const enCours = prec.some((m) => m.id === 'bot-en-cours');
+          if (enCours) {
+            return prec.map((m) =>
+              m.id === 'bot-en-cours'
+                ? { ...m, id: `bot-${Date.now()}`, content: texte, sources: undefined }
+                : m,
+            );
+          }
+          return [...prec, { id: `bot-${Date.now()}`, type: 'bot', author: 'FactBot', content: texte, timestamp: Date.now() }];
+        });
       }),
       // Le serveur confirme la mise en diffusant bet:updated. On relit nos
       // propres mises plutôt que de faire confiance à l'émission : elle peut
@@ -267,7 +292,9 @@ export default function Room() {
             explanation: explication?.trim() || "Explication en cours de génération.",
             source: v.sourceUrl ?? '',
             explanationSource: v.explanationSource,
-            userVoted: mesVotes[v.claimId] !== undefined,
+            userVote: mesVotes[v.claimId] === undefined
+              ? undefined
+              : mesVotes[v.claimId] ? 'FAUX' : 'VRAI',
             aiGuess,
             aiGuessWhy,
           };

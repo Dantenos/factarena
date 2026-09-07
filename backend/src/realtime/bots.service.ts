@@ -45,6 +45,18 @@ export class BotsService {
   private static readonly ECART_LLM_MS = 5_000;
   private static readonly MEMOIRE = 8;
 
+  // Débit des faux joueurs : ~7 messages par manche de 10 clips, contre 22
+  // avant, où ils noyaient le chat des joueurs. Regroupé ici parce qu'on y
+  // revient après chaque test à plusieurs.
+  private static readonly AMBIANCE_PAR_CLIP = 0.3;
+  // Probabilités de se taire quand un joueur vote. Seul le premier avis d'un
+  // bot sur un clip a de l'intérêt : ensuite il n'a plus rien à ajouter.
+  private static readonly SILENCE_PREMIER_AVIS = 0.6;
+  private static readonly SILENCE_DEJA_POSITIONNE = 0.95;
+  private static readonly PROBA_REBOND = 0.15;
+  // Plafond dur : sans lui, cinq joueurs qui votent ensemble partent en rafale.
+  private static readonly ECART_MESSAGE_MS = 12_000;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
@@ -376,7 +388,7 @@ export class BotsService {
     // Chacun avance à son rythme, le serveur ignore ce que tel joueur a sous
     // les yeux — un bot sur minuterie parlait du Hindenburg à quelqu'un qui
     // regardait une manifestation. Le contenu part de reagirAuVote().
-    const ambiance = Math.max(3, Math.round(round.roundClaims.length * 1.2));
+    const ambiance = Math.max(2, Math.round(round.roundClaims.length * BotsService.AMBIANCE_PAR_CLIP));
     for (let i = 0; i < ambiance; i += 1) {
       const auteur =
         Math.random() < 0.5
@@ -428,13 +440,11 @@ export class BotsService {
     // Le bot s'est déjà exprimé sur ce clip : à plusieurs joueurs, il se
     // contenterait sinon de répéter la même phrase à chacun. Il se tait,
     // sauf de loin en loin pour relancer.
-    if (dejaPositionne && Math.random() < 0.85) return;
-    if (!dejaPositionne && Math.random() < 0.35) return;
+    if (dejaPositionne && Math.random() < BotsService.SILENCE_DEJA_POSITIONNE) return;
+    if (!dejaPositionne && Math.random() < BotsService.SILENCE_PREMIER_AVIS) return;
 
-    // Pas plus d'un message toutes les quatre secondes, quel que soit le
-    // nombre de joueurs qui votent simultanément.
     const maintenant = Date.now();
-    if (maintenant - (this.dernierMessage.get(roomId) ?? 0) < 4000) return;
+    if (maintenant - (this.dernierMessage.get(roomId) ?? 0) < BotsService.ECART_MESSAGE_MS) return;
     this.dernierMessage.set(roomId, maintenant);
 
     const claim = await this.prisma.claim.findUnique({
@@ -479,7 +489,7 @@ export class BotsService {
     const minuterie = setTimeout(() => {
       this.noter(roomId, auteur, contenu);
       emettre({ author: auteur, content: contenu });
-      if (genere && Math.random() < 0.35) this.rebondir(roomId, auteur, contenu, emettre);
+      if (genere && Math.random() < BotsService.PROBA_REBOND) this.rebondir(roomId, auteur, contenu, emettre);
     }, delai);
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
 
@@ -571,7 +581,7 @@ export class BotsService {
       // Un autre bot rebondit parfois sur la réponse : c'est ce qui donne
       // l'impression qu'ils se parlent entre eux. Un seul rebond, sinon ils
       // discuteraient entre eux sans fin par-dessus les joueurs.
-      if (genere && Math.random() < 0.45) this.rebondir(roomId, cible, reponse, emettre);
+      if (genere && Math.random() < BotsService.PROBA_REBOND) this.rebondir(roomId, cible, reponse, emettre);
     }, 1200 + Math.random() * 2500);
     // On la range avec les autres pour qu'un verrouillage de manche l'annule.
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);

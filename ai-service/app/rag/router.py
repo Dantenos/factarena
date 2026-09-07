@@ -14,6 +14,7 @@ fact-checking, où une réponse inventée serait pire que pas de réponse.
 import json
 import os
 
+import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -100,6 +101,18 @@ def _sse(event: str, data) -> str:
     ensure_ascii=False : on garde les accents français lisibles dans le flux.
     """
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _message_erreur(erreur: Exception) -> str:
+    """Traduit un échec de génération en une phrase affichable dans le chat.
+
+    Le 429 mérite d'être distingué : c'est le seul cas où le joueur peut agir
+    (attendre, ou prévenir l'équipe). On ne promet pas de retour rapide — quand
+    la limite du plan tombe à zéro, attendre ne sert à rien.
+    """
+    if isinstance(erreur, httpx.HTTPStatusError) and erreur.response.status_code == 429:
+        return "L'assistant a atteint la limite d'appels de l'IA. Il ne peut pas répondre pour le moment."
+    return "La génération a été interrompue."
 
 
 # Message renvoyé quand le garde-fou bloque (question à propos d'un clip vivant).
@@ -259,14 +272,23 @@ async def ask(req: AskRequest, request: Request):
     async def event_stream():
         # On envoie d'abord les SOURCES : le front peut les afficher tout de
         # suite, avant même que la réponse commence à s'écrire.
-        yield _sse("sources", [{"title": p["title"], "url": p["url"]} for p in passages])
+        # Un article long donne plusieurs passages : sans dédoublonnage on
+        # affichait quatre fois le même lien sous la réponse.
+        vues: set[str] = set()
+        sources = []
+        for p in passages:
+            if p["url"] in vues:
+                continue
+            vues.add(p["url"])
+            sources.append({"title": p["title"], "url": p["url"]})
+        yield _sse("sources", sources)
         try:
             async for token in chat_stream(messages):
                 yield _sse("token", {"text": token})
-        except Exception:
+        except Exception as erreur:
             # Le streaming a déjà commencé : impossible de changer le code HTTP
             # maintenant. On signale donc l'erreur DANS le flux, proprement.
-            yield _sse("error", {"message": "La génération a été interrompue."})
+            yield _sse("error", {"message": _message_erreur(erreur)})
             return
         yield _sse("done", {})
 

@@ -49,7 +49,9 @@ export interface ClipResult {
   // D'où vient l'explication : le RAG, ou la clé éditoriale quand le corpus ne
   // couvre pas le clip. L'étiquette affichée en dépend.
   explanationSource?: 'rag' | 'editorial';
-  userVoted: boolean;   // true si le joueur a voté sur ce clip précis
+  // Ce que le joueur a répondu, absent s'il n'a pas voté. L'écran promettait
+  // « ta réponse vs la vérité » sans jamais montrer la réponse.
+  userVote?: ClipVerdict;
   // Ce que l'IA aurait répondu SANS connaître la clé et sans son article
   // source. Purement informatif : le score n'en dépend jamais. Quand elle se
   // trompe, on l'affiche tel quel — c'est la limite d'une IA face au

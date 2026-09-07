@@ -18,24 +18,6 @@
     ]
   },
   {
-    "sourceKey": "20-minutes:9ffd429db48e",
-    "text": "Une fausse vidéo de Trump en train d’embrasser les pieds de Musk diffusée dans les locaux du HUD",
-    "truthLabel": "TRUE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.20minutes.fr/societe/4140873-20250227-oui-fausse-video-trump-train-embrasser-pieds-musk-projetee-administration-us",
-    "_publisher": "20 Minutes",
-    "_rating": "Vrai",
-    "_reviewDate": "2025-02-27",
-    "themeTags": [
-      "fausse",
-      "video",
-      "trump",
-      "train",
-      "embrasser",
-      "pieds"
-    ]
-  },
-  {
     "sourceKey": "20-minutes:38848bc935e5",
     "text": "Cette vidéo de « duel » entre un « mini-cerf » et un rhinocéros est-elle générée par IA ?",
     "truthLabel": "TRUE",
@@ -530,60 +512,6 @@
     ]
   },
   {
-    "sourceKey": "tf1-info:4fa0005da839",
-    "text": "Des liasses de billets issus du détournement d'argent des dons européens en Ukraine",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://www.tf1info.fr/international/que-sait-on-de-cette-video-de-saisie-d-argent-en-ukraine-censee-illustrer-le-detournement-de-fonds-europeens-2460339.html",
-    "_publisher": "TF1 Info",
-    "_rating": "Faux",
-    "_reviewDate": "2026-08-25",
-    "themeTags": [
-      "liasses",
-      "billets",
-      "issus",
-      "detournement",
-      "d'argent",
-      "dons"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:d9acdcec6239",
-    "text": "Une vidéo prouve que l’Iran a détruit un data center d’Amazon à Bahreïn",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C3L349H",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-30",
-    "themeTags": [
-      "video",
-      "prouve",
-      "iran",
-      "detruit",
-      "data",
-      "center"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:5f5be62672e2",
-    "text": "Une vidéo des viandes envoyées d'Israël jetées par le peuple de Gaza",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.C2Q38ZW",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-07-22",
-    "themeTags": [
-      "video",
-      "viandes",
-      "envoyees",
-      "d'israel",
-      "jetees",
-      "peuple"
-    ]
-  },
-  {
     "sourceKey": "factuel-afp:fb6bdcd44edd",
     "text": "Une vidéo du dernier hommage à CR7 rendu à Madère",
     "truthLabel": "FALSE",
@@ -829,24 +757,6 @@
     ]
   },
   {
-    "sourceKey": "factuel-afp:43562ef318a5",
-    "text": "Une vidéo d'une mobilisation contre les projets touristiques liés à la famille Trump en Albanie",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B6MH6WE",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-16",
-    "themeTags": [
-      "video",
-      "d'une",
-      "mobilisation",
-      "contre",
-      "projets",
-      "touristiques"
-    ]
-  },
-  {
     "sourceKey": "tf1-info:08020f5fb90d",
     "text": "Une vidéo montre une boite de conserve sans viande donnée aux soldats russes",
     "truthLabel": "FALSE",
@@ -880,24 +790,6 @@
       "detruire",
       "helicoptere",
       "americain"
-    ]
-  },
-  {
-    "sourceKey": "factuel-afp:03ae7bb0df75",
-    "text": "Cette vidéo montre des soldats israéliens dévaster une église au Liban",
-    "truthLabel": "FALSE",
-    "category": "viral_debunk",
-    "sourceUrl": "https://factuel.afp.com/doc.afp.com.B6DV6KF",
-    "_publisher": "Factuel AFP",
-    "_rating": "Faux",
-    "_reviewDate": "2026-06-10",
-    "themeTags": [
-      "video",
-      "montre",
-      "soldats",
-      "israeliens",
-      "devaster",
-      "eglise"
     ]
   },
   {

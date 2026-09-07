@@ -30,8 +30,11 @@ Trois modules, 5 points, définis au chapitre IV.4 du sujet :
    visiblement différentes (voir §4, étapes 2 et 3).
 2. **Le RAG doit ingérer un large dataset** — des milliers de documents, pas vingt. Ne jamais
    présenter le corpus comme « petit ».
-3. **La modération doit agir par modèle**, pas par liste de mots interdits. Une wordlist = 0
-   point. L'API Mistral règle ça.
+3. **La modération agit par modèle**, pas par liste de mots interdits. Attention, c'est notre
+   choix, pas une règle : relu ligne à ligne, le sujet dit seulement « Content moderation AI
+   (auto moderation, auto deletion, auto warning, etc.) » et n'interdit nulle part les listes
+   de mots. On tient quand même au modèle — c'est le seul angle qui rende le module
+   défendable comme un module d'IA. L'API Mistral règle ça.
 
 ### Le principe qui protège tout le reste
 
@@ -163,6 +166,39 @@ Endpoint `POST /moderation/check` : prend un message de chat → appelle la Mode
 Mistral → renvoie une décision (OK / warn / delete). Le back l'appelle pour chaque message du
 salon. Dépend du chat (module 3, côté Back Core) : à coordonner avec lui. Vit dans
 `app/moderation/`.
+
+La décision se prend en **deux couches**, et c'est ce qu'il faut savoir expliquer :
+
+1. La Moderation API, plus notre propre seuil sur les scores (0.05). Les drapeaux du modèle
+   sont calibrés pour l'anglais et pour des contenus lourds ; le seuil rattrape les insultes
+   francophones que le modèle note sans les lever.
+2. Un **juge LLM**, sollicité uniquement quand la couche 1 laisse passer. Il ne peut que
+   durcir, jamais assouplir.
+
+Pourquoi la couche 2 est nécessaire : les scores notent un *contexte d'agression*, pas un
+registre de langue. Mesuré sur ce chat, « espèce de con » sort à 0.255 et disparaît, mais
+« con » employé seul tombe à 0.0028 — sous le bruit des messages ordinaires, qui montent
+jusqu'à 0.0143. Aucun réglage de seuil ne sépare les deux : baisser le curseur détruirait des
+messages légitimes bien avant d'atteindre l'insulte isolée. Un LLM, lui, reconnaît un mot
+grossier hors contexte et décode les abréviations que le modèle de modération ignore.
+
+Dans les deux couches, ce sont des **modèles** qui détectent — on ne compare aucun mot à une
+liste. La politique (quel signal mène à quelle action) est la part qui nous revient.
+
+Coût assumé : un appel LLM de plus par message propre, sur le chemin bloquant du chat. Borné
+à 3 s, et sans effet si Mistral est injoignable (même politique fail-open que le back).
+
+Même motif que le garde-fou anti-spoil de `rag/guardrail.py` : couche déterministe, puis juge
+LLM en rattrapage.
+
+**Une troisième couche existe dans le fichier, entièrement commentée** : une liste de mots
+interdits (français + anglais). Elle est écrite parce que les deux couches actives dépendent
+toutes les deux de l'API Mistral — on a vu le quota de `/chat/completions` retomber à zéro,
+et si l'endpoint de modération tombe aussi, le chat n'est plus filtré du tout. Elle reste
+désactivée par choix : le sujet ne l'interdit pas, mais en laisser une active donnerait
+l'impression que la détection repose dessus plutôt que sur les modèles.
+À n'activer que si l'IA est indisponible le jour de la correction, et en le disant. Le mode
+d'emploi est dans le commentaire, en bas de `app/moderation/router.py`.
 
 ### Étape 5 — branchement au back
 Le back NestJS appelle mes endpoints sur `http://ai-service:8000`. J'expose une API interne

@@ -97,17 +97,24 @@ export class RoundsService {
     const fausses = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'FALSE'));
     const vraies = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'TRUE'));
 
-    // Un cinquième de la manche par thème, au maximum : sur dix clips, deux du
-    // même sujet, donc cinq thèmes différents au minimum.
-    //
-    // Le corpus est déséquilibré thème par thème — sur l'immigration ou Trump,
-    // presque tout est faux. Sans plafond, le joueur apprend à répondre « fake »
-    // au sujet plutôt qu'au contenu. Le quart laissait encore trois clips d'un
-    // même thème, ce qui suffit à installer ce réflexe.
-    //
-    // Le repli plus bas dépasse ce plafond en dernier recours, donc resserrer ne
-    // risque pas de produire une manche incomplète.
-    const plafondTheme = Math.max(2, Math.ceil(nombre / 5));
+    // Le plafond ne vise qu'un réflexe : « ce sujet est toujours faux ». Seul un
+    // thème dont tous les clips ont le même verdict peut l'enseigner. Appliqué
+    // partout il saturait la manche — cinq thèmes pour dix clips, donc deux de
+    // chacun imposés, et les quatre clips « hors contexte » revenaient sans cesse.
+    const verdictsParTheme = new Map<string, Set<string>>();
+    for (const claim of vivier) {
+      const theme = claim.category ?? 'inconnu';
+      if (!verdictsParTheme.has(theme)) verdictsParTheme.set(theme, new Set());
+      verdictsParTheme.get(theme)!.add(claim.truthLabel);
+    }
+    const themesHomogenes = new Set(
+      [...verdictsParTheme].filter(([, verdicts]) => verdicts.size === 1).map(([theme]) => theme),
+    );
+
+    // Un thème mixte garde un plafond, mais large : sans lui il occupait jusqu'à
+    // neuf clips sur dix et la manche devenait un quiz de sciences.
+    const plafondHomogene = Math.max(2, Math.ceil(nombre / 5));
+    const plafondMixte = Math.ceil(nombre / 2);
     const comptes = new Map<string, number>();
     const prendre = (source: Array<{ id: string; truthLabel: string; category: string | null }>, combien: number) => {
       const pris: typeof source = [];
@@ -115,7 +122,7 @@ export class RoundsService {
         if (pris.length >= combien) break;
         const theme = claim.category ?? 'inconnu';
         const dejaPris = comptes.get(theme) ?? 0;
-        if (dejaPris >= plafondTheme) continue;
+        if (dejaPris >= (themesHomogenes.has(theme) ? plafondHomogene : plafondMixte)) continue;
         comptes.set(theme, dejaPris + 1);
         pris.push(claim);
       }

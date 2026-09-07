@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 from app.db import to_pgvector
 from app.main import app
-from app.moderation.router import _decide
+from app.moderation.router import _appliquer_juge, _decide
 from app.rag.chunking import chunk_text
 from app.rate_limit import RateLimiter
 
@@ -34,6 +34,27 @@ def test_moderation_decide_les_trois_cas():
     assert _decide({"categories": {}})["action"] == "allow"
     assert _decide({"categories": {"violence_and_threats": True}})["action"] == "delete"
     assert _decide({"categories": {"financial": True}})["action"] == "warn"
+
+
+def test_moderation_juge_ne_fait_que_durcir():
+    # Le juge LLM est la seconde couche : il rattrape ce que l'API de modération
+    # laisse passer, mais il ne doit JAMAIS ramener une suppression en
+    # autorisation, sinon on perdrait les insultes que la couche 1 attrape déjà.
+    passe = {"action": "allow", "flagged": [], "au_dessus_du_seuil": [], "scores": {}}
+    supprime = {"action": "delete", "flagged": ["hate_and_discrimination"], "au_dessus_du_seuil": [], "scores": {}}
+
+    assert _appliquer_juge(passe, True)["action"] == "delete"
+    assert _appliquer_juge(passe, False)["action"] == "allow"
+    assert _appliquer_juge(supprime, False)["action"] == "delete"
+
+
+def test_moderation_juge_injoignable_laisse_la_decision_intacte():
+    # Même politique que le back (ai.service.ts) : une panne IA ne durcit ni
+    # n'assouplit la modération, elle est simplement sans effet. None = le juge
+    # n'a pas pu répondre.
+    passe = {"action": "allow", "flagged": [], "au_dessus_du_seuil": [], "scores": {}}
+    assert _appliquer_juge(passe, None)["action"] == "allow"
+    assert _appliquer_juge(passe, None)["juge_llm"] is None
 
 
 def test_chunk_text():
