@@ -213,6 +213,24 @@ export default function Room() {
           ),
         );
       }),
+      // Le serveur émettait cette erreur dans le vide : on écrivait « @bot ... »
+      // et il ne se passait rien, sans rien pour dire pourquoi.
+      ecouter('ai:error', (d: { message?: string }) => {
+        const texte = d?.message?.trim() || "L'assistant n'a pas pu répondre.";
+        setMessages((prec) => {
+          // On termine le message en cours au lieu d'en ajouter un second,
+          // sinon la réponse suivante viendrait s'y coller.
+          const enCours = prec.some((m) => m.id === 'bot-en-cours');
+          if (enCours) {
+            return prec.map((m) =>
+              m.id === 'bot-en-cours'
+                ? { ...m, id: `bot-${Date.now()}`, content: texte, sources: undefined }
+                : m,
+            );
+          }
+          return [...prec, { id: `bot-${Date.now()}`, type: 'bot', author: 'FactBot', content: texte, timestamp: Date.now() }];
+        });
+      }),
       // Le serveur confirme la mise en diffusant bet:updated. On relit nos
       // propres mises plutôt que de faire confiance à l'émission : elle peut
       // être refusée, et l'événement concerne aussi les autres joueurs.

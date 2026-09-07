@@ -30,6 +30,10 @@ class AiResponseParseError extends Error {
 export type AiStreamEvent =
   | { type: 'sources'; data: AiCitation[] }
   | { type: 'token'; data: { text: string } }
+  // Échec survenu après le début du flux : le service IA ne peut plus changer
+  // le code HTTP, il le signale dans le flux. On transporte son message tel
+  // quel plutôt que de le remplacer par un générique.
+  | { type: 'error'; data: { message: string } }
   | { type: 'done'; data: Record<string, never> };
 
 @Injectable()
@@ -465,7 +469,10 @@ export class AiService {
       return { type: 'token', data: { text } };
     }
     if (eventName === 'done') return { type: 'done', data: {} };
-    if (eventName === 'error') throw new Error('AI streaming failed');
+    if (eventName === 'error') {
+      const message = (data as { message?: unknown })?.message;
+      return { type: 'error', data: { message: typeof message === 'string' && message.trim() ? message : 'La génération a été interrompue.' } };
+    }
     throw new AiResponseParseError(`Unknown AI SSE event: ${eventName}`);
   }
 
