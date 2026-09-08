@@ -14,6 +14,7 @@ type RoundWithDetails = Round & {
 
 @Injectable()
 export class RoomsService {
+  static readonly MINIMUM_CREDITS_POUR_JOUER = 50;
   constructor(
     private readonly prisma: PrismaService,
     private readonly betsService: BetsService,
@@ -24,6 +25,7 @@ export class RoomsService {
   ) {}
 
   async create(data: { name: string }, createdBy: string) {
+    await this.assertCanPlay(createdBy);
     const room = await this.prisma.room.create({ data: { name: data.name, createdBy, status: 'WAITING' } });
     this.realtimeGateway.broadcastRoomListUpdate();
     return room;
@@ -31,6 +33,7 @@ export class RoomsService {
 
   async findAll() {
     return this.prisma.room.findMany({
+      where: { status: 'WAITING' },
       orderBy: { createdAt: 'desc' },
       include: { host: { select: { id: true, email: true, avatarUrl: true, status: true } }, _count: { select: { rounds: true } } },
     });
@@ -87,6 +90,14 @@ export class RoomsService {
     }));
   }
 
+  async assertCanPlay(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { virtualBalance: true } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.virtualBalance < RoomsService.MINIMUM_CREDITS_POUR_JOUER) {
+      throw new ForbiddenException('Crédits insuffisants. Veuillez recharger vos crédits depuis votre page de profil.');
+    }
+  }
+
   async getHistory(id: string) {
     const room = await this.prisma.room.findUnique({
       where: { id },
@@ -124,6 +135,13 @@ export class RoomsService {
     const room = await this.prisma.room.findUnique({ where: { id }, select: { createdBy: true } });
     if (!room) throw new NotFoundException(`Salon ${id} introuvable`);
     if (room.createdBy !== userId) throw new ForbiddenException('Seul l’hôte du salon peut effectuer cette action');
+  }
+
+  async closeIfHostLeaves(id: string, userId: string) {
+    const room = await this.prisma.room.findUnique({ where: { id }, select: { createdBy: true, status: true } });
+    if (!room || room.createdBy !== userId || !['WAITING', 'IN_PROGRESS'].includes(room.status)) return false;
+    await this.prisma.room.update({ where: { id }, data: { status: 'FINISHED' } });
+    return true;
   }
 
   private async findRoundForHistory(id: string) {

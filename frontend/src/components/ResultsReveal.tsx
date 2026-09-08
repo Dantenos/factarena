@@ -10,35 +10,36 @@ interface ResultsRevealProps {
   totalClips: number;
   clipResults: ClipResult[];
   leaderboard: LeaderboardEntry[];
+  isWinner: boolean;
 }
 
 // Associe à chaque verdict possible un label affiché et une couleur de badge.
 // Centralisé ici plutôt que dans un switch/if répété, pour n'avoir qu'un
 // seul endroit à modifier si un verdict change de libellé ou de couleur.
 const VERDICT_STYLES: Record<ClipVerdict, { label: string; className: string }> = {
-  FAUX: { label: "FAKE NEWS", className: "text-red-400" },
-  VRAI: { label: "GOOD NEWS", className: "text-emerald-400" },
+  FAUX: { label: "FAKE", className: "text-red-400" },
+  VRAI: { label: "FACT", className: "text-emerald-400" },
   TROMPEUR: { label: "TROMPEUR", className: "text-amber-400" },
   HORS_CONTEXTE: { label: "HORS CONTEXTE", className: "text-purple-400" },
 };
 
 function libelleVote(vote?: ClipVerdict): string {
-  if (vote === 'VRAI') return 'Good news';
-  if (vote === 'FAUX') return 'Fake news';
+  if (vote === 'VRAI') return 'Fact';
+  if (vote === 'FAUX') return 'Fake';
   return "Pas de réponse";
 }
 
 function libelleAvisIa(avis?: ClipResult['aiGuess']): string {
-  if (avis === 'VRAI') return 'Good news';
-  if (avis === 'FAUX') return 'Fake news';
+  if (avis === 'VRAI') return 'Fact';
+  if (avis === 'FAUX') return 'Fake';
   if (avis === 'INCERTAIN') return 'Incertain';
   return "Pas d'avis";
 }
 
-export default function ResultsReveal({ correctCount, totalClips, clipResults, leaderboard }: ResultsRevealProps) {
-  // Détermine si le score du joueur est "bon" (au moins la moitié des clips
-  // correctement évalués), pour choisir la couleur/le message de la bannière.
-  const isGoodScore = correctCount >= totalClips / 2;
+export default function ResultsReveal({ correctCount, totalClips, clipResults, leaderboard, isWinner }: ResultsRevealProps) {
+  const meilleurScore = leaderboard.length > 0
+    ? Math.max(...leaderboard.map((entry) => entry.correctCount))
+    : -1;
   const [detailsOuverts, setDetailsOuverts] = useState<Record<string, boolean>>({});
 
   return (
@@ -46,7 +47,7 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
       {/* Bannière de score global : verte si bon score, rouge sinon */}
       <div
         className={`rounded-xl p-4 text-center font-semibold ${
-          isGoodScore ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
+          isWinner ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
         }`}
       >
         Tu as {correctCount}/{totalClips} bonne(s) réponse(s).
@@ -144,20 +145,11 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
         <ul className="space-y-2">
           {['1er', '2e', '3e', '4e', '5e'].map((position, index) => {
             const entry = leaderboard[index];
-            const podiumStyle = index === 0
+            const estGagnant = entry !== undefined && entry.correctCount === meilleurScore;
+            const podiumStyle = estGagnant
               ? 'bg-amber-400/10 border-amber-300/20'
-              : index === 1
-                ? 'bg-slate-300/10 border-slate-300/20'
-                : index === 2
-                  ? 'bg-orange-400/10 border-orange-300/20'
-                  : 'bg-white/[0.03] border-white/5';
-            const positionStyle = index === 0
-              ? 'text-amber-300'
-              : index === 1
-                ? 'text-slate-300'
-                : index === 2
-                  ? 'text-orange-300'
-                  : 'text-white/60';
+              : 'bg-white/[0.03] border-white/5';
+            const positionStyle = estGagnant ? 'text-amber-300' : 'text-white/60';
             return (
               <li key={position} className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm ${podiumStyle}`}>
                 <span className={`w-10 shrink-0 font-semibold ${positionStyle}`}>

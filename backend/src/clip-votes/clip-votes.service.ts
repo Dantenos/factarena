@@ -17,10 +17,12 @@ export class ClipVotesService {
     // « Unable to start a transaction in the given time ».
     const round = await this.prisma.round.findUnique({
       where: { id: data.roundId },
-      include: { roundClaims: { where: { claimId: data.claimId }, select: { claimId: true } } },
+      include: { roundClaims: { where: { claimId: data.claimId }, select: { claimId: true, orderIndex: true } } },
     });
     if (!round) throw new NotFoundException(`La manche ${data.roundId} est introuvable`);
+    if (round.status !== 'OPEN') throw new BadRequestException('Les votes ne sont pas ouverts');
     if (round.roundClaims.length !== 1) throw new BadRequestException('Le clip ne fait pas partie de cette manche');
+    if (round.roundClaims[0].orderIndex !== round.currentClipIndex) throw new BadRequestException('Ce clip n’est pas le clip courant');
     if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Rejoignez le salon avant de voter');
     const existingVote = await this.prisma.clipVote.findUnique({
       where: { userId_roundId_claimId: { userId, roundId: data.roundId, claimId: data.claimId } },

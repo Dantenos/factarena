@@ -44,41 +44,13 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
     this.running = true;
     try {
       const rounds = await this.prisma.round.findMany({
-        where: { status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED', 'REVEALED'] as any }, room: { status: { not: 'FINISHED' } } },
+        where: { status: 'REVEALED' as any, room: { status: 'IN_PROGRESS' } },
         select: { id: true, roomId: true, status: true, opensAt: true, locksAt: true },
         orderBy: { locksAt: 'asc' },
       });
 
       for (const candidate of rounds) {
-        let status = String(candidate.status);
-        if (status === 'COUNTDOWN') {
-          if (candidate.opensAt > new Date()) continue;
-          const opened = await this.roundsService.openIfDue(candidate.id);
-          if (!opened) continue;
-          status = 'OPEN';
-          await this.realtimeGateway.publishRoundState(candidate.roomId, 'round:open', candidate.id);
-          // Les faux joueurs commentent la manche pendant qu'elle est ouverte.
-          // Voir bots.service.ts : deux trompent, un meuble. Leurs messages sont
-          // éphémères et n'entrent jamais dans l'historique du salon.
-          void this.botsService.animer(candidate.roomId, candidate.id, (message) =>
-            this.realtimeGateway.diffuserMessageBot(candidate.roomId, message),
-          );
-          if (opened.locksAt > new Date()) continue;
-        }
-
-        if (status === 'OPEN') {
-          // Avant l'heure, la manche se verrouille quand même si tous les
-          // parieurs ont fini de voter — inutile de leur imposer l'attente.
-          const locked = candidate.locksAt > new Date()
-            ? await this.verrouillerSiToutLeMondeAVote(candidate.id)
-            : await this.roundsService.lockIfDue(candidate.id);
-          if (!locked) continue;
-          this.dernierControle.delete(candidate.id);
-          status = 'LOCKED';
-          await this.realtimeGateway.publishRoundState(candidate.roomId, 'round:locked', candidate.id);
-          // Manche verrouillée : les bots n'ont plus rien à influencer.
-          this.botsService.arreter(candidate.roomId);
-        }
+        const status = String(candidate.status);
 
         if (status === 'REVEALED') {
           await this.publishVerdicts(candidate.id, candidate.roomId);

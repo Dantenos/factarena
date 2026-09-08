@@ -11,6 +11,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import Chat from '../components/Chat';
 import StatsBar from '../components/StatsBar';
 import ResultsReveal from '../components/ResultsReveal';
+import { useAuth } from '../auth/AuthContext';
 import { useSocket } from '../hooks/useSocket';
 import { api, solde } from '../api/client';
 import type { ChatMessage, ClipResult, ClipVerdict, LeaderboardEntry } from '../mocks/gameData';
@@ -74,12 +75,16 @@ function accueilBot(): ChatMessage {
 
 export default function Room() {
   const { roomId } = useParams<{ roomId: string }>();
-  const { connecte, etat, erreur: erreurConnexion, emettre, ecouter } = useSocket(roomId ?? null);
+  const { utilisateur } = useAuth();
+  const { connecte, etat, erreur: erreurConnexion, emettre, demander, ecouter } = useSocket(roomId ?? null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([accueilBot()]);
   const [balance, setBalance] = useState(0);
   const [mise, setMise] = useState<number | null>(null);
-  const [indexClip, setIndexClip] = useState(0);
+  const [lancement, setLancement] = useState(false);
+  const [erreurManche, setErreurManche] = useState<string | null>(null);
+  const [signales, setSignales] = useState<Record<string, true>>({});
+  const [hoteParti, setHoteParti] = useState(false);
   // Vote du joueur par claim : sert à griser les boutons déjà utilisés.
   const [mesVotes, setMesVotes] = useState<Record<string, boolean>>({});
   const [resultats, setResultats] = useState<ClipResult[] | null>(null);
@@ -89,11 +94,22 @@ export default function Room() {
   // Sources du bot reçues avant sa réponse, en attente d'un message où s'accrocher.
   const sourcesEnAttente = useRef<Array<{ title?: string; url: string }>>([]);
 
-  const round = etat?.round as { id?: string; status?: string; roundClaims?: ClipEnJeu[] } | null;
+  const round = etat?.round as { id?: string; status?: string; currentClipIndex?: number; roundClaims?: ClipEnJeu[] } | null;
   const clips = round?.roundClaims ?? [];
+  const indexClip = round?.currentClipIndex ?? 0;
   const clipCourant = clips[indexClip]?.claim ?? null;
   const manchOuverte = round?.status === 'OPEN';
+  const manchePreparee = round?.status === 'COUNTDOWN';
+  const partieLancee = etat?.room?.status === 'IN_PROGRESS' && manchOuverte;
   const nombreJoueurs = etat?.members?.length ?? 0;
+  const estHote = etat?.room?.createdBy === utilisateur?.id;
+  const cleClips = clips.map((clip) => clip.claim.id).join(',');
+  const meilleurScore = classement.length > 0
+    ? Math.max(...classement.map((entree) => entree.correctCount))
+    : -1;
+  const joueurGagnant = classement.some((entree) =>
+    entree.userId === utilisateur?.id && entree.correctCount === meilleurScore,
+  );
 
   // Solde de crédits : il ne transite pas par le WebSocket, on le lit via l'API
   // et on le rafraîchit à chaque révélation (les gains viennent d'être versés).
@@ -117,6 +133,31 @@ export default function Room() {
       .catch(() => setMise(null));
   }, [idManche]);
 
+  // Restaure uniquement les votes du joueur. L'index du clip est désormais
+  // porté par la manche et diffusé à tous les joueurs par le serveur.
+  useEffect(() => {
+    if (!idManche || !cleClips) return;
+    let annule = false;
+    setMesVotes({});
+    api<Array<{ claimId: string; userId?: string; isFake: boolean }>>(`/clip-votes/round/${idManche}`)
+      .then((votes) => {
+        if (annule) return;
+        const votesDuJoueur = votes.filter((vote) => !vote.userId || vote.userId === utilisateur?.id);
+        const votesRestaures = Object.fromEntries(votesDuJoueur.map((vote) => [vote.claimId, vote.isFake]));
+        setMesVotes(votesRestaures);
+      })
+      .catch(() => { /* la manche reste jouable si la restauration échoue */ });
+    return () => { annule = true; };
+  }, [cleClips, idManche, utilisateur?.id]);
+
+  const preparationDemandee = useRef(false);
+  useEffect(() => {
+    if (!connecte || !estHote || etat?.room?.status !== 'WAITING' || round || preparationDemandee.current) return;
+    preparationDemandee.current = true;
+    demander('round:prepare', { roomId, claimCount: CLIPS_PAR_MANCHE })
+      .catch((e) => setErreurManche(e instanceof Error ? e.message : 'Préparation impossible'));
+  }, [connecte, demander, estHote, etat?.room?.status, roomId, round]);
+
   function miser(montant: number) {
     if (!roomId || !idManche || mise !== null || montant > balance) return;
     emettre('bet:place', { roomId, roundId: idManche, stake: montant });
@@ -129,7 +170,7 @@ export default function Room() {
       // L'historique n'est lisible qu'après room:join — le back exige d'être
       // membre. Le charger au montage donnait un 403 en console.
       ecouter('room:joined', () => {
-        api<Array<{ id: string; content: string; createdAt: string; user?: { email?: string } }>>(
+        api<Array<{ id: string; content: string; createdAt: string; user?: { displayName?: string | null } }>>(
           `/chat/room/${roomId}`,
         )
           .then((liste) =>
@@ -138,7 +179,7 @@ export default function Room() {
               ...liste.map((m) => ({
                 id: m.id,
                 type: 'user' as const,
-                author: m.user?.email?.split('@')[0] ?? 'joueur',
+                author: m.user?.displayName || 'joueur',
                 content: m.content,
                 timestamp: new Date(m.createdAt).getTime(),
               })),
@@ -151,7 +192,7 @@ export default function Room() {
       // directement donnait des messages vides avec un auteur « joueur ».
       ecouter('chat:message', (d: {
         action?: string;
-        message?: { id: string; content: string; createdAt: string; user?: { email?: string } };
+        message?: { id: string; content: string; createdAt: string; user?: { displayName?: string | null } };
       }) => {
         const m = d?.message;
         if (!m) return;
@@ -160,7 +201,7 @@ export default function Room() {
           {
             id: m.id,
             type: 'user',
-            author: m.user?.email?.split('@')[0] ?? 'joueur',
+            author: m.user?.displayName || 'joueur',
             content: m.content,
             timestamp: new Date(m.createdAt).getTime(),
             // La modération a masqué le message : le composant Chat affiche
@@ -182,6 +223,9 @@ export default function Room() {
             timestamp: Date.now(),
           },
         ]);
+      }),
+      ecouter('room:host_left', () => {
+        setHoteParti(true);
       }),
       // Réponses du bot : on les affiche comme un message de type "bot" pour
       // que le Chat les distingue visuellement des joueurs.
@@ -343,11 +387,10 @@ export default function Room() {
 
   function voter(estFake: boolean) {
     if (!clipCourant || !round?.id || !roomId) return;
-    emettre('clip-vote:submit', { roomId, roundId: round.id, claimId: clipCourant.id, isFake: estFake });
-    setMesVotes((prec) => ({ ...prec, [clipCourant.id]: estFake }));
-    // On enchaîne sur le clip suivant : c'est la progression côté client
-    // évoquée en tête de fichier.
-    if (indexClip < clips.length - 1) setIndexClip((i) => i + 1);
+    setErreurManche(null);
+    demander('clip-vote:submit', { roomId, roundId: round.id, claimId: clipCourant.id, isFake: estFake })
+      .then(() => setMesVotes((prec) => ({ ...prec, [clipCourant.id]: estFake })))
+      .catch((e) => setErreurManche(e instanceof Error ? e.message : 'Vote impossible'));
   }
 
   function envoyerMessage(contenu: string) {
@@ -357,7 +400,6 @@ export default function Room() {
 
   // Clips signalés par le joueur, pour changer le libellé du bouton. On ne
   // vide pas cet état entre les manches : un clip déjà signalé le reste.
-  const [signales, setSignales] = useState<Record<string, true>>({});
   function signalerClip() {
     if (!clipCourant || !roomId || signales[clipCourant.id]) return;
     emettre('clip:report', { roomId, roundId: round?.id, claimId: clipCourant.id });
@@ -366,36 +408,45 @@ export default function Room() {
     setSignales((prec) => ({ ...prec, [clipCourant.id]: true }));
   }
 
-  // Lancement d'une manche. Sans ce bouton, aucune partie ne pouvait démarrer
-  // depuis l'interface : il fallait appeler l'API à la main. Le serveur tire
-  // lui-même les clips, on ne lui envoie que leur nombre et la durée.
-  const [lancement, setLancement] = useState(false);
-  const [erreurManche, setErreurManche] = useState<string | null>(null);
+  // Les transitions de manche sont décidées par le serveur et diffusées à tous.
   async function lancerManche() {
-    if (!roomId) return;
+    if (!roomId || !round?.id) return;
     setLancement(true);
     setErreurManche(null);
     try {
-      const resultat = await api<{ alreadyActive?: boolean }>('/rounds', {
-        method: 'POST',
-        body: { roomId, claimCount: CLIPS_PAR_MANCHE, durationSeconds: 300 },
-      });
-      if (resultat.alreadyActive) {
-        setErreurManche('Une manche est déjà en cours.');
-        return;
-      }
-      // Pas besoin de recharger : le serveur diffuse le nouvel état par
-      // WebSocket, la page se met à jour toute seule.
-      setIndexClip(0);
+      await demander('round:start', { roomId, roundId: round.id });
       setMesVotes({});
       setResultats(null);
     } catch (e) {
-      // Cas courants : on n'est pas l'hôte du salon, ou une manche est déjà
-      // en cours. On l'affiche au lieu de laisser le bouton sans effet.
       setErreurManche(e instanceof Error ? e.message : 'Lancement impossible');
     } finally {
       setLancement(false);
     }
+  }
+
+  async function passerAuClipSuivant() {
+    if (!roomId || !round?.id) return;
+    setErreurManche(null);
+    try {
+      await demander('round:next', { roomId, roundId: round.id });
+    } catch (e) {
+      setErreurManche(e instanceof Error ? e.message : 'Impossible de passer au clip suivant');
+    }
+  }
+
+  async function voirVerdict() {
+    if (!roomId || !round?.id) return;
+    setErreurManche(null);
+    try {
+      await demander('round:reveal', { roomId, roundId: round.id });
+    } catch (e) {
+      setErreurManche(e instanceof Error ? e.message : 'Impossible d’afficher le verdict');
+    }
+  }
+
+  function quitterPartie() {
+    if (roomId) emettre('room:leave', { roomId });
+    window.location.assign('/play');
   }
 
   if (!roomId) {
@@ -421,6 +472,12 @@ export default function Room() {
         }}
       />
 
+      {hoteParti && (
+        <p role="alert" className="rounded-lg border border-amber-300/40 bg-amber-300/10 px-4 py-3 text-base font-semibold text-amber-200">
+          L’hôte a quitté la partie. Veuillez quitter la partie.
+        </p>
+      )}
+
       {/* État de la connexion : un joueur doit comprendre pourquoi rien ne
           bouge si le réseau est coupé, plutôt que de voir une page figée. */}
       {!connecte && (
@@ -433,50 +490,54 @@ export default function Room() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-gris-krystal rounded-xl p-3 space-y-3">
           <div className="relative">
-            {clipCourant?.mediaRef ? (
+            {partieLancee && clipCourant?.mediaRef ? (
               <VideoPlayer src={clipCourant.mediaRef} />
             ) : (
-              // Beaucoup de claims n'ont pas encore de vidéo associée : on
-              // affiche alors l'affirmation, ce qui reste parfaitement jouable.
               <div className="aspect-video bg-noir-krystal rounded flex items-center justify-center p-8">
                 <p className="text-white text-lg text-center">
-                  {clipCourant?.text ?? 'En attente du lancement de la manche...'}
+                  {partieLancee
+                    ? (clipCourant?.text ?? 'En attente du clip...')
+                    : resultats
+                      ? 'La partie est terminée !'
+                      : 'En attente du lancement de la manche...'}
                 </p>
               </div>
             )}
           </div>
 
-          {clipCourant && (
+          {partieLancee && clipCourant && (
             <p className="text-white text-sm">{clipCourant.text}</p>
           )}
 
-          {/* Aucune manche en cours : on propose de la lancer. */}
           {!round && (
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={lancerManche}
-                disabled={lancement || !connecte || nombreJoueurs < 2}
-                className="button-blue-d px-4 py-3 disabled:opacity-40"
-              >
-                {lancement ? 'Lancement...' : `Lancer une manche (${CLIPS_PAR_MANCHE} clips)`}
-              </button>
-              {connecte && nombreJoueurs < 2 && (
-                <p className="text-white/50 text-sm">Il faut au moins 2 joueurs présents pour lancer une manche.</p>
+              <p className="text-white/50 text-sm">{estHote ? 'Préparation de la manche...' : 'En attente de la préparation de la manche par l’hôte.'}</p>
+            </div>
+          )}
+
+          {manchePreparee && (
+            <div className="flex flex-col gap-2">
+              {estHote ? (
+                <button
+                  type="button"
+                  onClick={lancerManche}
+                  disabled={lancement || !connecte || nombreJoueurs < 2}
+                  className="button-blue-d px-4 py-3 disabled:opacity-40"
+                >
+                  {lancement ? 'Lancement...' : `Lancer la partie (${clips.length} clips)`}
+                </button>
+              ) : (
+                <p className="text-white/50 text-sm">En attente du lancement par l’hôte.</p>
               )}
-              {erreurManche && (
-                <p role="alert" className="text-red-l text-sm">{erreurManche}</p>
+              {estHote && connecte && nombreJoueurs < 2 && (
+                <p className="text-white/50 text-sm">Il faut au moins 2 joueurs présents pour lancer une partie.</p>
               )}
             </div>
           )}
 
-          {/* Mise de la manche. Le serveur acceptait « bet:place » depuis le
-              début, mais rien ne l'émettait : le pot restait donc à zéro et les
-              crédits ne servaient à rien. Une seule mise par manche, posée
-              pendant que la fenêtre est ouverte. */}
-          {round && manchOuverte && mise === null && (
+          {round && manchePreparee && mise === null && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-white/50 text-sm">Ta mise :</span>
+              <span className="text-white/50 text-sm">Fais ta mise pour que l’hôte puisse lancer la partie :</span>
               {MISES.map((montant) => (
                 <button
                   key={montant}
@@ -492,50 +553,60 @@ export default function Room() {
               <span className="text-white/30 text-xs">solde {balance}</span>
             </div>
           )}
-          {round && mise !== null && (
+          {round && manchePreparee && mise !== null && (
             <p className="text-emerald-400/80 text-sm">
               Mise enregistrée : {mise}.
             </p>
           )}
 
-          {/* Vote good/fake : le cœur du jeu. Désactivé hors fenêtre ouverte ou
-              si le joueur a déjà tranché ce clip. */}
+          {manchePreparee && mise === null && (
+            <p className="text-amber-300/80 text-sm">Tu dois miser avant le lancement de la partie.</p>
+          )}
+
           <div className="flex gap-3">
             <button
               type="button"
-              disabled={!manchOuverte || dejaVote || !clipCourant}
+              disabled={!partieLancee || dejaVote || !clipCourant}
               onClick={() => voter(false)}
-              className="flex-1 button-blue-l px-4 py-3 disabled:opacity-40"
+              className="flex-1 button-green-l px-4 py-3 disabled:opacity-40"
             >
-              Good news
+              FACT
             </button>
             <button
               type="button"
-              disabled={!manchOuverte || dejaVote || !clipCourant}
+              disabled={!partieLancee || dejaVote || !clipCourant}
               onClick={() => voter(true)}
               className="flex-1 button-red-l px-4 py-3 disabled:opacity-40"
             >
-              Fake news
+              FAKE
             </button>
           </div>
           {dejaVote && (
-            <p className="text-gray-400 text-sm">Vote enregistré pour ce clip.</p>
+            <p className="text-gray-400 text-sm">Vote définitif enregistré pour ce clip. En attente de l’hôte.</p>
           )}
 
-          {/* Tous les clips votés, manche encore ouverte : sans ce message on
-              croit l'application bloquée, alors qu'on attend simplement la fin
-              du chronomètre pour la révélation. */}
-          {manchOuverte && clips.length > 0 && Object.keys(mesVotes).length >= clips.length && (
-            <p className="text-emerald-400/80 text-sm">
-              Tu as voté sur tous les clips. La révélation arrive à la fin du temps imparti.
-            </p>
+          {partieLancee && !dejaVote && <p className="text-amber-300/80 text-sm">Vote Fact ou Fake pour continuer.</p>}
+
+          {partieLancee && estHote && dejaVote && indexClip < clips.length - 1 && (
+            <button type="button" onClick={passerAuClipSuivant} className="button-blue-d w-full px-4 py-3">
+              Vidéo suivante
+            </button>
           )}
+          {partieLancee && estHote && indexClip >= clips.length - 1 && dejaVote && (
+            <button type="button" onClick={voirVerdict} className="button-blue-d w-full px-4 py-3">
+              Voir le verdict
+            </button>
+          )}
+          {partieLancee && !estHote && dejaVote && (
+            <p className="text-white/50 text-sm">En attente de l’hôte pour passer à la suite.</p>
+          )}
+          {estHote && erreurManche && <p role="alert" className="text-red-l text-sm">{erreurManche}</p>}
 
           {/* Signalement : le corpus est constitué automatiquement, et quelques
               vidéos ne correspondent pas à leur affirmation. Le joueur est le
               mieux placé pour le voir. Volontairement discret — ce n'est pas
               une action de jeu, et il ne faut pas la confondre avec un vote. */}
-          {clipCourant && (
+          {partieLancee && clipCourant && (
             <button
               type="button"
               onClick={signalerClip}
@@ -568,7 +639,17 @@ export default function Room() {
           totalClips={resultats.length}
           clipResults={resultats}
           leaderboard={classement}
+          isWinner={joueurGagnant}
         />
+      )}
+      {resultats && (
+        <button
+          type="button"
+          onClick={quitterPartie}
+          className="text-base sm:text-lg button-red-d px-3 sm:px-5 py-1"
+        >
+          Quitter la partie
+        </button>
       )}
     </section>
   );

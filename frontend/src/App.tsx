@@ -33,6 +33,7 @@ export default function App() {
             tapant l'URL : la « connexion » n'était qu'un drapeau localStorage. */}
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/play" element={<Play />} />
           {/* Le salon a besoin de SON identifiant : sans lui la page ne peut ni

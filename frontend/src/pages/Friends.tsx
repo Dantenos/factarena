@@ -73,6 +73,7 @@ export default function Friends() {
       const detail = (event as CustomEvent<{ type?: string; requestId?: string }>).detail;
       if (detail?.requestId && (detail.type === 'request_accepted' || detail.type === 'request_declined')) {
         setDemandesEnvoyees((precedentes) => precedentes.filter((demande) => demande.id !== detail.requestId));
+        setMessage(null);
       }
       rafraichir();
       rafraichirDemandes();
@@ -217,7 +218,12 @@ export default function Friends() {
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{nomDe(ami)}</p>
+                    <Link
+                      to={`/profile/${ami.id}`}
+                      className="block truncate text-sm font-semibold hover:text-bleu-l hover:underline"
+                    >
+                      {nomDe(ami)}
+                    </Link>
                     <Presence statut={ami.status} />
                   </div>
                   {/* Un ami en partie est rejoignable d'un clic : c'est tout

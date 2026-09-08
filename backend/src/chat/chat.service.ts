@@ -44,7 +44,7 @@ export class ChatService {
       },
       include: {
         user: {
-          select: { id: true, email: true, avatarUrl: true, status: true },
+          select: { id: true, email: true, displayName: true, avatarUrl: true, status: true },
         },
       },
     });
@@ -63,7 +63,7 @@ export class ChatService {
       orderBy: { createdAt: 'asc' },
       include: {
         user: {
-          select: { id: true, email: true, avatarUrl: true, status: true },
+          select: { id: true, email: true, displayName: true, avatarUrl: true, status: true },
         },
       },
     });

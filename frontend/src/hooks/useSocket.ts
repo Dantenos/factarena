@@ -52,6 +52,7 @@ export function useSocket(roomId: string | null) {
     });
 
     const majEtat = (nouvel: EtatSalon) => {
+      if (!nouvel?.room) return;
       if (nouvel?.serverTime) {
         decalageRef.current = new Date(nouvel.serverTime).getTime() - Date.now();
       }
@@ -67,7 +68,7 @@ export function useSocket(roomId: string | null) {
     // traite donc identiquement.
     const EVENEMENTS_ETAT = [
       'room:state', 'room:joined', 'room:reconnected',
-      'round:state', 'round:open', 'round:locked', 'round:revealed', 'round:finished',
+      'round:state', 'round:prepared', 'round:started', 'round:next', 'round:open', 'round:locked', 'round:revealed', 'round:finished',
     ];
     EVENEMENTS_ETAT.forEach((evenement) => socket.on(evenement, majEtat));
 
@@ -76,7 +77,6 @@ export function useSocket(roomId: string | null) {
     socket.on('connect_error', () => setConnecte(false));
 
     return () => {
-      socket.emit('room:leave', { roomId });
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -86,6 +86,21 @@ export function useSocket(roomId: string | null) {
   /** Émet un événement vers la gateway (no-op si la socket n'est pas prête). */
   const emettre = useCallback((evenement: string, donnees: unknown) => {
     socketRef.current?.emit(evenement, donnees);
+  }, []);
+
+  const demander = useCallback(<T,>(evenement: string, donnees: unknown): Promise<T> => {
+    const socket = socketRef.current;
+    if (!socket) return Promise.reject(new Error('Connexion au salon indisponible'));
+    return new Promise<T>((resolve, reject) => {
+      socket.timeout(6000).emit(evenement, donnees, (erreur: Error | null, reponse: T) => {
+        if (erreur) reject(erreur);
+        else {
+          const resultat = reponse as T & { ok?: boolean; message?: string };
+          if (resultat && resultat.ok === false) reject(new Error(resultat.message ?? 'Action impossible'));
+          else resolve(reponse);
+        }
+      });
+    });
   }, []);
 
   /** Abonnement ponctuel à un événement, nettoyé automatiquement. */
@@ -101,5 +116,5 @@ export function useSocket(roomId: string | null) {
   /** Heure du SERVEUR estimée : à utiliser pour la fenêtre de vote. */
   const maintenantServeur = useCallback(() => Date.now() + decalageRef.current, []);
 
-  return { connecte, etat, erreur, emettre, ecouter, maintenantServeur };
+  return { connecte, etat, erreur, emettre, demander, ecouter, maintenantServeur };
 }

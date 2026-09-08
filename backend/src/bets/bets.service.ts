@@ -25,7 +25,7 @@ export class BetsService {
     if (existingBet) return { ...existingBet, alreadyPlaced: true };
     try {
       return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const open = await tx.round.updateMany({ where: { id: data.roundId, status: 'OPEN', locksAt: { gt: new Date() }, room: { status: { not: 'FINISHED' } } }, data: { updatedAt: new Date() } });
+        const open = await tx.round.updateMany({ where: { id: data.roundId, status: { in: ['COUNTDOWN', 'OPEN'] }, room: { status: { not: 'FINISHED' } } }, data: { updatedAt: new Date() } });
         if (open.count !== 1) throw new BadRequestException('Les mises sont closes pour cette manche');
         await this.ledger.debitForBet(tx, userId, data.stake);
         return tx.bet.create({ data: { roundId: data.roundId, userId, stake: data.stake } });

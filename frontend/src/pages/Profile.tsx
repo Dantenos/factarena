@@ -2,6 +2,7 @@
 // grille et on la remplit avec /stats/me et /stats/leaderboard, qui existent
 // déjà côté back (backend/src/stats/).
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { api, chercherJoueurs, envoyerAvatar, modifierProfil, reclamerRattrapage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
@@ -57,7 +58,10 @@ interface MancheJouee {
 const SEUIL_RATTRAPAGE = 50;
 
 export default function Profile() {
+  const { userId } = useParams<{ userId: string }>();
   const { utilisateur, rafraichir } = useAuth();
+  const profilId = userId ?? utilisateur?.id;
+  const estMonProfil = !userId || userId === utilisateur?.id;
   const [stats, setStats] = useState<Stats | null>(null);
   const [podium, setPodium] = useState<LigneClassement[]>([]);
   const [historique, setHistorique] = useState<MancheJouee[]>([]);
@@ -84,39 +88,44 @@ export default function Profile() {
   }
 
   useEffect(() => {
+    if (!profilId) return;
     // Pas de console.error dans les catch : une statistique indisponible n'est
     // pas une erreur de l'application, et le sujet exige une console vierge.
-    api<Stats>('/stats/me').then(setStats).catch(() => setStats(null));
+    const cheminProfil = userId ? `/stats/users/${userId}` : '/stats/me';
+    const cheminHistorique = userId ? `/stats/users/${userId}/round-history` : '/stats/me/round-history';
+    api<Stats>(cheminProfil).then(setStats).catch(() => setStats(null));
     api<LigneClassement[]>('/stats/leaderboard')
       // Le back renvoie tout le monde, classé. On n'affiche que le podium.
       .then((liste) => setPodium(liste.slice(0, 3)))
       .catch(() => setPodium([]));
     // Le module « statistiques » du sujet demande l'historique des parties, pas
     // seulement les totaux : dates, résultats et adversaires.
-    api<MancheJouee[]>('/stats/me/round-history')
+    api<MancheJouee[]>(cheminHistorique)
       .then(setHistorique)
       .catch(() => setHistorique([]));
-  }, []);
+  }, [profilId, userId]);
 
   useEffect(() => {
+    if (!profilId) return;
     const mettreAJourHistorique = () => {
-      api<MancheJouee[]>('/stats/me/round-history').then(setHistorique).catch(() => undefined);
+      const chemin = userId ? `/stats/users/${userId}/round-history` : '/stats/me/round-history';
+      api<MancheJouee[]>(chemin).then(setHistorique).catch(() => undefined);
     };
     window.addEventListener('factarena:history-update', mettreAJourHistorique);
     return () => window.removeEventListener('factarena:history-update', mettreAJourHistorique);
-  }, []);
+  }, [profilId, userId]);
 
   useEffect(() => {
     const mettreAJourSolde = (event: Event) => {
       const soldeMisAJour = (event as CustomEvent<{ userId?: string; virtualBalance?: number }>).detail;
-      if (soldeMisAJour?.userId !== utilisateur?.id || typeof soldeMisAJour.virtualBalance !== 'number') return;
+      if (soldeMisAJour?.userId !== profilId || typeof soldeMisAJour.virtualBalance !== 'number') return;
       setStats((precedent) => precedent
         ? { ...precedent, virtualBalance: soldeMisAJour.virtualBalance }
         : precedent);
     };
     window.addEventListener('factarena:balance-update', mettreAJourSolde);
     return () => window.removeEventListener('factarena:balance-update', mettreAJourSolde);
-  }, [utilisateur?.id]);
+  }, [profilId]);
 
   useEffect(() => {
     const mettreAJourProfil = (event: Event) => {
@@ -150,7 +159,10 @@ export default function Profile() {
 
   const nomDe = (profil?: ProfilJoueur | null, secours?: string) =>
     profil?.displayName || profil?.email?.split('@')[0]?.slice(0, 30) || secours || 'joueur';
-  const pseudo = nomDe(stats?.user, utilisateur?.displayName || utilisateur?.email?.split('@')[0]?.slice(0, 30));
+  const pseudo = nomDe(
+    stats?.user,
+    estMonProfil ? utilisateur?.displayName || utilisateur?.email?.split('@')[0]?.slice(0, 30) : undefined,
+  );
 
   // Le back borne déjà le pseudo, on applique la même règle ici : la
   // validation est double, formulaire et serveur.
@@ -243,8 +255,8 @@ export default function Profile() {
           ça la fiche débordait de la colonne sur un écran de 320 px. */}
       <div className="grid gap-4 p-4 sm:p-8 lg:grid-rows-3 lg:col-span-2 lg:col-start-1 bg-gris-krystal text-white rounded-xl">
         <div className="min-w-0 lg:row-start-1 bg-noir-krystal rounded-xl p-4 flex items-center gap-4">
-          {utilisateur?.avatarUrl ? (
-            <img src={utilisateur.avatarUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0" />
+          {stats?.user.avatarUrl ? (
+            <img src={stats.user.avatarUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0" />
           ) : (
             // Pas d'avatar : une initiale plutôt qu'une image cassée.
             <span className="w-14 h-14 rounded-full bg-grisclair-krystal flex items-center justify-center text-xl font-semibold shrink-0">
@@ -252,7 +264,7 @@ export default function Profile() {
             </span>
           )}
           <div className="min-w-0 flex-1">
-            {edition ? (
+            {estMonProfil && edition ? (
               <form onSubmit={enregistrerPseudo} className="flex gap-2 items-center">
                 <label htmlFor="pseudo" className="sr-only">Nouveau pseudo</label>
                 <input
@@ -280,13 +292,15 @@ export default function Profile() {
                  la coupure : invisible, et surtout impossible à cliquer. */
               <p className="font-semibold flex items-center gap-2 min-w-0">
                 <span className="truncate">{pseudo}</span>
-                <button
-                  type="button"
-                  onClick={() => { setNouveauPseudo(pseudo); setEdition(true); }}
-                  className="text-xs text-white/30 hover:text-white font-normal shrink-0"
-                >
-                  modifier
-                </button>
+                {estMonProfil && (
+                  <button
+                    type="button"
+                    onClick={() => { setNouveauPseudo(pseudo); setEdition(true); }}
+                    className="text-xs text-white/30 hover:text-white font-normal shrink-0"
+                  >
+                    modifier
+                  </button>
+                )}
               </p>
             )}
             <p className="text-white/40 text-sm">
@@ -294,22 +308,24 @@ export default function Profile() {
             </p>
             {/* Sous la mise minimale, le compte était enfermé : plus rien à
                 engager, donc plus aucun gain possible, et rien pour remonter. */}
-            {stats && stats.virtualBalance < SEUIL_RATTRAPAGE && (
+            {estMonProfil && stats && stats.virtualBalance < SEUIL_RATTRAPAGE && (
               <button
                 type="button"
                 onClick={rattraper}
                 disabled={rattrapageEnCours}
                 className="button-blue-l px-3 py-1 text-xs mt-1 disabled:opacity-50"
               >
-                {rattrapageEnCours ? '...' : 'Réclamer 200 crédits'}
+                {rattrapageEnCours ? '...' : 'Réclamer 250 crédits'}
               </button>
             )}
             {/* L'envoi part dès la sélection du fichier : un bouton « envoyer »
                 séparé n'apporterait rien pour un seul champ. */}
-            <label className="text-xs text-white/30 hover:text-white cursor-pointer">
-              changer d'avatar (5 Mo max, PNG, JPEG/JPG, 2048 × 2048 max)
-              <input id="avatar" name="avatar" type="file" accept="image/png,image/jpeg" className="hidden" onChange={choisirAvatar} />
-            </label>
+            {estMonProfil && (
+              <label className="text-xs text-white/30 hover:text-white cursor-pointer">
+                changer d'avatar (5 Mo max, PNG, JPEG/JPG, 2048 × 2048 max)
+                <input id="avatar" name="avatar" type="file" accept="image/png,image/jpeg" className="hidden" onChange={choisirAvatar} />
+              </label>
+            )}
             {messageProfil && <p className="text-red-l text-xs mt-1">{messageProfil}</p>}
           </div>
         </div>

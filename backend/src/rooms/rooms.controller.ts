@@ -19,7 +19,9 @@ export class RoomsController {
   state(@Param('id', CuidParamPipe) id: string) { return this.roomsService.getState(id); }
 
   @Get(':id/members')
-  members(@Param('id', CuidParamPipe) id: string) { return this.roomsService.getMembers(id); }
+  members(@Param('id', CuidParamPipe) id: string, @Request() req: { user: { userId: string } }) {
+    return this.roomsService.assertCanPlay(req.user.userId).then(() => this.roomsService.getMembers(id));
+  }
 
   @Get(':id/history')
   history(@Param('id', CuidParamPipe) id: string) { return this.roomsService.getHistory(id); }
