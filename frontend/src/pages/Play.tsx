@@ -5,7 +5,7 @@
 // Elle interroge maintenant les vrais endpoints du back.
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
+import { api, solde } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 
 interface Salon {
@@ -13,6 +13,9 @@ interface Salon {
   name: string;
   status: string;
 }
+
+const MINIMUM_CREDITS_POUR_JOUER = 50;
+const MESSAGE_CREDITS_INSUFFISANTS = 'Crédits insuffisants. Veuillez recharger vos crédits depuis votre page de profil.';
 
 export default function Play() {
   const navigate = useNavigate();
@@ -27,6 +30,11 @@ export default function Play() {
     setErreur(null);
     setRoomPleine(null);
     try {
+      const { virtualBalance } = await solde();
+      if (virtualBalance < MINIMUM_CREDITS_POUR_JOUER) {
+        setErreur(MESSAGE_CREDITS_INSUFFISANTS);
+        return;
+      }
       const membres = await api<Array<{ id: string }>>(`/rooms/${salon.id}/members`);
       const dejaDansLaRoom = membres.some((membre) => membre.id === utilisateur?.id);
       if (membres.length >= 5 && !dejaDansLaRoom) {
@@ -59,6 +67,11 @@ export default function Play() {
     setCreation(true);
     setErreur(null);
     try {
+      const { virtualBalance } = await solde();
+      if (virtualBalance < MINIMUM_CREDITS_POUR_JOUER) {
+        setErreur(MESSAGE_CREDITS_INSUFFISANTS);
+        return;
+      }
       // Nom horodaté : deux salons créés à la suite restent distinguables sans
       // demander une saisie à l'utilisateur.
       const salon = await api<Salon>('/rooms', {

@@ -10,6 +10,7 @@ import {
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -56,6 +57,7 @@ export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RealtimeGateway.name);
   private readonly socketsByUser = new Map<string, Set<string>>();
+  private readonly reconnexions = new Map<string, { roomId: string; timer: ReturnType<typeof setTimeout> }>();
   // Nettement sous le TTL de 45 s de la présence, pour qu'elle n'expire jamais
   // tant que la socket vit.
   private static readonly BATTEMENT_MS = 20_000;
@@ -192,8 +194,17 @@ export class RealtimeGateway
     this.removeSocket(userId, socket.id);
     const leftPresence = await this.roomPresence.leave(socket.id);
     if (leftPresence?.leftRoom) {
+      const room = await this.roomsService.findOne(leftPresence.roomId);
+      const hoteParti = room.createdBy === userId;
+      if (hoteParti && room.status === 'IN_PROGRESS') {
+        this.programmerFermetureApresDeconnexion(leftPresence.roomId, userId);
+      } else {
+        const ferme = await this.roomsService.closeIfHostLeaves(leftPresence.roomId, userId);
+        if (ferme) this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:host_left');
+      }
       this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:member_left', { userId });
       this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:state', await this.roomsService.getState(leftPresence.roomId));
+      this.broadcastRoomListUpdate();
     }
     if (!this.socketsByUser.has(userId)) {
       await this.prisma.user.updateMany({ where: { id: userId }, data: { status: 'OFFLINE' } });
@@ -207,6 +218,7 @@ export class RealtimeGateway
 
   /** Ce qu'on dit au joueur quand un salon ne peut pas être rejoint. */
   private messageSalonInaccessible(error: unknown): string {
+    if (error instanceof ForbiddenException) return error.message;
     return error instanceof NotFoundException || error instanceof BadRequestException
       ? 'Ce salon n’existe plus. Retourne au lobby pour en choisir un autre.'
       : 'Impossible de rejoindre ce salon.';
@@ -218,6 +230,19 @@ export class RealtimeGateway
     try {
       this.assertCuid(body?.roomId, 'roomId');
       room = await this.roomsService.findOne(body?.roomId);
+      const roomDejaRejointe = await this.roomPresence.getCurrentRoomId(socket.data.userId);
+      const reconnexion = this.reconnexions.get(socket.data.userId);
+      const reconnexionAutorisee = reconnexion?.roomId === room.id;
+      if (reconnexionAutorisee) {
+        clearTimeout(reconnexion!.timer);
+        this.reconnexions.delete(socket.data.userId);
+      }
+      if (room.status !== 'WAITING' && roomDejaRejointe !== room.id && !reconnexionAutorisee) {
+        throw new BadRequestException('Cette partie est déjà en cours ou terminée.');
+      }
+      if (room.status === 'WAITING' && !reconnexionAutorisee) {
+        await this.roomsService.assertCanPlay(socket.data.userId);
+      }
     } catch (error) {
       // Même raison qu'à la connexion : l'exception partait dans un événement
       // « exception » que le client n'écoute pas.
@@ -264,7 +289,12 @@ export class RealtimeGateway
     const currentRoom = await this.roomPresence.getCurrentRoomId(socket.data.userId);
     await this.prisma.user.updateMany({ where: { id: socket.data.userId }, data: { status: currentRoom ? 'IN_GAME' : 'ONLINE' } });
     this.broadcastPresence(socket.data.userId, currentRoom ? 'IN_GAME' : 'ONLINE', currentRoom);
-    if (leftPresence?.leftRoom) this.server.to(this.roomChannel(roomId)).emit('room:member_left', { userId: socket.data.userId });
+    if (leftPresence?.leftRoom) {
+      const hoteParti = await this.roomsService.closeIfHostLeaves(roomId, socket.data.userId);
+      if (hoteParti) this.server.to(this.roomChannel(roomId)).emit('room:host_left');
+      this.server.to(this.roomChannel(roomId)).emit('room:member_left', { userId: socket.data.userId });
+      this.broadcastRoomListUpdate();
+    }
     this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
     return { roomId };
   }
@@ -311,6 +341,48 @@ export class RealtimeGateway
       );
     }
     return vote;
+  }
+
+  @SubscribeMessage('round:prepare')
+  async prepareRound(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: RoomPayload & { claimCount?: number }) {
+    this.assertCuid(body?.roomId, 'roomId');
+    await this.assertInRoom(socket, body.roomId);
+    try {
+      const round = await this.roundsService.prepare(body.roomId, socket.data.userId, body.claimCount ?? 5);
+      await this.publishRoundState(body.roomId, 'round:prepared', round.id);
+      return round;
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : 'Préparation impossible' };
+    }
+  }
+
+  @SubscribeMessage('round:start')
+  async startRound(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: RoomPayload & { roundId: string }) {
+    this.assertCuid(body?.roomId, 'roomId'); this.assertCuid(body?.roundId, 'roundId');
+    await this.assertInRoom(socket, body.roomId);
+    await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
+    try {
+      const round = await this.roundsService.start(body.roundId, socket.data.userId);
+      await this.publishRoundState(body.roomId, 'round:started', body.roundId);
+      this.broadcastRoomListUpdate();
+      return round;
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : 'Lancement impossible' };
+    }
+  }
+
+  @SubscribeMessage('round:next')
+  async nextRoundClip(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: RoomPayload & { roundId: string }) {
+    this.assertCuid(body?.roomId, 'roomId'); this.assertCuid(body?.roundId, 'roundId');
+    await this.assertInRoom(socket, body.roomId);
+    await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
+    try {
+      const round = await this.roundsService.next(body.roundId, socket.data.userId);
+      await this.publishRoundState(body.roomId, 'round:next', body.roundId);
+      return round;
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : 'Passage au clip suivant impossible' };
+    }
   }
 
   /**
@@ -362,11 +434,20 @@ export class RealtimeGateway
     this.assertCuid(body?.roundId, 'roundId');
     await this.assertInRoom(socket, body.roomId);
     await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
-    const round = await this.roundsService.reveal(body.roundId, socket.data.userId);
-    const state = await this.roomsService.getState(body.roomId);
-    this.server.to(this.roomChannel(body.roomId)).emit('round:revealed', { round, ...this.liveStats(state) });
-    this.server.to(this.roomChannel(body.roomId)).emit('round:state', state);
-    return round;
+    try {
+      const round = await this.roundsService.reveal(body.roundId, socket.data.userId);
+      const state = await this.roomsService.getState(body.roomId);
+      // Tous les événements de transition transportent le même état complet.
+      // Une enveloppe { round, pot } ferait perdre room au frontend et ferait
+      // planter le rendu au moment où le verdict apparaît.
+      this.server.to(this.roomChannel(body.roomId)).emit('round:revealed', state);
+      const verdicts = await this.aiService.generateRoundVerdicts(body.roundId);
+      const classement = await this.roundsService.classement(body.roundId);
+      if (verdicts.length > 0) await this.publishRoundVerdicts(body.roomId, body.roundId, verdicts, classement);
+      return round;
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : 'Révélation impossible' };
+    }
   }
 
   @SubscribeMessage('chat:send')
@@ -512,6 +593,14 @@ export class RealtimeGateway
   private async restoreRoom(socket: AuthenticatedSocket, roomId: string) {
     this.assertCuid(roomId, 'roomId');
     const room = await this.roomsService.findOne(roomId);
+    const reconnexion = this.reconnexions.get(socket.data.userId);
+    if (room.status !== 'WAITING' && reconnexion?.roomId !== room.id) {
+      throw new BadRequestException('Cette partie est déjà en cours ou terminée.');
+    }
+    if (reconnexion) {
+      clearTimeout(reconnexion.timer);
+      this.reconnexions.delete(socket.data.userId);
+    }
     socket.data.roomId = room.id;
     await socket.join(this.roomChannel(room.id));
     await this.roomPresence.join(socket.id, socket.data.userId, room.id);
@@ -531,6 +620,25 @@ export class RealtimeGateway
   }
 
   private roomChannel(roomId: string) { return `room:${roomId}`; }
+
+  private programmerFermetureApresDeconnexion(roomId: string, userId: string) {
+    const ancien = this.reconnexions.get(userId);
+    if (ancien) clearTimeout(ancien.timer);
+    const timer = setTimeout(() => {
+      void (async () => {
+        const reconnexion = this.reconnexions.get(userId);
+        if (!reconnexion || reconnexion.roomId !== roomId) return;
+        this.reconnexions.delete(userId);
+        const ferme = await this.roomsService.closeIfHostLeaves(roomId, userId);
+        if (ferme) {
+          this.server.to(this.roomChannel(roomId)).emit('room:host_left');
+          this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
+          this.broadcastRoomListUpdate();
+        }
+      })();
+    }, 15_000);
+    this.reconnexions.set(userId, { roomId, timer });
+  }
 
   private addSocket(userId: string, socketId: string) {
     const sockets = this.socketsByUser.get(userId) || new Set<string>();

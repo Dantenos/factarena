@@ -1,27 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-// Page d'accueil. Elle appelle /api/health (le backend, via nginx, même origine)
-// pour vérifier que la chaîne front -> nginx -> back fonctionne. L'erreur est
-// gérée proprement (aucune exception non catchée -> aucune erreur console).
 export default function Home() {
-  const [apiStatus, setApiStatus] = useState<string>('...');
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((data: { status: string }) => setApiStatus(data.status))
-      .catch(() => setApiStatus('indisponible'));
-  }, []);
-
   return (
 	<section className="grid w-full grid-cols-1 lg:grid-cols-2 gap-8 p-4 sm:p-8 bg-noir-krystal min-h-full">
 
 		<div className="order-1 min-w-0 lg:row-start-1">
 			<h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold text-white mt-2 whitespace-nowrap">FactArena</h1>
-			<p className="p-2 text-white">
-				État de l'API backend : <strong>{apiStatus}</strong>
-			</p>
 			<div className="mt-6 mb-8">
 				<Link to="/play" className="button-blue-d px-10 sm:px-15 py-3 text-2xl sm:text-[30px]">Jouer</Link>
 			</div>

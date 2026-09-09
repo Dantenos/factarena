@@ -16,6 +16,21 @@ export class RoundsController {
   @Post()
   create(@Body() body: CreateRoundDto, @Request() req: { user: { userId: string } }) { return this.roundsService.create(body, req.user.userId); }
 
+  @Post('prepare')
+  prepare(@Body() body: { roomId: string; claimCount?: number }, @Request() req: { user: { userId: string } }) {
+    return this.roundsService.prepare(body.roomId, req.user.userId, body.claimCount ?? 5);
+  }
+
+  @Post(':id/start')
+  start(@Param('id', CuidParamPipe) id: string, @Request() req: { user: { userId: string } }) {
+    return this.roundsService.start(id, req.user.userId);
+  }
+
+  @Post(':id/next')
+  next(@Param('id', CuidParamPipe) id: string, @Request() req: { user: { userId: string } }) {
+    return this.roundsService.next(id, req.user.userId);
+  }
+
   @Get('room/:roomId')
   findByRoom(@Param('roomId', CuidParamPipe) roomId: string) { return this.roundsService.findByRoom(roomId); }
 

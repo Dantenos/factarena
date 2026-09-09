@@ -14,7 +14,7 @@ export default function Privacy() {
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold">Politique de confidentialité</h1>
           <p className="text-sm text-gray-400">
-            Dernière mise à jour : août 2026 — FactArena est un projet étudiant
+            Dernière mise à jour : août 2026. FactArena est un projet étudiant
             réalisé dans le cadre du cursus de l'école 42.
           </p>
         </header>

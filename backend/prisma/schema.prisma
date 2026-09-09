@@ -146,6 +146,7 @@ model Round {
   id            String      @id @default(cuid())
   roomId        String
   status        RoundStatus @default(OPEN)
+  currentClipIndex Int       @default(0)
   opensAt       DateTime    @default(now())
   locksAt       DateTime
   revealedAt    DateTime?

@@ -9,7 +9,7 @@ export class LedgerService {
   // par l'interface, pas zéro : rester coincé à trente crédits est la même
   // impasse qu'en avoir aucun, puisqu'on ne peut déjà plus rien engager.
   static readonly SEUIL_RATTRAPAGE = 50;
-  static readonly MONTANT_RATTRAPAGE = 200;
+  static readonly MONTANT_RATTRAPAGE = 250;
 
   constructor(
     private readonly prisma: PrismaService,

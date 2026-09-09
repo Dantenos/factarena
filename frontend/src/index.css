@@ -32,6 +32,9 @@
 	.button-blue-l {
 		@apply inline-flex items-center justify-center rounded-xl bg-white border-3 border-bleu-l text-noir-krystal font-semibold transition-colors hover:bg-bleu-l hover:text-white;
 	}
+	.button-green-l {
+		@apply inline-flex items-center justify-center rounded-xl bg-white border-3 border-emerald-500 text-noir-krystal font-semibold transition-colors hover:bg-emerald-500 hover:text-white;
+	}
 	.button-red-l {
 		@apply inline-flex items-center justify-center rounded-xl bg-white border-3 border-red-l text-noir-krystal font-semibold transition-colors hover:bg-red-l hover:text-white;
 	}
