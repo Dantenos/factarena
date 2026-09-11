@@ -1,19 +1,19 @@
 """Accès PostgreSQL du service IA — la table des vecteurs (le corpus RAG).
 
-POURQUOI ce fichier vit ici et pas dans Prisma : Prisma (côté back NestJS) gère
+Ce fichier vit ici et pas dans Prisma parce que Prisma (côté back NestJS) gère
 les tables relationnelles (User, Room...), mais il gère mal le type `vector`.
 La frontière décidée dans docs/ARCHITECTURE.md §5.2 : les tables VECTORIELLES
 sont gérées par le service IA, dans la MÊME base. Les deux mondes se parlent par
 `id`, jamais par jointure Prisma <-> vecteur.
 
-POURQUOI UN SCHÉMA DÉDIÉ `rag` (et pas `public`) : le `prisma db push` du backend
+Le schéma dédié `rag` plutôt que `public` a une raison : le `prisma db push` du backend
 gère le schéma `public` et veut SUPPRIMER toute table qu'il n'y connaît pas —
 dont notre `documents`. En isolant nos tables dans le schéma `rag`, Prisma ne les
 voit plus et ne peut plus les détruire. On règle le search_path sur `rag,public`
 pour que nos requêtes non qualifiées visent `rag.documents`, tout en gardant
 l'accès au type `vector` (extension installée dans `public`).
 
-POURQUOI psycopg en SQL direct (et pas un ORM comme SQLAlchemy) : on a UNE table
+psycopg en SQL direct plutôt qu'un ORM comme SQLAlchemy : on a une seule table
 et quelques requêtes. Un ORM serait une grosse dépendance pour rien, alors que
 du SQL brut se lit et s'explique en soutenance ligne par ligne.
 """

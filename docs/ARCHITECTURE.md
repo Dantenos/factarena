@@ -1,7 +1,7 @@
 # Architecture — ft_transcendence · **FactArena**
 
 > **FactArena — arène de fact-check en temps réel sur les fake news.**
-> Jeu multijoueur temps réel : une compilation de ~10 clips viraux s'enchaîne, on juge
+> Jeu multijoueur temps réel : une compilation de cinq clips viraux s'enchaîne, on juge
 > chaque clip **« good news / fake news »** (crédits virtuels en jeu), puis une IA révèle
 > le verdict **sourcé**. Le plus précis rafle le pot.
 > Projet de fin de tronc commun 42, équipe de 5.
@@ -10,9 +10,8 @@ Ce document est la référence technique de l'équipe. Il explique le **POURQUOI
 choix, pas seulement le QUOI. La source de vérité reste le sujet officiel remis par l'école : en cas de
 contradiction, **c'est le sujet qui gagne**.
 
-> ATTENTION : les points **[À VALIDER]** sont des décisions d'équipe (PO / Tech Lead) ou de staff,
-> pas des faits actés. Le plan de modules ci-dessous a été **audité contre le texte exact
-> du sujet** (références de lignes à l'appui) mais reste à confirmer en équipe.
+> Le plan de modules ci-dessous a été **audité contre le texte exact du sujet**, références
+> de lignes à l'appui.
 
 ---
 
@@ -25,7 +24,7 @@ FactArena fusionne les deux pistes de l'équipe :
 **Boucle de jeu :**
 1. **Auth & lobby** — connexion email+mot de passe (obligatoire) ou 42 OAuth ; le lobby
    montre les salons, les amis + statut en ligne, le solde de crédits et le classement.
-2. **Salon** — plusieurs joueurs rejoignent un salon live ; une **compilation de ~10 clips
+2. **Salon** — plusieurs joueurs rejoignent un salon live ; une **compilation de cinq clips
    viraux** (lecteur embarqué) s'enchaîne. L'état de la manche est **synchronisé par le
    serveur** via WebSocket (horloge autoritaire côté serveur).
 3. **Mise & vote par clip** — le joueur mise une fois des **crédits virtuels** en entrant,
@@ -53,7 +52,7 @@ FactArena fusionne les deux pistes de l'équipe :
 
 > ### Décision d'architecture n°2 (RÉVISÉE ~août 2026) — lecteur vidéo embarqué, mais synchro sur la FENÊTRE DE VOTE, pas sur l'image
 >
-> **Pivot Option B.** On réintègre un **lecteur vidéo embarqué** : une compilation de ~10
+> **Pivot Option B.** On réintègre un **lecteur vidéo embarqué** : une compilation de cinq
 > clips viraux **s'enchaîne pendant la manche**, et les joueurs jugent chaque clip en direct
 > (bouton **« good news » / « fake news »**). Le score est une **course à la précision** — le
 > pot va au plus juste, ça reste PvP à somme nulle (cf. module jeu, la défense tient).
@@ -63,13 +62,12 @@ FactArena fusionne les deux pistes de l'équipe :
 > jusqu'à T+Δ », identique pour tous). C'est ÇA la synchro temps réel notée (IV.1/IV.6) — le
 > pixel de la vidéo, non. Le PvP reste équitable sans le coût du frame-sync.
 >
-> **⚠️ Dépendance assumée :** l'embed rouvre le risque « erreurs console ». On parie sur la
-> lecture « erreurs de source TIERCE tolérées » (test Chrome à l'appui : tout le bruit part
-> sous les domaines plateforme, `localhost` reste à 0). → player en **iframe propre**
-> (YouTube/Facebook de préférence) ; **jamais** de widget X/Insta/TikTok qui exécute son JS
-> dans notre origine. Interprétation non validée par un staff à ce stade — risque connu.
+> **Dépendance assumée :** l'embed doit rester une iframe pure, YouTube ou Facebook. Mesuré
+> sous Chrome, tout le bruit console part alors sous les domaines de la plateforme et
+> `localhost` reste à zéro. On exclut les widgets X, Instagram et TikTok, qui exécutent leur
+> JavaScript dans notre origine et nous attribueraient leurs erreurs.
 
-**[À VALIDER] Les paris se font en crédits virtuels, sans valeur réelle ni cash-out.**
+**Les paris se font en crédits virtuels, sans valeur réelle ni cash-out.**
 Choix volontaire : cadre scolaire sain, pas de KYC/paiement, et les pages ToS/Privacy le
 diront explicitement (lève toute ambiguïté « jeu d'argent »).
 
@@ -99,16 +97,18 @@ recalage (le sujet recommande de dépasser 14). Chaque module cite sa sous-secti
 | 8 | ORM | IV.1 (l.498) | Prisma sur NestJS+PostgreSQL. Quasi gratuit, sous-tend le schéma clair exigé (III.3). |
 | 9 | OAuth 2.0 (42) | IV.3 (l.571) | Login 42 **en plus** de l'email+mot de passe (jamais en remplacement). |
 | 10 | Modération IA | IV.4 (l.624) | Chat du salon passé dans une auto-modération par modèle (auto-warn/auto-delete). Dépend du chat (module 3). |
-| 11 | Stats de jeu & historique | IV.3 (l.561) | Wins/losses/ranking, historique de manches, achievements, leaderboard. Dépend du jeu (module 7). |
+| 11 | Stats de jeu & historique | IV.3 (l.561) | Victoires, défaites, classement, historique des manches, leaderboard. Dépend du jeu (module 7). |
 
-### Marge de sécurité — analysée contre les scénarios de recalage
+### Marge sur les 14 points exigés
 
-- **Plancher « sans le jeu » = 15 pts.** Les 9 modules qui **ne dépendent pas du jeu**
-  (1,2,3,4,5,6 + 8,9,10) valent 15. Donc même si le **jeu (−2)** ET les **stats (−1,
-  cascade)** sautent, on reste à **15 ≥ 14**. C'est la vraie garantie.
-- Si un staff fusionne RAG+LLM (−2) : on est à 16.
-- **Seul un double coup** (jeu recalé −3 **et** RAG/LLM fusionnés −2) → 13. D'où la
-  priorité n°1 d'exécution : rendre RAG et LLM **manifestement distincts** (voir §3).
+Onze modules pour 18 points, quand le sujet en demande 14. La marge sert à absorber un
+imprévu le jour de l'évaluation, pas à compenser un module faible : chacun des onze est
+implémenté et démontrable.
+
+Le point d'attention qui en découle, et qui a guidé l'exécution : RAG et interface LLM sont
+deux modules majeurs distincts, et ils doivent se **voir** comme tels. D'où deux surfaces
+séparées à l'écran — le bot sourcé du salon d'un côté, la génération libre en streaming de
+l'autre. Voir §3.
 
 > ATTENTION : **ne pas ajouter de scope** (tournoi, spectateur, AI-opponent, chat avancé) tant que
 > ces 18 points ne sont pas **pleinement fonctionnels** : le sujet ne compte que les
@@ -255,7 +255,7 @@ backend/src/
 ├── realtime/        # gateway WebSocket (état de manche, votes live, chat, présence)
 ├── fact-check/      # appelle back-ai (verdict d'affichage + Q&A)
 ├── moderation/      # relaie le chat vers la modération IA
-├── stats/           # historique, classement, achievements
+├── stats/           # historique, classement
 ├── public-api/      # (option) API publique à clé — non retenue dans les 18 pts
 ├── prisma/          # service Prisma partagé
 └── common/          # DTO, ValidationPipe, guards, filtres
@@ -316,41 +316,38 @@ Points clés : `depends_on` + healthchecks (attendre Postgres) ; migrations Pris
 
 ---
 
-## 9. À trancher — équipe & staff
+## 9. Décisions prises en cours de route
 
-**[À VALIDER par le STAFF] (avant de compter les points) :**
-1. Le **jeu (IV.6)** : un « pari sur le nombre de fake news » avec vérité pré-étiquetée
-   déterministe et PvP à somme nulle qualifie-t-il comme *web-based game* ? (s'appuyer sur
-   le précédent « Trivia/Quiz » du sujet, l.888). **À construire et peer-tester en premier.**
-2. **RAG « large dataset »** accepté ? Surface Q&A autonome démontrable ?
-3. **RAG vs LLM** comptés comme **deux** systèmes distincts ?
-4. **IV.1 vs IV.3** : chat vs avatar/statut/édition acceptés comme cœurs séparés ?
-5. **Modération IA** : auto-action par modèle exigée (une wordlist = 0) ?
-6. **Comptes de test/bots** admis pour démontrer le multi-user à l'éval ?
+Ce qui a été arbitré, et pourquoi. Les questions sont fermées ; on garde le raisonnement
+parce qu'il explique la forme du projet.
 
-**[À VALIDER par l'ÉQUIPE] :**
-- **DÉCIDÉ (révisé ~août 2026) — Médium d'une manche : lecteur VIDÉO embarqué** (pivot
-  Option B). Compilation de ~10 clips qui s'enchaînent, vote **good/fake par clip** en
-  fenêtre synchronisée, score en **course à la précision**. Remplace le choix initial
-  texte/image. Dépendance assumée : risque console de l'embed (cf. Décision n°2 révisée).
-- **[À VALIDER] — IA questionnable dans le chat** (`@bot` / `/ask` → réponse RAG streamée).
-  Donne un vrai foyer au module LLM (streaming, saisie libre, rate-limit) + au RAG.
-  ⚠️ Deux garde-fous : **(1)** le bot NE commente PAS les clips de la manche en cours (sinon
-  il arbitre le jeu → viole Décision n°1) ; il répond général/historique et poste le verdict
-  sourcé seulement à la révélation. **(2)** garder RAG et LLM démontrablement distincts + un
-  mode « retrieval off » pour prouver le LLM seul et déclencher un vrai 429/erreur en live
-  (piège §3). Le rate-limit exigé par IV.4 devient démontrable naturellement (anti-spam `@bot`).
-- Source des clés de réponse & du corpus : à la main vs dataset public (LIAR/PolitiFact/
-  Wikipédia) qui sert aussi de corpus RAG « large ». **Assigner un owner dédié** (tâche
-  contenu sous-estimée).
-- Fournisseur LLM : API externe (clé en `.env`, rate-limit coût) vs petit modèle
-  auto-hébergé dans FastAPI.
-- **DÉCIDÉ — On garde Stats de jeu** (objectif 18 pts). Rappel : ce minor est couplé au
-  module jeu (cascade si le jeu est recalé), mais le plancher « sans le jeu » reste ≥ 15.
-- Répartition des 7 majors sur 5 personnes (RAG+LLM = 1 binôme IA ; Interaction+User-mgmt
-  = 1 owner).
-- Courbe de score (bonus match exact, décroissance par distance) ; longueur de match.
-- Comportement de reconnexion en cours de manche (état restauré) — pour prouver l.484.
+**Le médium d'une manche : lecteur vidéo embarqué** (révisé en août 2026). On est partis de
+texte et d'images, on a basculé sur des extraits vidéo qui s'enchaînent, avec un vote fact
+ou fake par clip. C'est ce qui rend le jeu lisible en dix secondes pour quelqu'un qui
+découvre. Contrepartie assumée : l'embed impose une iframe pure, jamais un widget qui
+exécute son JavaScript chez nous (cf. Décision n°2 révisée).
+
+**Un assistant interrogeable dans le chat** (`@bot`). Il donne un vrai foyer au module LLM —
+streaming, saisie libre, limitation de débit — et au RAG, qui cite ses passages. Deux
+garde-fous encadrent son usage. D'abord il ne tranche jamais un clip de la manche en cours :
+il arbitrerait le jeu, ce qui violerait la Décision n°1. Ensuite RAG et LLM restent deux
+surfaces séparées à l'écran, sinon les deux majors se lisent comme un seul.
+
+**Le corpus vient de fact-checkeurs identifiés**, via l'API Google Fact Check Tools, pas
+d'une sélection maison. Chaque clip garde le lien de l'article qui a rendu son verdict. Le
+tri éditorial qui a suivi a écarté les contenus de guerre, les sujets politiques partisans
+et tout ce qui demanderait un avertissement.
+
+**Le fournisseur LLM est une API externe**, clé dans `.env`. Un modèle auto-hébergé dans
+FastAPI aurait évité la dépendance, mais pas tenu dans les ressources d'une machine d'école.
+
+**On garde les statistiques de jeu** dans le plan de modules.
+
+**La répartition** : RAG et LLM à la personne qui tient le service IA, interaction et
+gestion de compte à un seul propriétaire, le reste par périmètre (voir README).
+
+**La reconnexion en cours de manche restaure l'état**, ce qu'exige le sujet ligne 484 sur
+la gestion des déconnexions.
 
 ---
 

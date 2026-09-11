@@ -306,8 +306,7 @@ Légende : **fonctionnel** = ça tourne, n'y touchez pas sans raison.
 
 | `docs/ARCHITECTURE.md` | Le doc technique : concept, plan des 18 points, décisions. |
 | `docs/ONBOARDING.md` | Ce fichier. |
-| `DEMARRAGE_GITHUB.md` | Notice de lancement du repo. À supprimer une fois fait. |
-| `setup_ft_transcendence.sh` | Le script qui a généré le squelette. Outillage, pas du livrable. |
+| `docs/COMMANDES.md` | Les commandes utiles, dont celles qui prouvent chaque exigence du sujet. |
 | `CLAUDE.md`, `.claude/` | Config de l'assistant IA (règles, agents). |
 
 ### `postgres/`

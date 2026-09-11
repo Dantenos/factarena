@@ -196,7 +196,11 @@ export class RealtimeGateway
     if (leftPresence?.leftRoom) {
       const room = await this.roomsService.findOne(leftPresence.roomId);
       const hoteParti = room.createdBy === userId;
-      if (hoteParti && room.status === 'IN_PROGRESS') {
+      // Le sursis vaut aussi quand la partie n'a pas encore démarré : réservé à
+      // IN_PROGRESS, un simple rechargement de page pendant que les joueurs se
+      // rassemblent fermait le salon avant que l'hôte ne revienne, et sa propre
+      // reconnexion se voyait refuser « partie déjà en cours ou terminée ».
+      if (hoteParti) {
         this.programmerFermetureApresDeconnexion(leftPresence.roomId, userId);
       } else {
         const ferme = await this.roomsService.closeIfHostLeaves(leftPresence.roomId, userId);
@@ -216,12 +220,21 @@ export class RealtimeGateway
     this.logger.debug(`WebSocket disconnected: ${socket.id} (${userId})`);
   }
 
-  /** Ce qu'on dit au joueur quand un salon ne peut pas être rejoint. */
+  /**
+   * Ce qu'on dit au joueur quand un salon ne peut pas être rejoint.
+   *
+   * Seul un salon vraiment absent mérite « n'existe plus ». Les autres refus
+   * portent déjà leur raison — partie lancée, solde insuffisant — et l'écraser
+   * affichait « ce salon n'existe plus » devant un salon bien présent.
+   */
   private messageSalonInaccessible(error: unknown): string {
-    if (error instanceof ForbiddenException) return error.message;
-    return error instanceof NotFoundException || error instanceof BadRequestException
-      ? 'Ce salon n’existe plus. Retourne au lobby pour en choisir un autre.'
-      : 'Impossible de rejoindre ce salon.';
+    if (error instanceof NotFoundException) {
+      return 'Ce salon n’existe plus. Retourne au lobby pour en choisir un autre.';
+    }
+    if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+      return error.message;
+    }
+    return 'Impossible de rejoindre ce salon.';
   }
 
   @SubscribeMessage('room:join')

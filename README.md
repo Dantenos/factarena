@@ -27,27 +27,26 @@ the subject rejects a project on either one. Everything else, we can discuss.
 
 ## Description
 
-**FactArena** is a real-time multiplayer fact-checking game about misinformation. Players
-join a live room and watch a **compilation of ~10 short viral video clips** play in sequence;
-for each clip, competing against each other, they call it **"good news" or "fake news"** in a
-server-synchronized vote window, having staked **virtual credits** (no real money, ever). When
-the compilation ends, an AI bot **streams** a sourced verdict for each clip (true/false +
-confidence + citations). Scoring is an **accuracy race**: whoever correctly judged the most
-clips wins the shared pot; players climb a global leaderboard.
+FactArena is a multiplayer game about misinformation. Players join a room, stake virtual
+credits (never real money), then watch five short viral clips one after another. For each
+clip they answer "fact" or "fake". The host drives the playlist, so everyone is on the same
+clip at the same time. Whoever judges the most clips correctly takes the pot, and a global
+leaderboard tracks accuracy across rounds.
 
-**Key design decision:** the verdict of each clip that decides the winners comes from a
-**pre-labeled editorial answer key** stored in the database, **not** from the live LLM.
-Scoring is deterministic; the RAG/LLM layer only *explains* the pre-known verdict — it never
-adjudicates the game. Real-time "sync" is a server-authoritative round state machine
-(countdown → lock → reveal) over WebSocket, not frame-accurate video streaming.
+One decision shaped the whole project: the verdict that decides who wins is a pre-labelled
+answer key stored in the database, taken from a published fact-check. It never comes from
+the LLM. The AI explains a verdict that is already known; it does not judge the game. That
+is what keeps scoring deterministic and what makes the AI modules honest to demonstrate.
+
+The "real-time" part is a round state machine held by the server (countdown, lock, reveal)
+over WebSocket. We do not stream video frames between players.
 
 Key features:
-- Real-time rooms: a viral-clip compilation plays; per-clip good/fake voting with live pot, synchronized vote windows and locked votes (WebSockets)
-- AI fact-checking bot: streamed LLM explanations grounded by a RAG vector database
-- A standalone "ask a claim → sourced answer" Q&A surface (reuses the RAG engine)
-- User accounts (email/password + 42 OAuth), profiles, avatars, friends, online status
-- Leaderboard, match history and game statistics
-- AI-moderated room chat
+- Rooms where several players watch the same clip at the same time and vote fact or fake, with the pot updating live over WebSocket
+- An AI bot in the chat that answers questions and cites the passages it used
+- Accounts by email and password or through 42, with profiles, avatars, friends and online status
+- Leaderboard, match history and per-player statistics
+- Chat moderation by model, not by a list of banned words
 
 ## Instructions
 
@@ -212,17 +211,16 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 | Room chat | oztozdem, alaroque | Send and receive messages in real time |
 | AI moderation | elanteno, alaroque | Every message is judged by a model (not a word list) and allowed, flagged or hidden |
 | Questionable AI bot | elanteno | `@bot` in the chat returns a sourced answer streamed token by token, and refuses to comment on clips from the round in progress |
-| Sourced fact-check corpus | elanteno | 1 849 passages shipped with the repository, loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run: the ClaimReview records of published fact-checks, the full text of the 32 articles that established the verdict of the playable clips, and figures from INSEE, Eurostat and the World Bank. The ingestion scripts can grow it further. |
+| Sourced fact-check corpus | elanteno | 1 653 passages shipped with the repository, loaded on first start with their pre-computed vectors so the bot cites sources without any ingestion run: the ClaimReview records of published fact-checks, the full text of the 24 articles that established the verdict of the playable clips, and figures from INSEE, Eurostat and the World Bank. The ingestion scripts can grow it further. |
 | Profile & stats | krfranco, alaroque, elanteno | Profile page with win rate, rounds played and credit balance; display-name editing and avatar upload; match history listing each finished round with its date, room, opponents, stake and net gain |
 | Friends | elanteno | Search players by e-mail or display name, add and remove them, see who is online or in a game, and join their room in one click |
-| Playable clip corpus | elanteno | 54 hand-curated clips with a playable video, 46 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped, as were war footage, partisan political content, and any subject requiring a content warning. |
+| Playable clip corpus | elanteno | 54 hand-curated clips with a playable video, 45 of them with their reveal explanation, all shipped in the seed. Clips whose video did not match the claim were reviewed in-game and dropped, as were war footage, partisan political content, and any subject requiring a content warning. |
 | Responsive layout | krfranco, elanteno | Every page adapts from 320 px upwards: the multi-column grids stack, the navigation wraps, and the room's chat moves below the video. Verified with no element overflowing the viewport at 320, 390, 768 and 1024 px. |
 
 ## Modules
 
-Target: **18 points** (14 required). Game-independent floor: **15 points** (safe even if
-the game module and its dependent stats module are both rejected). See `docs/ARCHITECTURE.md`
-for the audited rationale and per-module subject references.
+Eleven modules, **18 points**, for the 14 the subject requires. Each one is explained below,
+and `docs/ARCHITECTURE.md` gives the section of the subject it answers.
 
 | Module | Type | Pts | Member(s) | Status |
 |---|---|---|---|---|
@@ -232,7 +230,7 @@ for the audited rationale and per-module subject references.
 | Standard user management | Major | 2 | alaroque, elanteno | Done |
 | Complete RAG system | Major | 2 | elanteno | Done |
 | LLM interface (streaming) | Major | 2 | elanteno | Done |
-| Web-based game (live fact-check arena) | Major | 2 | alaroque, oztozdem, elanteno | Done — **needs staff validation** |
+| Web-based game (live fact-check arena) | Major | 2 | alaroque, oztozdem, elanteno | Done |
 | ORM (Prisma) | Minor | 1 | alaroque | Done |
 | OAuth 2.0 (42) | Minor | 1 | alaroque, elanteno | Done |
 | AI content moderation | Minor | 1 | elanteno, alaroque | Done |
@@ -257,7 +255,7 @@ alongside.
 status — distinct from the basic authentication required by the subject.
 
 **Complete RAG system.** Cosine search over pgvector, answers grounded in the retrieved
-passages and citing their URL. The repository ships 1 849 passages with their pre-computed
+passages and citing their URL. The repository ships 1 653 passages with their pre-computed
 vectors, so a freshly cloned installation answers with sources without running any ingestion.
 The corpus mixes published fact-checks (AFP, Snopes, franceinfo, dpa…) — both their
 ClaimReview records and the full article text for the clips in play — with live official
@@ -276,8 +274,16 @@ limiter on top of the provider's own 429 handling.
 policy that turns categories into an action (allow, warn, delete) is ours and is the part
 worth explaining.
 
-**Web-based game.** Rounds run live, players compete against each other, rules are written
-and the win condition is deterministic because it comes from the editorial answer key.
+**Web-based game.** The subject asks for four things and we can point at each. Players play
+against each other: everyone in the room judges the same clip and only the most accurate
+player takes the pot. Matches are live: the host moves the playlist forward, the server holds
+the round state, and every client follows over WebSocket. The rules are explicit on screen,
+and the win condition is deterministic, since it comes from the editorial answer key rather
+than from a model. It is 2D, in the browser, with no plugin.
+
+What makes it a Major rather than a UI is the server-side round machine: drawing a balanced
+set of clips, a betting window, per-clip votes that are refused out of turn, an early lock
+when everyone has voted, then a settlement that pays the pot in one atomic transaction.
 
 **ORM, OAuth 2.0, game statistics.** Prisma with six versioned migrations; 42 login in
 addition to — never instead of — email and password; wins, losses, ranking and match
@@ -285,10 +291,11 @@ history computed from the bet ledger.
 
 ## Individual Contributions
 
-Every contribution and difficulty described below is traceable in the git history of
-`main` — commit messages, branch names and reverted pull requests.
+What follows can be checked against the git history. `git shortlog -sn origin/main` gives
+the commit count per person; branch names and reverted pull requests tell the rest of the
+story. We stopped writing counts here because they went stale every week.
 
-**`slario` — DevOps, PM · 27 commits.** Owns `docker-compose.yml`, nginx and its TLS
+**`slario` — DevOps, PM.** Owns `docker-compose.yml`, nginx and its TLS
 certificates, the container entrypoints and the GitHub Actions workflows. Built the complete
 ELK logging stack over two weeks — Logstash, index retention, automatic certificate
 generation, SSL between every component — then removed it by pull request once we established
@@ -297,7 +304,7 @@ the `gelf` log driver: the stack could not have started during an evaluation. Al
 problems specific to the 42 machines, in three successive attempts: the `chown` in the images
 fails on the school filesystem, and port 443 is privileged, so nginx publishes 8443.
 
-**`alaroque` — Back-end core · 13 commits.** Wrote essentially the whole NestJS application:
+**`alaroque` — Back-end core.** Wrote essentially the whole NestJS application:
 database schema and migrations, email/password authentication, 42 OAuth, the
 server-authoritative game loop and the JWT-authenticated Socket.IO gateway, rooms and
 presence, the betting module with server-side stake and balance validation, the atomic
@@ -306,7 +313,7 @@ call behind NestJS so authentication and rate limiting stay in one place. Two co
 explicit security-hardening passes after review. Also the person who merged most pull
 requests into `main`.
 
-**`elanteno` — Tech Lead / Architect, AI · 38 commits.** Built the FastAPI service: pgvector
+**`elanteno` — Tech Lead / Architect, AI.** Built the FastAPI service: pgvector
 schema and HNSW index, embeddings, retrieval, SSE streaming for the RAG and free-form LLM
 surfaces, the moderation policy on top of Mistral, and the rate limiter. Assembled and
 curated the game's content from the Google Fact Check Tools API, INSEE, Eurostat, the World
@@ -317,19 +324,25 @@ now exported to the repository with its pre-computed vectors. On the front, wire
 to the real API and added the friends screen, the match history, the OAuth callback and the
 responsive pass.
 
-**`krfranco` — Front-end UI, Product Owner · 13 commits.** Owns the visual identity: the
+**`krfranco` — Front-end UI, Product Owner.** Owns the visual identity: the
 Tailwind theme and colour tokens, the shared layout, and the home, login, profile and lobby
 pages. Defined the component vocabulary — the button, card and panel classes — that every
 screen added later reuses, which is why the friends page, the match history and the OAuth
 callback needed no new styles. The visual pass was delivered before the API existed, with the
 buttons left to be wired with the back-end.
 
-**`oztozdem` — Front-end real-time and UX · 8 commits.** Built the room screen and its
-components from the design mock-up: the chat panel with per-author colouring and its
-moderation badge, the betting panel, the statistics bar, the clip progress bar, the results
-reveal and the video player. Also wrote `mocks/gameData.ts`, the shared data shapes — a
-deliberate call that let the room UI be built and reviewed before the WebSocket contract was
-settled, at the cost of a long-lived branch that had to absorb `main` repeatedly.
+**`oztozdem` — Front-end real-time and UX.** Built the room screen and its components from
+the design mock-up: the chat panel with its per-author colouring and moderation badge, the
+statistics bar, the results reveal and the video player. Also wrote `mocks/gameData.ts`, the
+shared data shapes, which let the room UI be built and reviewed before the WebSocket contract
+was settled.
+
+That choice came at a price worth explaining. His branch `feat/frontend-tr` lived for weeks
+and had to absorb `main` over and over, so `git shortlog` credits him with a single commit:
+the merge squashed the rest. Two of his components, the betting panel and the clip progress
+bar, were dropped when the round became server-driven and are no longer rendered. The lesson
+we took from it is that a front-end branch should merge on the day the contract it depends on
+is settled, not weeks later.
 
 ## Resources
 

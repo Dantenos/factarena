@@ -256,20 +256,22 @@ Ce qui transforme « j'ai codé » en « je marque les points » :
 - **Table `documents`** (mienne, FastAPI) : `source, title, url, content, chunk_index,
   embedding vector(1024)`. Index HNSW cosinus. Voir `app/db.py`.
 
-## 8. Points ouverts / à valider
+## 8. Ce que ces questions sont devenues
 
-- Nom exact du modèle de chat Mistral et format de la réponse en streaming : vérifiés à
-  l'étape 0 (chat/completions, SSE `data: [DONE]`) — OK.
-- Volume final du corpus (2000 articles par défaut : à monter si on veut « plus large »).
-- Le pipeline X-Fact -> table `Claim` : format d'export, qui code quoi (moi la préparation
-  des données, le Back Core la table). À caler en réunion.
+- Modèle de chat Mistral et format du streaming : `chat/completions` en SSE, terminé par
+  `data: [DONE]`.
+- Volume du corpus : 1 653 passages livrés avec le dépôt, vecteurs pré-calculés, chargés au
+  premier démarrage si l'index est vide.
+- Alimentation de la table `Claim` : finalement pas X-Fact mais l'API Google Fact Check
+  Tools, lancée à la main depuis `app.rag.ingest_claimreview`. Le résultat est figé dans
+  `editorial-claims.generated.json`, versionné, donc personne n'a besoin de clé Google.
 
 ---
 
-## 9. Le bot questionnable dans le chat (idée à intégrer — pivot Option B)
+## 9. Le bot interrogeable dans le chat
 
-Idée d'équipe : dans le chat du salon, un joueur peut **interroger l'IA** — `@bot` ou
-`/ask <question>` — et recevoir une réponse **streamée et sourcée**. Pourquoi c'est malin pour
+Dans le chat du salon, un joueur interroge l'IA — `@bot` ou `/ask <question>` — et reçoit une
+réponse **streamée et sourcée**. Pourquoi c'est malin pour
 MOI : ça donne enfin une **surface vivante** à mon module LLM et à mon RAG, au lieu d'un simple
 champ de test. Le même chat porte donc deux de mes modules : la **modération** (passive) et
 l'**interrogation** (active).

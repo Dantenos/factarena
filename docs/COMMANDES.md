@@ -235,6 +235,35 @@ Pour ne vider que les parties en gardant le corpus (voir plus bas).
 Les commandes qui prouvent chaque exigence du sujet, dans l'ordre où on les
 passe. Chacune indique ce qu'elle doit renvoyer.
 
+### Le bloc à coller en une fois
+
+Après `docker compose up --build`, ceci passe tous les contrôles qui se scriptent.
+Le reste (console, responsive, deux joueurs) demande un navigateur et suit plus bas.
+
+```bash
+echo "— services —";              docker compose ps --format 'table {{.Service}}\t{{.Status}}'
+echo "— accueil —";               curl -sk -o /dev/null -w '%{http_code}\n' https://localhost:8443/
+echo "— api —";                   curl -sk https://localhost:8443/api/health; echo
+echo "— privacy + terms —";       curl -sk -o /dev/null -w '%{http_code} ' https://localhost:8443/privacy
+                                  curl -sk -o /dev/null -w '%{http_code}\n' https://localhost:8443/terms
+echo "— oauth 42 —";              curl -sk -o /dev/null -w '%{http_code}\n' https://localhost:8443/api/auth/42
+echo "— email invalide —";        curl -sk -o /dev/null -w '%{http_code}\n' -X POST https://localhost:8443/api/auth/register \
+                                    -H 'Content-Type: application/json' -d '{"email":"pasunemail","password":"a"}'
+echo "— champ non déclaré —";     curl -sk -o /dev/null -w '%{http_code}\n' -X POST https://localhost:8443/api/auth/register \
+                                    -H 'Content-Type: application/json' -d '{"email":"a@b.co","password":"Pass123!","role":"ADMIN"}'
+echo "— injection SQL —";         curl -sk -o /dev/null -w '%{http_code}\n' -X POST https://localhost:8443/api/auth/login \
+                                    -H 'Content-Type: application/json' -d '{"email":"x'"'"' OR 1=1--","password":"x"}'
+echo "— commits par personne —";  git shortlog -sn origin/main
+echo "— corpus livré —";          docker compose exec -T ai-service python -c "
+from app.db import connect
+with connect() as c, c.cursor() as cur:
+    cur.execute('SELECT count(*) FROM \"Claim\" WHERE \"mediaRef\" IS NOT NULL'); print('clips jouables :', cur.fetchone()[0])
+    cur.execute('SELECT count(*) FROM rag.documents');                            print('passages RAG   :', cur.fetchone()[0])"
+```
+
+Attendu : cinq services `healthy`, `200`, `{"status":"ok"}`, `200 200`, `302`,
+trois fois `400`, cinq contributeurs, 50 clips jouables et 1 653 passages.
+
 ### Démarrage et services
 
 ```bash
@@ -274,12 +303,15 @@ vote, format CUID des identifiants).
 
 ### Mots de passe
 
+Le filtre sur `passwordHash` n'est pas décoratif : les comptes créés via 42 et les
+faux joueurs n'en ont pas, et `findFirst` sans filtre tombe dessus.
+
 ```bash
 docker compose exec -T backend node -e '
 const {PrismaClient}=require("@prisma/client");const p=new PrismaClient();
-p.user.findFirst({select:{passwordHash:true}}).then(u=>{
-  console.log(u.passwordHash);                    // $2b$12$... sel inclus
-}).finally(()=>p.$disconnect());'
+p.user.findFirst({where:{passwordHash:{not:null}},select:{email:true,passwordHash:true}})
+ .then(u=>console.log(u.email,"->",u.passwordHash))   // $2a$12$… 60 caractères, sel inclus
+ .finally(()=>p.$disconnect());'
 ```
 
 ### Services IA

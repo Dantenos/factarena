@@ -167,7 +167,7 @@ CONSIGNE_SECOND_AVIS = (
 async def second_avis(req: SecondAvisRequest, request: Request):
     """L'IA se prononce sur une affirmation SANS connaître la clé de réponse.
 
-    POURQUOI CET ENDPOINT : à la révélation, on affiche le verdict éditorial —
+    Ce que fait cet endpoint : à la révélation, on affiche le verdict éditorial —
     celui qui décide du score — puis, à côté, ce que l'IA aurait répondu. Quand
     elle se trompe, ça ne coûte rien au jeu (le score ne dépend pas d'elle) et
     ça montre honnêtement les limites d'une IA face au fact-checking. C'est un
