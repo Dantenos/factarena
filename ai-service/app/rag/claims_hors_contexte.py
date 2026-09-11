@@ -11,7 +11,7 @@ LA SOLUTION : reprendre les vidéos Wikimedia — authentiques, documentées, lu
 par la balise <video> qui n'affiche aucun titre — et les attribuer au MAUVAIS
 événement. C'est très exactement le mécanisme de désinformation le plus
 répandu : l'image recyclée, sortie de son contexte. La catégorie HORS_CONTEXTE
-de docs/CLAIMS.md décrit ce cas.
+désigne ce cas.
 
 POURQUOI C'EST LÉGITIME, alors que la règle d'or interdit de qualifier soi-même
 un contenu : ici on ne porte aucun jugement sur les propos de quiconque. On

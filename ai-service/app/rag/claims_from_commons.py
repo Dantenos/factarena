@@ -11,7 +11,7 @@ des documents réels, décrits et sourcés, et le fichier vidéo est servi en
 direct — donc lu par la balise <video>, SANS lecteur tiers ni script externe.
 C'est même plus propre qu'une iframe pour la console.
 
-COMMENT ON ÉVITE D'INVENTER (règle d'or, docs/CLAIMS.md §2) : on n'utilise PAS
+COMMENT ON ÉVITE D'INVENTER (règle d'or, app/rag/README.md) : on n'utilise PAS
 la recherche libre, mais les CATÉGORIES de Commons, curées à la main par ses
 contributeurs. La recherche libre nous avait sorti « 60163 Tornado » pour une
 tornade : c'est une locomotive à vapeur. Affirmer « cette vidéo montre une vraie

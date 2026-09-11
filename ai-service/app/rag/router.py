@@ -46,8 +46,8 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=1000)
 
     # Contexte de la manche EN COURS, fourni par le Back Core (lui seul tient
-    # l'état de la partie). Sert au garde-fou anti-spoil (cf. guardrail.py, AI.md
-    # §9). Absents/vides hors manche -> le bot répond librement.
+    # l'état de la partie). Sert au garde-fou anti-spoil (cf. guardrail.py).
+    # Absents/vides hors manche -> le bot répond librement.
     #   - live_topics : les MOTS-THÈMES des clips en jeu (couche 1, thématique) ;
     #   - live_claims : les TEXTES des affirmations en jeu (couche 2, juge LLM).
     # Bornés (une manche ~10 clips) pour ne pas gonfler la requête.
@@ -167,7 +167,7 @@ CONSIGNE_SECOND_AVIS = (
 async def second_avis(req: SecondAvisRequest, request: Request):
     """L'IA se prononce sur une affirmation SANS connaître la clé de réponse.
 
-    POURQUOI CET ENDPOINT : à la révélation, on affiche le verdict éditorial —
+    Ce que fait cet endpoint : à la révélation, on affiche le verdict éditorial —
     celui qui décide du score — puis, à côté, ce que l'IA aurait répondu. Quand
     elle se trompe, ça ne coûte rien au jeu (le score ne dépend pas d'elle) et
     ça montre honnêtement les limites d'une IA face au fact-checking. C'est un
@@ -227,7 +227,7 @@ async def ask(req: AskRequest, request: Request):
             detail=f"Trop de requêtes (max {_RATE_MAX} par {int(_RATE_WINDOW)}s). Réessayez dans un instant.",
         )
 
-    # 0. Garde-fou anti-spoil, AVANT toute récupération (AI.md §9, décision n°1).
+    # 0. Garde-fou anti-spoil, AVANT toute récupération (cf. ai-service/README.md).
     #    Cascade : couche 1 thématique (mots-thèmes, déterministe, sans API) ;
     #    « sinon » couche 2 juge LLM (rattrape les reformulations). On ne l'exécute
     #    que s'il y a une manche à protéger (hors manche -> les listes sont vides).

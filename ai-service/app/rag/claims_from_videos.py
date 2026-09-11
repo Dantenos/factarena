@@ -11,7 +11,7 @@ Deux fichiers se rencontrent ici :
   - le corpus RAG (source='factcheck') : article -> affirmation + verdict.
 La clé de jointure est l'URL de l'article.
 
-RÈGLE D'OR (docs/CLAIMS.md §2) : le verdict vient TOUJOURS du fact-checkeur. On
+RÈGLE D'OR (app/rag/README.md) : le verdict vient TOUJOURS du fact-checkeur. On
 le lit dans la phrase-fait déjà ingérée, et on jette tout ce qui est ambigu
 plutôt que de trancher à sa place.
 

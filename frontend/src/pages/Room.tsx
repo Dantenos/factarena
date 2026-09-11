@@ -1,10 +1,7 @@
-// Page Salon — branchée sur le back, plus sur les mocks. On ne garde de
-// mocks/gameData.ts que ses types.
+// Page Salon. De mocks/gameData.ts on ne garde plus que les types.
 //
-// Écart avec la doc : elle décrit une fenêtre de vote par clip, le back en
-// implémente une seule pour toute la manche (opensAt -> locksAt). On suit le
-// comportement réel — le joueur avance à son rythme, ses votes doivent juste
-// tomber avant le verrouillage. À trancher en équipe.
+// C'est le serveur qui tient l'index du clip courant : tout le monde regarde le
+// même extrait au même moment, et un vote sur un autre clip est refusé.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
@@ -38,21 +35,17 @@ const CLIPS_PAR_MANCHE = 5;
 const MISES = [50, 100, 250];
 
 /**
- * Marques d'un renvoi aux passages récupérés. Elles décident si l'on affiche les
- * citations sous la réponse.
+ * Une citation numérotée décide si l'on affiche les sources sous la réponse.
  *
- * La recherche vectorielle rend toujours ses six plus proches voisins, même
- * quand aucun n'a de rapport : sur « c'est quoi un orage ? » elle remonte des
- * articles sur les ovnis. Afficher ces sources sous une réponse de culture
- * générale laisserait croire qu'elles l'étayent.
+ * La recherche rend toujours ses plus proches voisins, même quand aucun n'a de
+ * rapport : sur « c'est quoi un orage ? » elle remonte des articles sur les
+ * ovnis. On se fie donc à ce que le modèle a fait, pas à une distance.
  *
- * Un seuil de distance ne trancherait pas — mesuré sur ce corpus, « comment
- * cuire des pâtes » sort à 0,32 et « vidéo sortie de son contexte », pourtant
- * couvert, à 0,31. On se fie donc à ce que le modèle a réellement fait : s'il
- * n'a renvoyé à aucun passage, il a répondu de lui-même, et on ne cite rien.
+ * Seuls les crochets comptent. Reconnaître aussi « les passages fournis »
+ * affichait cinq sources sous « les passages fournis ne mentionnent pas… »,
+ * c'est-à-dire précisément quand le corpus ne couvre pas la question.
  */
-const RENVOI_AUX_PASSAGES =
-  /\[\d+\]|d'apr[èe]s les passages|selon les passages|les passages (fournis|indiquent|montrent|abordent)/i;
+const RENVOI_AUX_PASSAGES = /\[\d+\]/;
 
 /**
  * Mot d'accueil de l'assistant, replacé en tête à chaque fois que la liste des
@@ -319,7 +312,7 @@ export default function Room() {
           // Le back renvoie un truthLabel binaire (TRUE/FALSE). Les verdicts
           // nuancés (TROMPEUR, HORS_CONTEXTE) n'existent pas encore côté base :
           // on retombe donc sur VRAI/FAUX. À faire évoluer si la colonne est
-          // ajoutée (voir docs/CLAIMS.md).
+          // ajoutée.
           const verdict: ClipVerdict = v.truthLabel === 'TRUE' ? 'VRAI' : 'FAUX';
 
           // Le back accole le second avis au verdict après une ligne vide

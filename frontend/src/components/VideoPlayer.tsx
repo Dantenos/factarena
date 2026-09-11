@@ -4,8 +4,8 @@
 // détectant le ratio réel au chargement des métadonnées, plutôt que de le
 // figer en dur.
 //
-// La lecture n'est volontairement pas synchronisée entre joueurs : c'est le
-// serveur qui tient la fenêtre de vote, chacun regarde le clip à son rythme.
+// On ne synchronise pas la lecture image par image : le serveur impose quel clip
+// est à l'écran, chacun le lit ensuite depuis son propre navigateur.
 //
 // Props :
 // - src          : URL de la vidéo à lire

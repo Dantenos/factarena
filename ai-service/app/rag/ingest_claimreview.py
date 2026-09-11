@@ -3,7 +3,7 @@
 POURQUOI cette source : Google agrège le ClaimReview mondial (AFP Factuel,
 franceinfo, Snopes...) en DONNÉES STRUCTURÉES. Un seul appel API rend
 claim + verdict + éditeur + lien -> pas de scraping, pas d'anti-bot, et le
-verdict vient d'un fact-checkeur identifié (règle d'or, docs/CLAIMS.md).
+verdict vient d'un fact-checkeur identifié (règle d'or, app/rag/README.md).
 
 Chaque résultat devient un document RAG sourcé (source='factcheck') :
 « Affirmation ... — jugé <verdict> par <éditeur> (<date>). Source: <url> ».

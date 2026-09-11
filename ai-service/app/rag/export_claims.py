@@ -8,9 +8,9 @@ fichier JSON dans MON dossier, il le récupère quand il veut.
 Différence avec `ingest_claimreview.py` (à ne pas confondre) :
   - ingest_claimreview.py  -> alimente MON corpus RAG (table rag.documents, vecteurs) ;
   - export_claims.py (ici) -> alimente la table Claim du JEU (clé de réponse).
-Même source d'API, deux destinations : c'est la frontière décrite dans AI.md §7.
+Même source d'API, deux destinations : c'est la frontière décrite dans app/rag/README.md.
 
-RÈGLE D'OR (docs/CLAIMS.md §2) : on ne qualifie JAMAIS un propos nous-mêmes. Le
+RÈGLE D'OR (app/rag/README.md) : on ne qualifie JAMAIS un propos nous-mêmes. Le
 `truthLabel` est TOUJOURS dérivé du verdict rendu par le fact-checkeur. Et si son
 verdict est ambigu (« à nuancer », « moitié vrai », « invérifiable »), on JETTE
 l'item au lieu de deviner — mieux vaut moins de claims que des claims inventées.
@@ -37,7 +37,7 @@ from app.config import settings
 API = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
 
 # Thèmes balayés. Chaque terme devient une `category` côté jeu, ce qui permet
-# d'équilibrer un lot (docs/CLAIMS.md §5) au lieu d'avoir 15 claims sur un sujet.
+# d'équilibrer un lot (app/rag/README.md, « Équilibrage ») au lieu d'avoir 15 claims sur un sujet.
 QUERIES = {
     "vidéo": "viral_debunk",
     "intelligence artificielle": "viral_debunk",
@@ -141,7 +141,7 @@ STOP = {
 def theme_tags(text: str, limit: int = 6) -> list[str]:
     """Mots-thèmes CANDIDATS pour le garde-fou anti-spoil (cf. guardrail.py).
 
-    ⚠️ Ce sont des candidats automatiques, à RELIRE : docs/CLAIMS.md prévoit une
+    ⚠️ Ce sont des candidats automatiques, à RELIRE : app/rag/README.md prévoit une
     curation humaine. On prend les mots longs et rares, hors mots vides. Ce champ
     est ignoré par l'importeur actuel (la colonne themeTags n'existe pas encore) :
     il sert à préparer le terrain.
@@ -257,7 +257,7 @@ def main() -> None:
         print("Aucune claim exploitable récupérée.")
         return
 
-    # --- Équilibrage (docs/CLAIMS.md §5) ---
+    # --- Équilibrage (app/rag/README.md) ---
     # Les fact-checkeurs publient très peu de « c'est vrai » : on récupère donc
     # ~95 % de FALSE. Tel quel, le jeu serait cassé — répondre « fake » à tout
     # suffirait à gagner. On plafonne donc les FALSE à 1,5x les TRUE (≈ 60/40).
