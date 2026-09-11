@@ -23,7 +23,7 @@ export class RagRequestDto {
   limit?: number;
 
   // Contexte de la manche EN COURS, transmis tel quel au garde-fou anti-spoil du
-  // service IA (ai-service/app/rag/guardrail.py, cf. docs/AI.md §9). Sans ces
+  // service IA (ai-service/app/rag/guardrail.py, cf. ai-service/README.md). Sans ces
   // deux listes le garde-fou est inerte et le bot peut divulguer la clé de
   // réponse du jeu. Vides hors manche -> le bot répond librement.
   //   - liveTopics : mots-thèmes des clips en jeu (filtre déterministe)

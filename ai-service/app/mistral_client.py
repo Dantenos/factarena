@@ -1,11 +1,11 @@
 """Client Mistral — la seule porte du service IA vers l'API Mistral.
 
-POURQUOI un fichier dédié : mes trois modules (RAG, interface LLM, modération)
+Un fichier dédié parce que les trois modules (RAG, interface LLM, modération)
 tapent tous sur Mistral. On centralise ici les appels HTTP pour ne pas dupliquer
 la clé, l'URL et la gestion d'erreurs dans chaque module. Si Mistral change son
 API, on ne corrige qu'à un seul endroit.
 
-POURQUOI httpx en direct (et pas le SDK mistralai) : on appelle l'API REST
+httpx en direct plutôt que le SDK mistralai : on appelle l'API REST
 nous-mêmes. C'est transparent (on voit chaque requête, on peut l'expliquer en
 soutenance) et ça ne dépend pas d'une version de SDK qui pourrait bouger. httpx
 est asynchrone : c'est indispensable ici pour ne PAS bloquer la boucle asyncio
@@ -47,7 +47,7 @@ _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 async def _post_json(url: str, payload: dict, timeout: float) -> httpx.Response:
     """POST JSON vers Mistral, avec réessais et backoff exponentiel.
 
-    POURQUOI : une ingestion peut durer 30 minutes et faire des centaines
+    Une ingestion peut durer 30 minutes et faire des centaines
     d'appels. Un simple hoquet réseau (DNS qui saute une seconde) ou un 429
     (quota) ne doit pas tout faire échouer. On réessaie donc les erreurs
     TRANSITOIRES en attendant de plus en plus longtemps (1, 2, 4, 8, 16 s).

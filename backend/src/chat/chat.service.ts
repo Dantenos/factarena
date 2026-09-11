@@ -78,7 +78,7 @@ export class ChatService {
     // Anti-spoil : on ne bloque plus le bot pendant toute la manche. On lui
     // transmet les affirmations des clips EN JEU, et c'est le garde-fou du
     // service IA qui refuse au cas par cas si la question porte dessus
-    // (ai-service/app/rag/guardrail.py, cf. docs/AI.md §9). Le joueur peut donc
+    // (ai-service/app/rag/guardrail.py, cf. ai-service/README.md). Le joueur peut donc
     // continuer à poser des questions générales pendant qu'il joue.
     const active = await this.prisma.round.findFirst({
       where: { roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] } },

@@ -4,7 +4,7 @@ POURQUOI : pour que l'IA EXPLIQUE un verdict en citant la vraie source (AFP Fact
 franceinfo...) au lieu de le deviner. On ingère le TEXTE des articles pointés par les
 Claim du jeu ; /rag/ask retrouve alors l'article et le cite.
 
-Le verdict, lui, reste dans la table `Claim` (Prisma, cf. docs/CLAIMS.md) — ici on ne
+Le verdict, lui, reste dans la table `Claim` (Prisma, cf. app/rag/README.md) — ici on ne
 stocke que le texte explicatif de l'article, pour l'ancrage RAG.
 
 Entrée : les URLs d'articles de fact-check, une par ligne dans

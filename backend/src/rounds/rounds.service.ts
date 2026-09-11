@@ -113,7 +113,7 @@ export class RoundsService {
   /**
    * Tire au sort les claims d'une manche, en respectant deux règles.
    *
-   * ÉQUILIBRAGE (docs/CLAIMS.md §5) : on vise environ 60 % de fausses. Si le lot
+   * ÉQUILIBRAGE (ai-service/app/rag/README.md) : on vise environ 60 % de fausses. Si le lot
    * ne contenait que des fausses, répondre « fake » à tout suffirait à gagner et
    * le jeu n'aurait plus d'intérêt.
    *

@@ -63,7 +63,7 @@ export class AiService {
     rateKey = 'internal',
     // Contexte de la manche en cours (vide par défaut = hors partie). Transmis
     // au garde-fou anti-spoil du service IA : sans lui, le bot pourrait révéler
-    // si un clip en jeu est vrai ou faux (cf. docs/AI.md §9). Les noms partent
+    // si un clip en jeu est vrai ou faux (cf. ai-service/README.md). Les noms partent
     // en snake_case car c'est le contrat FastAPI (live_topics / live_claims).
     live: { topics?: string[]; claims?: string[] } = {},
   ) {
@@ -299,7 +299,7 @@ export class AiService {
    * l'événement `sources`.
    *
    * `live` porte le contexte de la manche jusqu'au garde-fou anti-spoil
-   * (docs/AI.md §9), qui refuse de répondre sur un clip en jeu.
+   * (ai-service/README.md), qui refuse de répondre sur un clip en jeu.
    */
   async *streamRag(
     prompt: string,

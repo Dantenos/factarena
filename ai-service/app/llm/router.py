@@ -4,7 +4,7 @@ C'est le module « interface LLM » du sujet, VOLONTAIREMENT DISTINCT du RAG :
   - le RAG (/rag/ask) récupère des passages et ancre la réponse dessus ;
   - ici, AUCUNE récupération : le modèle répond à partir de sa seule
     connaissance. C'est ce qui prouve à l'évaluateur que RAG et LLM sont deux
-    systèmes différents (4 points en jeu, cf. docs/ARCHITECTURE.md §3).
+    systèmes différents (4 points en jeu, cf. README.md, « LLM interface »).
 
 Le sujet impose pour ce module : streaming (fait), gestion d'erreurs (le client
 Mistral réessaie les pépins transitoires, et on renvoie une erreur propre) ET

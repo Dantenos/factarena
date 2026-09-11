@@ -34,7 +34,7 @@ SEVERE_CATEGORIES = {
 
 # Seuil de suppression sur les SCORES, en plus des drapeaux de Mistral.
 #
-# POURQUOI : les drapeaux du modèle sont calibrés pour l'anglais et pour des
+# Les drapeaux du modèle sont calibrés pour l'anglais et pour des
 # contenus lourds. Sur un chat de jeu francophone ils laissaient passer les
 # insultes courantes — « enculé » sortait à 0.076, « sale connard » à 0.295,
 # sans qu'aucune catégorie soit levée.
@@ -64,7 +64,7 @@ DELAI_JUGE_S = 3.0
 async def _juge_grossierete(message: str) -> bool | None:
     """Seconde couche : un LLM relit ce que l'API de modération a laissé passer.
 
-    POURQUOI cette couche existe. Les scores de l'API de modération notent un
+    Cette couche existe parce que les scores de l'API de modération notent un
     CONTEXTE d'agression, pas un registre de langue. Mesuré sur ce chat :
     « espèce de con » sort à 0.255 et part à la poubelle, mais « con » tout seul
     tombe à 0.0028 — soit SOUS le bruit des messages ordinaires, qui montent
@@ -190,7 +190,7 @@ async def check(req: ModerationRequest):
 # COUCHE 3 — filet de secours par liste de mots. DÉSACTIVÉE VOLONTAIREMENT.
 # ===========================================================================
 #
-# POURQUOI ELLE EST ÉCRITE. Les deux couches actives dépendent entièrement de
+# Ce qui l'a motivée : les deux couches actives dépendent entièrement de
 # l'API Mistral. On a vu le cas concret : le quota de `/chat/completions` est
 # retombé à zéro (en-tête `x-ratelimit-limit-req-minute: 0`), le juge de la
 # couche 2 s'est mis à répondre None, et il ne restait plus que la couche 1.
@@ -198,7 +198,7 @@ async def check(req: ModerationRequest):
 # est fail-open, et le chat n'est plus filtré du tout. Ce bloc est la réponse à
 # ce trou-là.
 #
-# POURQUOI ELLE EST DÉSACTIVÉE. Non pas parce que le sujet l'interdirait — il ne
+# Et ce qui la garde éteinte : non pas le sujet, qui ne
 # dit rien des listes de mots — mais parce qu'une liste active donnerait
 # l'impression que la détection repose dessus, alors que c'est le modèle qui
 # fait le travail. Le risque n'en vaut pas la chandelle tant que Mistral répond.

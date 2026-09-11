@@ -18,7 +18,7 @@ Deux partis pris :
   captures d'écran sont majoritaires côté « authentique », mais le lecteur ne
   sait pas les afficher : un clip sans image jouable est un clip perdu.
 - On NE TRADUIT PAS. Reformuler les propos d'une personne nommée est
-  précisément ce que la règle d'or de docs/CLAIMS.md interdit : une nuance
+  précisément ce que la règle d'or de app/rag/README.md interdit : une nuance
   perdue à la traduction déplacerait le verdict, et le verdict ne nous
   appartient pas. Les énoncés restent donc dans la langue du fact-checkeur.
 
