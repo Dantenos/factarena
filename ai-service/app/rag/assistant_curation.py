@@ -8,7 +8,7 @@ propose une fiche que tu n'as plus qu'à valider.
 ⚠️ CE QUE CET OUTIL NE FAIT PAS : il ne décide RIEN. La fiche est une
 PROPOSITION. C'est un humain qui tranche et qui insère. Laisser le modèle fixer
 lui-même le verdict violerait la décision d'architecture n°1 (la clé de réponse
-ne vient jamais du LLM) et la règle d'or de docs/CLAIMS.md §2 (on ne qualifie
+ne vient jamais du LLM) et la règle d'or de app/rag/README.md (on ne qualifie
 jamais soi-même les propos d'autrui — c'est le fact-checkeur qui engage sa
 responsabilité, pas nous).
 

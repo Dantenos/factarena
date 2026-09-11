@@ -312,7 +312,7 @@ export default function Room() {
           // Le back renvoie un truthLabel binaire (TRUE/FALSE). Les verdicts
           // nuancés (TROMPEUR, HORS_CONTEXTE) n'existent pas encore côté base :
           // on retombe donc sur VRAI/FAUX. À faire évoluer si la colonne est
-          // ajoutée (voir docs/CLAIMS.md).
+          // ajoutée.
           const verdict: ClipVerdict = v.truthLabel === 'TRUE' ? 'VRAI' : 'FAUX';
 
           // Le back accole le second avis au verdict après une ligne vide

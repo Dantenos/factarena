@@ -10,8 +10,8 @@
 
 RAPPEL HONNÊTE (à dire à l'évaluateur) : ceci est l'ASSISTANT de fact-checking
 (analyse sourcée d'une affirmation). Ce n'est PAS l'arbitre du jeu — le score du
-jeu vient d'une clé de réponse éditoriale déterministe (docs/ARCHITECTURE.md,
-décision n°1). Le RAG EXPLIQUE, il ne tranche jamais le gain. Ne jamais dire
+jeu vient d'une clé de réponse éditoriale déterministe (README.md,
+« Deterministic answer key »). Le RAG EXPLIQUE, il ne tranche jamais le gain. Ne jamais dire
 « mon IA détecte les fake news » : dire « mon IA produit une analyse sourcée ».
 """
 import asyncio

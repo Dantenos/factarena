@@ -146,6 +146,25 @@ a pre-labelled editorial `truthLabel` stored in the database. The RAG/LLM layer 
 *explains* a verdict that is already known. Scoring is reproducible, and a model
 hallucination can never change a game's outcome.
 
+**Embedded video, with the vote window synchronised rather than the picture.** A round is
+a playlist of viral clips played in the platform's official iframe (YouTube or Facebook);
+we host no video. The server only decides when each clip's vote opens and closes, the same
+instant for every player, and that is the real-time part fairness depends on. Syncing the
+frames themselves would cost a lot and prove nothing. The embed has to stay a pure iframe:
+widgets from X, Instagram or TikTok run their JavaScript inside our origin and would charge
+their console errors to us.
+
+**Verdicts come from identified fact-checkers, never from us.** Every clip stores the
+verdict published by AFP, Snopes, franceinfo or another signatory of the ClaimReview
+standard, together with the article's URL. We never qualify a named person's words
+ourselves: the fact-checker carries the editorial responsibility, and every verdict stays
+traceable to a dated source. Ambiguous ratings are dropped rather than interpreted. The
+rules the ingestion scripts follow are in `ai-service/app/rag/README.md`.
+
+**An external LLM API rather than a self-hosted model.** One key in `.env`. A model served
+from the FastAPI container would have removed the dependency, but would not fit in the
+resources of a school machine.
+
 ## Database Schema
 
 Thirteen relational tables managed by Prisma, plus one vector table owned by the AI service.
@@ -196,8 +215,7 @@ Separately, the AI service owns `rag.documents` (`source`, `title`, `url`, `cont
 
 ## Modules
 
-Eleven modules, **18 points**, for the 14 the subject requires. Each one is explained below,
-and `docs/ARCHITECTURE.md` gives the section of the subject it answers.
+Eleven modules, **18 points**, for the 14 the subject requires. Each one is explained below.
 
 | Module | Type | Pts | Member(s) | Status |
 |---|---|---|---|---|
@@ -324,9 +342,10 @@ is settled, not weeks later.
 ## Resources
 
 - Project subject: the PDF handed out by the school (not vendored here)
-- Architecture & module rationale: `docs/ARCHITECTURE.md`
-- AI service roadmap and decisions: `docs/AI.md`
-- Game content specification: `docs/CLAIMS.md`
+- AI service design (anti-spoiler guardrail, moderation layers, corpus rules):
+  `ai-service/README.md` and `ai-service/app/rag/README.md`
+- Backend policies (ledger, game state, moderation, avatar upload): `backend/*_POLICY.md`
+- Day-to-day commands: `docs/COMMANDES.md`
 
 External services and data sources actually used:
 

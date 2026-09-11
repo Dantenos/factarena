@@ -1,6 +1,6 @@
 """Garde-fou anti-spoil du bot de chat (`@bot`) — cascade thématique + juge LLM.
 
-Ce fichier existe pour une raison (cf. `docs/AI.md §9` et la décision d'archi n°1) :
+Ce fichier existe pour une raison (cf. `ai-service/README.md`, « garde-fou anti-spoil ») :
 si quelqu'un demande « la vidéo de l'aigle, elle est vraie ? » PENDANT que ce clip
 est dans la manche en cours, répondre reviendrait à **divulguer la clé de réponse**
 du jeu — interdit, l'équité du jeu ne doit jamais dépendre du modèle.
@@ -41,7 +41,7 @@ def is_about_live_topics(question: str, live_topics: list[str]) -> bool:
     """La question touche-t-elle un mot-thème d'un clip de la manche en cours ?
 
     `live_topics` = l'union des mots-thèmes des clips en jeu, fournie par le
-    Back Core (curés avec le contenu — cf. `CLAIMS.md`). Matching insensible à la
+    Back Core (curés avec le contenu). Matching insensible à la
     casse et aux accents : un mot-thème d'UN mot est cherché en **mot entier**
     (« art » ne matche pas « carte ») ; un mot-thème **multi-mots** est cherché en
     sous-chaîne. Déterministe, aucun appel réseau.

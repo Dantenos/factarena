@@ -5,7 +5,7 @@ vérifications que l'API n'indexe pas et celles dont la vidéo se trouve
 ailleurs que dans l'article. Ce fichier recueille ce qu'on ajoute au cas par
 cas, une fois le clip regardé et le verdict relevé chez le fact-checkeur.
 
-Chaque entrée porte sa source. C'est la condition posée par docs/CLAIMS.md :
+Chaque entrée porte sa source. C'est la condition posée par app/rag/README.md :
 le verdict appartient à la rédaction qui l'a publié, jamais à nous. On se
 contente de recopier fidèlement, y compris quand la conclusion est nuancée —
 auquel cas la nuance part dans l'explication, puisque la base ne connaît que

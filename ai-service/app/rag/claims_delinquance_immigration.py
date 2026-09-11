@@ -8,7 +8,7 @@ D'OÙ VIENNENT LES VERDICTS. Uniquement de rédactions de fact-checking — AFP
 Factuel, TF1 Info, Le Monde, 20 Minutes, franceinfo, Africa Check. On n'est pas
 allé chercher les publications d'origine dans les médias qui les diffusent :
 elles n'apportent aucun verdict, et les étiqueter nous-mêmes reviendrait à nous
-instituer arbitres de ce qui est vrai. La règle d'or de docs/CLAIMS.md
+instituer arbitres de ce qui est vrai. La règle d'or de app/rag/README.md
 l'interdit, et pour une bonne raison — c'est le fact-checkeur qui engage sa
 responsabilité éditoriale, pas nous.
 

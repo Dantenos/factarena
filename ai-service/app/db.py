@@ -2,7 +2,7 @@
 
 Ce fichier vit ici et pas dans Prisma parce que Prisma (côté back NestJS) gère
 les tables relationnelles (User, Room...), mais il gère mal le type `vector`.
-La frontière décidée dans docs/ARCHITECTURE.md §5.2 : les tables VECTORIELLES
+La frontière décidée (cf. README.md, « PostgreSQL with pgvector ») : les tables VECTORIELLES
 sont gérées par le service IA, dans la MÊME base. Les deux mondes se parlent par
 `id`, jamais par jointure Prisma <-> vecteur.
 
