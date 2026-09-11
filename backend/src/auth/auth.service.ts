@@ -16,6 +16,8 @@ type AuthUser = {
   displayName: string | null;
   status: string;
   role: string;
+  experience: number;
+  level: number;
 };
 
 @Injectable()
@@ -174,6 +176,8 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
         status: user.status,
         role: user.role,
+        experience: user.experience,
+        level: user.level,
       },
     };
   }

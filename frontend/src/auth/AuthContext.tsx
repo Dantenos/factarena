@@ -102,13 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getToken();
     if (!token) return;
     const socket = io({ path: '/socket.io', transports: ['websocket'], auth: { token } });
-    const profilMisAJour = (profilUtilisateur: { id?: string; displayName?: string | null; avatarUrl?: string | null }) => {
+    const profilMisAJour = (profilUtilisateur: { id?: string; displayName?: string | null; avatarUrl?: string | null; experience?: number; level?: number; achievements?: unknown[] }) => {
       if (!profilUtilisateur?.id) return;
       if (profilUtilisateur.id === utilisateur.id) {
         setUtilisateur((precedent) => precedent ? {
           ...precedent,
           displayName: profilUtilisateur.displayName ?? precedent.displayName,
           avatarUrl: profilUtilisateur.avatarUrl ?? precedent.avatarUrl,
+          experience: profilUtilisateur.experience ?? precedent.experience,
+          level: profilUtilisateur.level ?? precedent.level,
         } : precedent);
       }
       window.dispatchEvent(new CustomEvent('factarena:profile-update', { detail: profilUtilisateur }));

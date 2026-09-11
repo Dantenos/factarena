@@ -82,7 +82,7 @@ export class RealtimeGateway
   ) {}
 
   /** Diffuse les changements de pseudo/avatar à toutes les sessions connectées. */
-  broadcastProfileUpdate(user: { id: string; displayName: string | null; avatarUrl: string | null }) {
+  broadcastProfileUpdate(user: { id: string; displayName: string | null; avatarUrl: string | null; experience?: number; level?: number; achievements?: unknown[] }) {
     this.server?.emit('profile:update', user);
   }
 
@@ -573,6 +573,16 @@ export class RealtimeGateway
 
   async publishRoundVerdicts(roomId: string, roundId: string, verdicts: unknown[], classement: unknown[] = []) {
     this.server.to(this.roomChannel(roomId)).emit('round:verdicts', { roundId, verdicts, classement });
+    const userIds = Array.isArray(classement)
+      ? classement.map((entry) => (entry as { userId?: string }).userId).filter((id): id is string => typeof id === 'string')
+      : [];
+    if (userIds.length > 0) {
+      const profils = await this.prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, displayName: true, avatarUrl: true, experience: true, level: true, achievements: { select: { achievementKey: true, unlockedAt: true }, orderBy: { unlockedAt: 'asc' } } },
+      });
+      for (const profil of profils) this.broadcastProfileUpdate(profil);
+    }
     await this.broadcastLeaderboardUpdate();
     this.broadcastHistoryUpdate();
   }

@@ -67,7 +67,19 @@ export interface LeaderboardEntry {
   username: string;
   correctCount: number;  // nombre de bonnes réponses sur la session
   creditsChange: number; // gain/perte de crédits (positif ou négatif)
+  experienceGained: number;
+  achievementsUnlocked: string[];
 }
+
+export type AchievementKey = 'FIRST_WIN' | 'CREDITS_100' | 'PERFECT_GAME' | 'BET_250_WIN' | 'TEN_WINS';
+
+export const ACHIEVEMENTS: Array<{ key: AchievementKey; name: string; description: string }> = [
+  { key: 'FIRST_WIN', name: 'Dans le petit bain', description: 'Gagner une partie.' },
+  { key: 'CREDITS_100', name: 'Début de la richese', description: 'Gagner 100 crédits pendant une partie.' },
+  { key: 'PERFECT_GAME', name: 'Pro de la fakenews', description: 'Avoir 5 bonnes réponses sur 5 au cours d’une partie.' },
+  { key: 'BET_250_WIN', name: 'Même pas peur', description: 'Gagner une partie en ayant misé 250 crédits.' },
+  { key: 'TEN_WINS', name: 'Imbattable', description: 'Gagner 10 parties.' },
+];
 
 // --- Paris ---
 

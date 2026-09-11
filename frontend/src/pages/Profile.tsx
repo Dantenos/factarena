@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, chercherJoueurs, envoyerAvatar, modifierProfil, reclamerRattrapage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { ACHIEVEMENTS } from '../mocks/gameData';
 
 /** Profil réduit renvoyé par le back à l'intérieur des statistiques. */
 interface ProfilJoueur {
@@ -13,6 +14,9 @@ interface ProfilJoueur {
   displayName: string | null;
   avatarUrl: string | null;
   createdAt: string;
+  experience: number;
+  level: number;
+  achievements: Array<{ achievementKey: string; unlockedAt: string }>;
 }
 
 /** Retour de /stats/me — voir StatsService.computeStats côté back. */
@@ -26,6 +30,8 @@ interface Stats {
   totalPayout: number;
   netGain: number;
   winRate: number;
+  experience: number;
+  level: number;
 }
 
 /** Une ligne de /stats/leaderboard, déjà triée et numérotée par le back. */
@@ -129,13 +135,13 @@ export default function Profile() {
 
   useEffect(() => {
     const mettreAJourProfil = (event: Event) => {
-      const profilMisAJour = (event as CustomEvent<{ id?: string; displayName?: string | null; avatarUrl?: string | null }>).detail;
+      const profilMisAJour = (event as CustomEvent<{ id?: string; displayName?: string | null; avatarUrl?: string | null; experience?: number; level?: number; achievements?: Array<{ achievementKey: string; unlockedAt: string }> }>).detail;
       if (!profilMisAJour?.id) return;
       setStats((precedent) => precedent && precedent.user.id === profilMisAJour.id
-        ? { ...precedent, user: { ...precedent.user, displayName: profilMisAJour.displayName ?? precedent.user.displayName, avatarUrl: profilMisAJour.avatarUrl ?? precedent.user.avatarUrl } }
+        ? { ...precedent, experience: profilMisAJour.experience ?? precedent.experience, level: profilMisAJour.level ?? precedent.level, user: { ...precedent.user, displayName: profilMisAJour.displayName ?? precedent.user.displayName, avatarUrl: profilMisAJour.avatarUrl ?? precedent.user.avatarUrl, experience: profilMisAJour.experience ?? precedent.user.experience, level: profilMisAJour.level ?? precedent.user.level, achievements: profilMisAJour.achievements ?? precedent.user.achievements } }
         : precedent);
       setPodium((precedent) => precedent.map((ligne) => ligne.user.id === profilMisAJour.id
-        ? { ...ligne, user: { ...ligne.user, displayName: profilMisAJour.displayName ?? ligne.user.displayName } }
+        ? { ...ligne, experience: profilMisAJour.experience ?? ligne.experience, level: profilMisAJour.level ?? ligne.level, user: { ...ligne.user, displayName: profilMisAJour.displayName ?? ligne.user.displayName, experience: profilMisAJour.experience ?? ligne.user.experience, level: profilMisAJour.level ?? ligne.user.level, achievements: profilMisAJour.achievements ?? ligne.user.achievements } }
         : ligne));
     };
     window.addEventListener('factarena:profile-update', mettreAJourProfil);
@@ -163,6 +169,9 @@ export default function Profile() {
     stats?.user,
     estMonProfil ? utilisateur?.displayName || utilisateur?.email?.split('@')[0]?.slice(0, 30) : undefined,
   );
+  const experienceRequise = (stats?.level ?? 1) * 25;
+  const progressionExperience = Math.min(100, ((stats?.experience ?? 0) / experienceRequise) * 100);
+  const succesDebloques = new Set((stats?.user.achievements ?? []).map((succes) => succes.achievementKey));
 
   // Le back borne déjà le pseudo, on applique la même règle ici : la
   // validation est double, formulaire et serveur.
@@ -306,6 +315,15 @@ export default function Profile() {
             <p className="text-white/40 text-sm">
               {stats ? `${stats.virtualBalance} crédits` : '—'}
             </p>
+            <div className="mt-3 max-w-xs" aria-label={`Niveau ${stats?.level ?? 1}, ${stats?.experience ?? 0} sur ${experienceRequise} XP`}>
+              <div className="flex items-center justify-between text-xs text-white/60">
+                <span className="font-semibold text-amber-300">Niveau {stats?.level ?? 1}</span>
+                <span>{stats?.experience ?? 0} / {experienceRequise} XP</span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-amber-300 transition-all duration-500" style={{ width: `${progressionExperience}%` }} />
+              </div>
+            </div>
             {/* Sous la mise minimale, le compte était enfermé : plus rien à
                 engager, donc plus aucun gain possible, et rien pour remonter. */}
             {estMonProfil && stats && stats.virtualBalance < SEUIL_RATTRAPAGE && (
@@ -356,31 +374,49 @@ export default function Profile() {
       </div>
 
       <div className="lg:col-span-3 lg:col-start-3 lg:pl-6">
-        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-full lg:w-[46%] text-white font-semibold rounded-xl">
-          Top players
-        </h1>
-        <div className="grid grid-cols-3 grid-rows-5 p-4 sm:p-8 gap-2 bg-gris-krystal min-h-[320px] lg:h-[92%] rounded-xl">
-          {marches.map((position, index) => {
-            const joueur = podium[index];
-            return (
-              <div
-                key={position}
-                className={`${position} min-w-0 max-w-full overflow-hidden bg-noir-krystal rounded-xl text-white flex flex-col items-center justify-end p-3 gap-1`}
-              >
-                {joueur ? (
-                  <>
-                    <span className="text-white/40 text-xs">#{joueur.rank}</span>
-                    <span className="min-w-0 max-w-full font-semibold text-sm text-center break-all">
-                      {nomDe(joueur.user)}
-                    </span>
-                    <span className={joueur.netGain >= 0 ? 'text-emerald-400 text-xs' : 'text-red-400 text-xs'}>
-                      {joueur.netGain >= 0 ? '+' : ''}{joueur.netGain} cr
-                    </span>
-                  </>
-                ) : null}
-              </div>
-            );
-          })}
+        <div className="mb-4 rounded-xl bg-gris-krystal p-4 sm:p-6">
+          <h1 className="bg-grisclair-krystal text-[20px] px-6 py-2 w-full text-white font-semibold rounded-xl">
+            Succès
+          </h1>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {ACHIEVEMENTS.map((succes) => {
+              const debloque = succesDebloques.has(succes.key);
+              return (
+                <div key={succes.key} className={`rounded-xl border p-3 transition-colors ${debloque ? 'border-amber-300/50 bg-amber-300/10 text-amber-200' : 'border-white/10 bg-noir-krystal/50 text-white/35 grayscale'}`}>
+                  <p className="font-semibold">{succes.name}</p>
+                  <p className="mt-1 text-xs">{succes.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="mb-4 rounded-xl bg-gris-krystal p-4 sm:p-6">
+          <h1 className="bg-grisclair-krystal text-[20px] px-6 py-2 w-full text-white font-semibold rounded-xl">
+            Top players
+          </h1>
+          <div className="mt-3 grid grid-cols-3 grid-rows-5 gap-2 bg-gris-krystal min-h-[260px] rounded-xl p-4 sm:p-6">
+            {marches.map((position, index) => {
+              const joueur = podium[index];
+              return (
+                <div
+                  key={position}
+                  className={`${position} min-w-0 max-w-full overflow-hidden bg-noir-krystal rounded-xl text-white flex flex-col items-center justify-end p-3 gap-1`}
+                >
+                  {joueur ? (
+                    <>
+                      <span className="text-white/40 text-xs">#{joueur.rank}</span>
+                      <span className="min-w-0 max-w-full font-semibold text-sm text-center break-all">
+                        {nomDe(joueur.user)}
+                      </span>
+                      <span className={joueur.netGain >= 0 ? 'text-emerald-400 text-xs' : 'text-red-400 text-xs'}>
+                        {joueur.netGain >= 0 ? '+' : ''}{joueur.netGain} cr
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -388,10 +424,11 @@ export default function Profile() {
           colonnes : une manche a trop d'informations (date, salon, adversaires)
           pour tenir dans une colonne du haut. */}
       <div className="lg:col-span-5 mt-6">
-        <h1 className="bg-grisclair-krystal text-[20px] px-8 py-2 w-full lg:w-[18%] text-white font-semibold rounded-xl">
-          Historique
-        </h1>
-        <div className="bg-gris-krystal rounded-xl p-4 sm:p-6 mt-2">
+        <div className="rounded-xl bg-gris-krystal p-4 sm:p-6">
+          <h1 className="bg-grisclair-krystal text-[20px] px-6 py-2 w-full text-white font-semibold rounded-xl">
+            Historique
+          </h1>
+          <div className="mt-3">
           {historique.length === 0 ? (
             <p className="text-white/30 text-sm">
               Aucune manche terminée pour l'instant.
@@ -442,6 +479,7 @@ export default function Profile() {
               })}
             </ul>
           )}
+          </div>
         </div>
       </div>
     </section>

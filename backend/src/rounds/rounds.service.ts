@@ -4,6 +4,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { RoomPresenceService } from '../rooms/room-presence.service';
 
+export const ACHIEVEMENT_LABELS = {
+  FIRST_WIN: 'Dans le petit bain',
+  CREDITS_100: 'Début de la richesse',
+  PERFECT_GAME: 'Pro de la fakenews',
+  BET_250_WIN: 'Même pas peur',
+  TEN_WINS: 'Imbattable',
+} as const;
+
 @Injectable()
 export class RoundsService {
   constructor(
@@ -419,6 +427,43 @@ export class RoundsService {
         await tx.bet.update({ where: { id: bet.id }, data: { result: payouts.has(bet.id) ? 'WIN' : 'LOSS', payout } });
         if (payout > 0) await this.ledger.creditPayout(tx, bet.userId, payout, `payout:${bet.id}`);
       }
+      // L'XP est attribuée aux gagnants dans la même transaction que le
+      // règlement. Les bots restent exclus de la progression des joueurs.
+      const gagnants = await tx.user.findMany({
+        where: { id: { in: winners.map((bet) => bet.userId) }, role: { not: 'BOT' } },
+        select: { id: true, experience: true, level: true },
+      });
+      for (const gagnant of gagnants) {
+        let experience = gagnant.experience + 25;
+        let level = gagnant.level;
+        while (experience >= level * 25) {
+          experience -= level * 25;
+          level += 1;
+        }
+        await tx.user.update({ where: { id: gagnant.id }, data: { experience, level } });
+      }
+      const votesParJoueur = new Map<string, number>();
+      for (const score of scores) votesParJoueur.set(score.bet.userId, score.correct);
+      const gainsParJoueur = new Map<string, number>();
+      for (const bet of bets) gainsParJoueur.set(bet.userId, (payouts.get(bet.id) ?? 0) - bet.stake);
+      const gagnantsHumains = gagnants.map((gagnant) => gagnant.id);
+      for (const userId of gagnantsHumains) {
+        const userBets = bets.filter((bet) => bet.userId === userId);
+        const totalVictoires = await tx.bet.count({ where: { userId, result: 'WIN' } });
+        const conditions = [
+          { key: 'FIRST_WIN', unlocked: true },
+          { key: 'CREDITS_100', unlocked: (gainsParJoueur.get(userId) ?? 0) >= 100 },
+          { key: 'PERFECT_GAME', unlocked: (votesParJoueur.get(userId) ?? 0) === 5 },
+          { key: 'BET_250_WIN', unlocked: userBets.some((bet) => bet.stake === 250) },
+          { key: 'TEN_WINS', unlocked: totalVictoires >= 10 },
+        ].filter((condition) => condition.unlocked);
+        for (const condition of conditions) {
+          await tx.achievementUnlock.createMany({
+            data: { userId, achievementKey: condition.key },
+            skipDuplicates: true,
+          });
+        }
+      }
       if (tx.room?.updateMany) await tx.room.updateMany({ where: { id: round.roomId, status: 'IN_PROGRESS' }, data: { status: 'FINISHED' } });
       return tx.round.findUniqueOrThrow({ where: { id }, include: { bets: true, clipVotes: true } });
     });
@@ -448,6 +493,7 @@ export class RoundsService {
       select: {
         clipVotes: { select: { userId: true, claimId: true, isFake: true } },
         bets: { select: { userId: true, stake: true, payout: true } },
+        revealedAt: true,
         roundClaims: { select: { claim: { select: { id: true, truthLabel: true } } } },
       },
     });
@@ -458,9 +504,9 @@ export class RoundsService {
       round.roundClaims.map(({ claim }) => [claim.id, claim.truthLabel === 'FALSE']),
     );
 
-    const parJoueur = new Map<string, { correctCount: number; creditsChange: number }>();
+    const parJoueur = new Map<string, { correctCount: number; creditsChange: number; experienceGained: number }>();
     const entree = (userId: string) => {
-      if (!parJoueur.has(userId)) parJoueur.set(userId, { correctCount: 0, creditsChange: 0 });
+      if (!parJoueur.has(userId)) parJoueur.set(userId, { correctCount: 0, creditsChange: 0, experienceGained: 0 });
       return parJoueur.get(userId)!;
     };
 
@@ -474,6 +520,13 @@ export class RoundsService {
     // joueur a engagé sa mise sans retour, donc la variation vaut -stake.
     for (const pari of round.bets) {
       entree(pari.userId).creditsChange += (pari.payout ?? 0) - pari.stake;
+    }
+
+    const joueursAvecPari = new Set(round.bets.map((pari) => pari.userId));
+    const scores = [...parJoueur.entries()].filter(([userId]) => joueursAvecPari.has(userId));
+    const bestScore = scores.length > 0 ? Math.max(...scores.map(([, values]) => values.correctCount)) : -1;
+    for (const [, values] of scores) {
+      if (values.correctCount === bestScore) values.experienceGained = 25;
     }
 
     if (parJoueur.size === 0) return [];
@@ -490,8 +543,24 @@ export class RoundsService {
       utilisateurs.map((u) => [u.id, u.displayName || u.email.split('@')[0]]),
     );
 
+    const utilisateursHumains = [...parJoueur.keys()].filter((id) => utilisateurs.some((u) => u.id === id));
+    const recompenses = await this.prisma.achievementUnlock.findMany({
+      where: {
+        userId: { in: utilisateursHumains },
+        unlockedAt: round.revealedAt ? { gte: round.revealedAt } : undefined,
+      },
+      select: { userId: true, achievementKey: true },
+      orderBy: { unlockedAt: 'asc' },
+    });
+    const recompensesParJoueur = new Map<string, string[]>();
+    for (const recompense of recompenses) {
+      const liste = recompensesParJoueur.get(recompense.userId) ?? [];
+      liste.push(recompense.achievementKey);
+      recompensesParJoueur.set(recompense.userId, liste);
+    }
+
     return [...parJoueur.entries()]
-      .map(([userId, valeurs]) => ({ userId, username: nom.get(userId) ?? 'joueur', ...valeurs }))
+      .map(([userId, valeurs]) => ({ userId, username: nom.get(userId) ?? 'joueur', ...valeurs, achievementsUnlocked: recompensesParJoueur.get(userId) ?? [] }))
       // Le plus précis d'abord : c'est le classement que le jeu met en avant.
       .sort((a, b) => b.correctCount - a.correctCount || b.creditsChange - a.creditsChange);
   }

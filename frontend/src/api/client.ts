@@ -102,6 +102,8 @@ export interface Utilisateur {
   avatarUrl: string | null;
   status: string;
   role: string;
+  experience: number;
+  level: number;
 }
 
 export interface ReponseAuth {
