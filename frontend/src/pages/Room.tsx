@@ -437,8 +437,16 @@ export default function Room() {
     }
   }
 
-  function quitterPartie() {
-    if (roomId) emettre('room:leave', { roomId });
+  async function quitterPartie() {
+    if (roomId) {
+      try {
+        // Attendre l'accusé garantit que le serveur diffuse room:host_left
+        // avant que la navigation ne ferme la socket.
+        await demander('room:leave', { roomId });
+      } catch {
+        // La socket peut déjà être coupée : la navigation reste prioritaire.
+      }
+    }
     window.location.assign('/play');
   }
 

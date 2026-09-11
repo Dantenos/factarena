@@ -31,7 +31,9 @@ export default function Layout() {
             <button
               type="button"
               className="text-base sm:text-lg button-red-d px-3 sm:px-5 py-1"
-              onClick={() => navigate('/play')}
+              onClick={() => window.dispatchEvent(new CustomEvent('factarena:leave-room', {
+                detail: { terminer: () => navigate('/play') },
+              }))}
             >
               Quitter la partie
             </button>

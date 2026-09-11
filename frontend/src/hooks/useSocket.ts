@@ -42,14 +42,23 @@ export function useSocket(roomId: string | null) {
     });
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      setConnecte(true);
-      socket.emit('room:join', { roomId });
-    });
+    // La gateway restaure déjà le salon grâce à roomId transmis dans le
+    // handshake. Un room:join supplémentaire créait une course au
+    // rechargement et pouvait afficher à tort « partie déjà en cours ».
+    socket.on('connect', () => setConnecte(true));
     socket.on('disconnect', () => setConnecte(false));
     socket.on('room:error', (donnees: { message?: string }) => {
       setErreur(donnees?.message ?? 'Impossible de rejoindre la room.');
     });
+    const quitterAvantDeconnexion = () => {
+      socket.emit('room:leave', { roomId });
+    };
+    window.addEventListener('factarena:logout', quitterAvantDeconnexion);
+    const quitterLaRoom = (evenement: Event) => {
+      const terminer = (evenement as CustomEvent<{ terminer?: () => void }>).detail?.terminer;
+      socket.timeout(6000).emit('room:leave', { roomId }, () => terminer?.());
+    };
+    window.addEventListener('factarena:leave-room', quitterLaRoom);
 
     const majEtat = (nouvel: EtatSalon) => {
       if (!nouvel?.room) return;
@@ -77,6 +86,8 @@ export function useSocket(roomId: string | null) {
     socket.on('connect_error', () => setConnecte(false));
 
     return () => {
+      window.removeEventListener('factarena:logout', quitterAvantDeconnexion);
+      window.removeEventListener('factarena:leave-room', quitterLaRoom);
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;

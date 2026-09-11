@@ -194,21 +194,9 @@ export class RealtimeGateway
     this.removeSocket(userId, socket.id);
     const leftPresence = await this.roomPresence.leave(socket.id);
     if (leftPresence?.leftRoom) {
-      const room = await this.roomsService.findOne(leftPresence.roomId);
-      const hoteParti = room.createdBy === userId;
-      // Le sursis vaut aussi quand la partie n'a pas encore démarré : réservé à
-      // IN_PROGRESS, un simple rechargement de page pendant que les joueurs se
-      // rassemblent fermait le salon avant que l'hôte ne revienne, et sa propre
-      // reconnexion se voyait refuser « partie déjà en cours ou terminée ».
-      if (hoteParti) {
-        this.programmerFermetureApresDeconnexion(leftPresence.roomId, userId);
-      } else {
-        const ferme = await this.roomsService.closeIfHostLeaves(leftPresence.roomId, userId);
-        if (ferme) this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:host_left');
-      }
-      this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:member_left', { userId });
-      this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:state', await this.roomsService.getState(leftPresence.roomId));
-      this.broadcastRoomListUpdate();
+      // Tous les joueurs bénéficient d'un court sursis pour recharger leur
+      // page. Seul le départ définitif de l'hôte ferme le salon à l'expiration.
+      this.programmerReconnexion(leftPresence.roomId, userId);
     }
     if (!this.socketsByUser.has(userId)) {
       await this.prisma.user.updateMany({ where: { id: userId }, data: { status: 'OFFLINE' } });
@@ -296,6 +284,11 @@ export class RealtimeGateway
     const roomId = body?.roomId || socket.data.roomId;
     if (!roomId) return { roomId: null };
     this.assertCuid(roomId, 'roomId');
+    const reconnexion = this.reconnexions.get(socket.data.userId);
+    if (reconnexion && reconnexion.roomId === roomId) {
+      clearTimeout(reconnexion.timer);
+      this.reconnexions.delete(socket.data.userId);
+    }
     await socket.leave(this.roomChannel(roomId));
     if (socket.data.roomId === roomId) delete socket.data.roomId;
     const leftPresence = await this.roomPresence.leave(socket.id);
@@ -629,8 +622,10 @@ export class RealtimeGateway
     await this.roomPresence.join(socket.id, socket.data.userId, room.id);
     await this.prisma.user.update({ where: { id: socket.data.userId }, data: { status: 'IN_GAME' } });
     this.broadcastPresence(socket.data.userId, 'IN_GAME', room.id);
+    this.server.to(this.roomChannel(room.id)).emit('room:member_joined', { userId: socket.data.userId });
     const state = await this.roomsService.getState(room.id);
     socket.emit('room:reconnected', state);
+    this.server.to(this.roomChannel(room.id)).emit('room:state', state);
     return state;
   }
 
@@ -644,7 +639,7 @@ export class RealtimeGateway
 
   private roomChannel(roomId: string) { return `room:${roomId}`; }
 
-  private programmerFermetureApresDeconnexion(roomId: string, userId: string) {
+  private programmerReconnexion(roomId: string, userId: string) {
     const ancien = this.reconnexions.get(userId);
     if (ancien) clearTimeout(ancien.timer);
     const timer = setTimeout(() => {
@@ -653,11 +648,12 @@ export class RealtimeGateway
         if (!reconnexion || reconnexion.roomId !== roomId) return;
         this.reconnexions.delete(userId);
         const ferme = await this.roomsService.closeIfHostLeaves(roomId, userId);
+        this.server.to(this.roomChannel(roomId)).emit('room:member_left', { userId });
         if (ferme) {
           this.server.to(this.roomChannel(roomId)).emit('room:host_left');
-          this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
-          this.broadcastRoomListUpdate();
         }
+        this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
+        this.broadcastRoomListUpdate();
       })();
     }, 15_000);
     this.reconnexions.set(userId, { roomId, timer });

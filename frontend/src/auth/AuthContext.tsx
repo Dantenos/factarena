@@ -179,6 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const seDeconnecter = useCallback(() => {
+    // Préviens la page de salon avant de fermer la session : une déconnexion
+    // volontaire doit libérer la place immédiatement, contrairement à un
+    // simple rechargement qui conserve la fenêtre de reconnexion.
+    window.dispatchEvent(new Event('factarena:logout'));
     clearToken();
     setUtilisateur(null);
   }, []);

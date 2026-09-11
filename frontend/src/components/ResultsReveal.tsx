@@ -149,7 +149,7 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
           <ul className="mt-2 space-y-1 text-center text-sm">
             {succesDebloques.map((succes, index) => (
               <li key={`${succes.username}-${succes.name}-${index}`}>
-                « {succes.username} » a débloqué le succès : « {succes.name} »
+                {succes.username} a débloqué le succès : « {succes.name} »
               </li>
             ))}
           </ul>
