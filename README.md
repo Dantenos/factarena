@@ -2,29 +2,6 @@
 
 # FactArena — Live Fake-News Fact-Checking Arena
 
-## Team — start here
-
-The infrastructure is done and it works. `docker compose up --build` brings up the five
-services (nginx, frontend, backend, AI service, PostgreSQL+pgvector) and serves the app over
-HTTPS at **https://localhost:8443** — nothing to install, nothing to configure by hand. Clone the
-repo, copy `.env.example` to `.env`, run the command, and you have a working stack.
-
-So you can start on your own scope right away:
-
-| Scope | Where your code goes | Read first |
-|---|---|---|
-| Back-end core | `backend/src/<your-module>/` | `docs/ARCHITECTURE.md` §6.1 — how to add a module |
-| AI service | `ai-service/app/{rag,llm,moderation}/` | `docs/ARCHITECTURE.md` §5.2 — pgvector is already enabled |
-| Front-end | `frontend/src/{pages,components}/` | `frontend/src/pages/Home.tsx` — a working `/api` call |
-| DevOps / infra | `docker-compose.yml`, `nginx/` | the comments in those files |
-
-For day-to-day work use the **development** command (hot reload) further down — not the
-production one, or you will rebuild the whole image on every saved file.
-
-Two rules that keep us out of trouble: `docker compose up` must always stay the production
-path (that is the single command the grader runs), and the browser console must stay clean —
-the subject rejects a project on either one. Everything else, we can discuss.
-
 ## Description
 
 FactArena is a multiplayer game about misinformation. Players join a room, stake virtual
@@ -62,7 +39,7 @@ Key features:
   `FORTYTWO_CLIENT_SECRET`. Without them the button answers a clean 503 and the rest of the
   application keeps working.
 
-### Run (production — this is what a grader runs)
+### Run (production)
 ```bash
 git clone <repo-url> ft_transcendence && cd ft_transcendence
 cp .env.example .env   # then edit the values
@@ -80,12 +57,12 @@ Once every service reports `healthy`, the stack is ready:
 | `https://localhost:8443/api/health` | `{"status":"ok"}` |
 | `docker compose ps` | 5 services, all `healthy` |
 
-### Run (development — hot reload, for daily work)
+### Run (development, with hot reload)
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
-Same URL, same nginx, same TLS — but your local code is mounted into the containers: save a
-file and the browser reloads on its own (React), or the API restarts on its own (NestJS).
+Same URL, same nginx, same TLS, but the local code is mounted into the containers: saving a
+file reloads the browser (React) or restarts the API (NestJS).
 See `docker-compose.dev.yml` for the details.
 
 > Only nginx publishes a port (8443 on the host, 443 inside). Every other service talks over the private Docker
