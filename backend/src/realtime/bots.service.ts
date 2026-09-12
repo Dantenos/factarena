@@ -2,59 +2,26 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 
-/**
- * Faux joueurs qui animent le chat pendant une manche.
- *
- * Deux affirment l'inverse de la bonne réponse, un troisième meuble. Le jeu
- * porte sur la désinformation : un chat où tout le monde raisonne juste
- * n'aurait aucun sens.
- *
- * Ils passent pour des joueurs, jamais pour l'assistant : pseudos ordinaires,
- * aucune source citée. L'assistant @bot, lui, cite les siennes et doit rester
- * fiable — il ne faut pas confondre les deux.
- *
- * Messages éphémères : diffusés en direct, jamais enregistrés ni modérés.
- */
 @Injectable()
 export class BotsService {
   private readonly logger = new Logger(BotsService.name);
 
-  // Les minuteries en cours, par salon : permet de tout annuler si la manche
-  // se termine plus tôt que prévu (verrouillage manuel, salon vidé).
   private readonly minuteries = new Map<string, NodeJS.Timeout[]>();
-  // Résolu une seule fois : les comptes des bots ne changent jamais.
   private comptesCache?: Map<string, string>;
-  // Réservoirs de formules en cours, par salon (voir creerPioche).
   private readonly pioches = new Map<string, Record<string, () => string>>();
 
-  // Avis arrêtés, par salon puis par « clip:bot ». À plusieurs joueurs les
-  // votes arrivent en rafale : sans mémoire, un bot dirait « fake » à l'un et
-  // « vrai » à l'autre du même clip, en écrasant son propre vote.
   private readonly avis = new Map<string, Map<string, string>>();
-  // Date du dernier message de bot, par salon : sert à espacer les réactions
-  // quand plusieurs joueurs votent en même temps.
   private readonly dernierMessage = new Map<string, number>();
 
-  // Derniers échanges du salon, joueurs ET bots. Les messages de bots ne sont
-  // jamais enregistrés en base : sans cette mémoire vive, ils ne pourraient pas
-  // se répondre entre eux.
   private readonly conversation = new Map<string, Array<{ auteur: string; contenu: string }>>();
-  // Dernier appel au LLM par salon : le limiteur est à 10/min, on s'auto-freine
-  // bien avant pour qu'un joueur bavard n'épuise pas le budget en dix secondes.
   private readonly dernierLLM = new Map<string, number>();
   private static readonly ECART_LLM_MS = 5_000;
   private static readonly MEMOIRE = 8;
 
-  // Débit des faux joueurs : ~7 messages par manche de 10 clips, contre 22
-  // avant, où ils noyaient le chat des joueurs. Regroupé ici parce qu'on y
-  // revient après chaque test à plusieurs.
   private static readonly AMBIANCE_PAR_CLIP = 0.3;
-  // Probabilités de se taire quand un joueur vote. Seul le premier avis d'un
-  // bot sur un clip a de l'intérêt : ensuite il n'a plus rien à ajouter.
   private static readonly SILENCE_PREMIER_AVIS = 0.6;
   private static readonly SILENCE_DEJA_POSITIONNE = 0.95;
   private static readonly PROBA_REBOND = 0.15;
-  // Plafond dur : sans lui, cinq joueurs qui votent ensemble partent en rafale.
   private static readonly ECART_MESSAGE_MS = 12_000;
 
   constructor(
@@ -62,11 +29,6 @@ export class BotsService {
     private readonly ai: AiService,
   ) {}
 
-  /**
-   * Caractères des faux joueurs. Ils décrivent une manière de parler, jamais
-   * un savoir : la position que le bot défend est décidée ailleurs, et le
-   * modèle n'apprend jamais la bonne réponse.
-   */
   private static readonly PERSONNAGES: Record<string, string> = {
     mreynaud: "Tu es mreynaud, un joueur sûr de lui qui tranche vite et déteste "
       + "qu'on le contredise. Tu parles sec, tu balances des arguments d'autorité.",
@@ -76,18 +38,12 @@ export class BotsService {
       + "connexion, demande qu'on répète et lâche des remarques à côté.",
   };
 
-  /** Mémorise un message pour que les bots puissent y réagir ensuite. */
   noter(roomId: string, auteur: string, contenu: string): void {
     const fil = this.conversation.get(roomId) ?? [];
     fil.push({ auteur, contenu });
     this.conversation.set(roomId, fil.slice(-BotsService.MEMOIRE));
   }
 
-  /**
-   * Fait parler un bot par le LLM. Renvoie null dès que quelque chose cloche —
-   * quota, réseau, réponse vide : l'appelant retombe alors sur ses formules
-   * pré-écrites, et le chat n'est jamais muet.
-   */
   private async phraseLLM(roomId: string, bot: string, consigne: string): Promise<string | null> {
     const maintenant = Date.now();
     if (maintenant - (this.dernierLLM.get(roomId) ?? 0) < BotsService.ECART_LLM_MS) return null;
@@ -118,15 +74,9 @@ export class BotsService {
       const donnees = reponse?.data as { answer?: string; text?: string } | undefined;
       const brut = (donnees?.answer ?? donnees?.text ?? '').trim();
       if (!brut) return null;
-      // Une seule ligne, bornée : le modèle part parfois en paragraphe, et un
-      // pavé dans le fil trahirait immédiatement la machine.
       const phrase = brut.split('\n').find((l) => l.trim().length > 0)?.trim() ?? '';
       let propre = phrase.replace(/^["'«»\s-]+|["'«»\s]+$/g, '');
-      // Filet : le modèle préfixe parfois quand même son pseudo, ce qui donne
-      // « lchen: lchen a raison » à l'écran.
       propre = propre.replace(new RegExp(`^@?${bot}\\s*[:,-]?\\s*`, 'i'), '').trim();
-      // Et il lui arrive de s'approuver lui-même : cette phrase-là n'a aucun
-      // sens dans le fil, mieux vaut retomber sur une formule pré-écrite.
       if (new RegExp(`^@?${bot}\\b`, 'i').test(propre)) return null;
       return propre.length >= 3 ? propre.slice(0, 180) : null;
     } catch (error) {
@@ -135,15 +85,9 @@ export class BotsService {
     }
   }
 
-  /** Deux trompeurs, un bavard. Pseudos volontairement quelconques. */
   private static readonly TROMPEURS = ['mreynaud', 'lchen'];
   private static readonly BAVARD = 'adiallo';
 
-  /**
-   * Formules affirmatives, qui doivent sonner sûres d'elles. {r} = la réponse
-   * assénée. Le réservoir est large parce qu'une manche en consomme une bonne
-   * douzaine, et que les répétitions se remarquent vite.
-   */
   private static readonly CERTITUDES = [
     "franchement celle-là c'est {r} à 100%, je l'ai déjà vue passer",
     "{r} évidemment, y a même pas débat",
@@ -165,12 +109,6 @@ export class BotsService {
     "{r}, on nous a déjà servi la même l'an dernier",
   ];
 
-  /**
-   * Variantes accrochées au sujet du clip (voir `sujetDe`). Un bot qui assène
-   * « c'est fake » sans jamais parler de ce qu'on regarde sonne hors-sol. On
-   * n'y recourt que si le sujet a pu être identifié, sinon on retombe sur les
-   * formules génériques.
-   */
   private static readonly CERTITUDES_SUJET = [
     "sur {s} y a toujours les mêmes intox qui tournent, c'est {r}",
     "{r}. les trucs sur {s} c'est jamais ce qu'on croit",
@@ -182,7 +120,6 @@ export class BotsService {
     "{r}, j'avais lu un truc sur {s} qui disait exactement ça",
   ];
 
-  /** Le bavard : du bruit, aucune information exploitable. */
   private static readonly MEUBLAGE = [
     'mouais',
     'chelou ce truc',
@@ -202,11 +139,6 @@ export class BotsService {
     'quelqu un a compris quelque chose ?',
   ];
 
-  /**
-   * Réponses quand un joueur interpelle un faux joueur. Ils campent sur leur
-   * position : les pousser ne doit jamais faire tomber la bonne réponse, sinon
-   * il suffirait de leur demander pour gagner.
-   */
   private static readonly RIPOSTES = [
     'mais oui je te dis, fais moi confiance',
     'jsuis sûr de moi là-dessus, tu verras à la révélation',
@@ -222,7 +154,6 @@ export class BotsService {
     "j'ai un doute d'un coup... non en fait non",
   ];
 
-  /** Le bavard, lui, esquive : il n'a jamais rien à défendre. */
   private static readonly ESQUIVES = [
     'moi jsais pas hein, me demandez pas',
     'aucune idée désolé',
@@ -231,7 +162,6 @@ export class BotsService {
     'jvous suis, jai pas d avis',
   ];
 
-  /** Le bavard peut aussi rebondir sur un trompeur, ce qui crée du faux consensus. */
   private static readonly APPUIS = [
     '+1 avec {a}',
     '{a} a raison je pense',
@@ -241,12 +171,6 @@ export class BotsService {
     'bon bah si {a} le dit',
   ];
 
-  /**
-   * Un faux joueur qui en contredit un autre, nommément. Sans ces échanges le
-   * chat n'est qu'une file de monologues : personne ne se répond, et l'illusion
-   * d'un vrai salon tombe. Le désaccord sert aussi le jeu — il oblige le joueur
-   * à trancher lui-même au lieu de suivre le premier avis affiché.
-   */
   private static readonly CONTRADICTIONS = [
     "{a} n'importe quoi, c'est {r} oui",
     '{a} t as regardé la même vidéo que moi ? {r}',
@@ -257,11 +181,6 @@ export class BotsService {
     'alors là {a} je suis pas du tout d accord, {r}',
   ];
 
-  /**
-   * Sujets reconnus dans le texte d'une claim, pour que les bots parlent de ce
-   * qui est à l'écran. Dictionnaire explicite plutôt qu'extraction automatique,
-   * qui sortait des mots hors sujet (« endroit », « existe »).
-   */
   private static readonly SUJETS: Array<[RegExp, string]> = [
     [/foudre|éclair|orage|tonnerre/i, 'la foudre'],
     [/plante|feuille|mimosa/i, 'les plantes'],
@@ -294,17 +213,11 @@ export class BotsService {
     return liste[Math.floor(Math.random() * liste.length)];
   }
 
-  /**
-   * Tirage sans remise : une formule ne revient pas tant que les autres n'ont
-   * pas servi. Un Math.random() nu ressortait la même plusieurs fois par manche.
-   */
   private static creerPioche<T>(source: T[]): () => T {
     let reste: T[] = [];
     return () => {
       if (reste.length === 0) {
         reste = [...source];
-        // Fisher-Yates, comme pour le tirage des claims : un sort() aléatoire
-        // biaiserait la distribution.
         for (let i = reste.length - 1; i > 0; i -= 1) {
           const j = Math.floor(Math.random() * (i + 1));
           [reste[i], reste[j]] = [reste[j], reste[i]];
@@ -314,12 +227,6 @@ export class BotsService {
     };
   }
 
-  /**
-   * Anime le chat d'un salon pendant la manche.
-   *
-   * `emettre` est fourni par la gateway : le service ne connaît pas Socket.IO,
-   * il se contente de dire quoi envoyer et quand.
-   */
   async animer(
     roomId: string,
     roundId: string,
@@ -333,8 +240,6 @@ export class BotsService {
         locksAt: true,
         roundClaims: {
           orderBy: { orderIndex: 'asc' },
-          // On récupère aussi le texte : sans lui les bots ne peuvent pas
-          // parler du sujet à l'écran (voir SUJETS / CERTITUDES_SUJET).
           select: { claim: { select: { id: true, truthLabel: true, text: true } } },
         },
       },
@@ -345,8 +250,6 @@ export class BotsService {
     if (restant <= 0) return;
 
     const minuteries: NodeJS.Timeout[] = [];
-    // Une pioche par réservoir, valable pour TOUTE la manche : c'est ce qui
-    // garantit qu'aucune formule ne revient tant que les autres n'ont pas servi.
     const pioches = {
       generique: BotsService.creerPioche(BotsService.CERTITUDES),
       sujet: BotsService.creerPioche(BotsService.CERTITUDES_SUJET),
@@ -357,9 +260,6 @@ export class BotsService {
       esquive: BotsService.creerPioche(BotsService.ESQUIVES),
     };
 
-    // Comptes des faux joueurs : nécessaires pour qu'ils puissent voter et
-    // donc figurer au classement. En cas d'échec on continue sans voter, le
-    // chat reste animé — c'est du décor, pas une raison de casser la manche.
     let comptes = new Map<string, string>();
     try {
       comptes = await this.comptes();
@@ -367,9 +267,6 @@ export class BotsService {
       this.logger.warn(`Comptes bots indisponibles : ${String(error)}`);
     }
 
-    // Ce que chaque bot répondra, décidé une fois pour toutes : le message
-    // affiché et le vote enregistré doivent dire la même chose, sinon un
-    // joueur attentif verrait un bot voter contre ce qu'il vient d'affirmer.
     const programmerVote = (pseudo: string, claimId: string, estFake: boolean, delai: number) => {
       const userId = comptes.get(pseudo);
       if (!userId) return;
@@ -384,10 +281,6 @@ export class BotsService {
       }, delai));
     };
 
-    // Ambiance seulement : ces messages ne parlent jamais d'un clip précis.
-    // Chacun avance à son rythme, le serveur ignore ce que tel joueur a sous
-    // les yeux — un bot sur minuterie parlait du Hindenburg à quelqu'un qui
-    // regardait une manifestation. Le contenu part de reagirAuVote().
     const ambiance = Math.max(2, Math.round(round.roundClaims.length * BotsService.AMBIANCE_PAR_CLIP));
     for (let i = 0; i < ambiance; i += 1) {
       const auteur =
@@ -403,9 +296,6 @@ export class BotsService {
           Math.max(2500, (restant / ambiance) * i + Math.random() * 4000)),
       );
     }
-    // Le bavard vote au hasard sur toute la manche : il n'a aucune opinion, et
-    // son score médiocre au classement le montre. Les deux autres votent quand
-    // ils prennent position, donc au moment où le joueur vote.
     round.roundClaims.forEach(({ claim }, index) => {
       programmerVote(BotsService.BAVARD, claim.id, Math.random() < 0.5,
         Math.max(2000, (restant / round.roundClaims.length) * index + 6000));
@@ -416,11 +306,6 @@ export class BotsService {
     this.logger.log(`Bots activés sur ${roomId} (${minuteries.length} actions programmées)`);
   }
 
-  /**
-   * Réaction au vote qui vient d'être émis — c'est le seul moment où l'on sait
-   * de quel clip il est question. Les bots prennent position, le plus souvent
-   * à côté de la plaque, et votent comme ils viennent de parler.
-   */
   async reagirAuVote(
     roomId: string,
     roundId: string,
@@ -437,9 +322,6 @@ export class BotsService {
     this.avis.set(roomId, avisSalon);
 
     const dejaPositionne = avisSalon.has(cle);
-    // Le bot s'est déjà exprimé sur ce clip : à plusieurs joueurs, il se
-    // contenterait sinon de répéter la même phrase à chacun. Il se tait,
-    // sauf de loin en loin pour relancer.
     if (dejaPositionne && Math.random() < BotsService.SILENCE_DEJA_POSITIONNE) return;
     if (!dejaPositionne && Math.random() < BotsService.SILENCE_PREMIER_AVIS) return;
 
@@ -455,8 +337,6 @@ export class BotsService {
 
     let reponse = avisSalon.get(cle);
     if (!reponse) {
-      // Ils se trompent souvent, pas toujours : un bot qui aurait TOUJOURS
-      // tort deviendrait un indicateur fiable par inversion.
       const ment = Math.random() < 0.75;
       reponse = ment
         ? (claim.truthLabel === 'TRUE' ? 'fake' : 'vrai')
@@ -465,8 +345,6 @@ export class BotsService {
     }
 
     const sujet = BotsService.sujetDe(claim.text);
-    // Quand il se répète pour un autre joueur, il campe sur sa position au
-    // lieu de reformuler une nouvelle certitude.
     const modele = dejaPositionne
       ? BotsService.piocher(BotsService.RIPOSTES)
       : (sujet && Math.random() < 0.6
@@ -474,9 +352,6 @@ export class BotsService {
           : pioches.generique());
 
     const delai = 900 + Math.random() * 2200;
-    // Le LLM ne choisit jamais la position — elle est arrêtée juste au-dessus,
-    // et les bots doivent se tromper souvent. Il ne fait que l'exprimer, avec
-    // le clip et le fil sous les yeux.
     const genere = await this.phraseLLM(
       roomId,
       auteur,
@@ -493,8 +368,6 @@ export class BotsService {
     }, delai);
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
 
-    // Le bot vote comme il vient de parler : sinon un joueur attentif verrait
-    // au classement qu'il a voté l'inverse de ce qu'il défendait.
     const comptes = this.comptesCache;
     const userId = comptes?.get(auteur);
     if (!userId) return;
@@ -511,11 +384,6 @@ export class BotsService {
     void joueurDitFake;
   }
 
-  /**
-   * Crée si besoin les comptes des faux joueurs et renvoie pseudo -> id.
-   * Pas de passwordHash : la connexion leur est impossible par construction.
-   * Le rôle « BOT » sert à les exclure des classements.
-   */
   private async comptes(): Promise<Map<string, string>> {
     if (this.comptesCache) return this.comptesCache;
     const pseudos = [...BotsService.TROMPEURS, BotsService.BAVARD];
@@ -536,11 +404,6 @@ export class BotsService {
     return this.comptesCache;
   }
 
-  /**
-   * Un joueur s'adresse à un faux joueur : celui-ci répond après un délai.
-   * Pas de modèle de langage ici — un bot qui argumente finirait par livrer la
-   * réponse à qui insiste, et l'assistant @bot perdrait son intérêt.
-   */
   async interpeller(
     roomId: string,
     contenu: string,
@@ -550,16 +413,10 @@ export class BotsService {
     this.noter(roomId, joueur, contenu);
     const normalise = contenu.toLowerCase();
     const cible = [...BotsService.TROMPEURS, BotsService.BAVARD].find((pseudo) =>
-      // Le pseudo doit apparaître comme un mot entier : sans cette limite,
-      // un pseudo court se retrouverait au milieu d'un autre mot.
       new RegExp(`(^|[^a-z0-9])@?${pseudo}([^a-z0-9]|$)`, 'i').test(normalise),
     );
     if (!cible) return false;
 
-    // On tente d'abord une vraie réponse : c'est le seul endroit où le bot
-    // peut tenir compte de ce qui vient d'être écrit. Le tirage sans remise
-    // reste le filet, pour que deux interpellations ne donnent jamais la même
-    // phrase mot pour mot.
     const pioches = this.pioches.get(roomId);
     const repli = () =>
       cible === BotsService.BAVARD
@@ -574,21 +431,15 @@ export class BotsService {
     );
     const reponse = genere ?? repli();
 
-    // Un délai de frappe : une réponse instantanée trahirait la machine.
     const minuterie = setTimeout(() => {
       this.noter(roomId, cible, reponse);
       emettre({ author: cible, content: reponse });
-      // Un autre bot rebondit parfois sur la réponse : c'est ce qui donne
-      // l'impression qu'ils se parlent entre eux. Un seul rebond, sinon ils
-      // discuteraient entre eux sans fin par-dessus les joueurs.
       if (genere && Math.random() < BotsService.PROBA_REBOND) this.rebondir(roomId, cible, reponse, emettre);
     }, 1200 + Math.random() * 2500);
-    // On la range avec les autres pour qu'un verrouillage de manche l'annule.
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
     return true;
   }
 
-  /** Un bot réagit à ce qu'un autre vient de dire. */
   private rebondir(
     roomId: string,
     auteurPrecedent: string,
@@ -613,15 +464,11 @@ export class BotsService {
     this.minuteries.set(roomId, [...(this.minuteries.get(roomId) ?? []), minuterie]);
   }
 
-  /** Annule les messages en attente d'un salon. */
   arreter(roomId: string): void {
-    // On oublie aussi le fil : sans ça, un bot citerait la manche précédente.
     this.conversation.delete(roomId);
     const existantes = this.minuteries.get(roomId);
     existantes?.forEach(clearTimeout);
     this.minuteries.delete(roomId);
-    // Les avis ne valent que pour la manche écoulée : les garder ferait
-    // rejouer les mêmes positions sur des clips différents à la suivante.
     this.avis.delete(roomId);
     this.pioches.delete(roomId);
     this.dernierMessage.delete(roomId);

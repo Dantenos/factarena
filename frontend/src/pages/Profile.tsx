@@ -1,13 +1,9 @@
-// Page Profil. La maquette affichait des libellés sans valeurs : on garde la
-// grille et on la remplit avec /stats/me et /stats/leaderboard, qui existent
-// déjà côté back (backend/src/stats/).
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, chercherJoueurs, envoyerAvatar, modifierProfil, reclamerRattrapage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { ACHIEVEMENTS } from '../mocks/gameData';
 
-/** Profil réduit renvoyé par le back à l'intérieur des statistiques. */
 interface ProfilJoueur {
   id: string;
   email: string;
@@ -19,7 +15,6 @@ interface ProfilJoueur {
   achievements: Array<{ achievementKey: string; unlockedAt: string }>;
 }
 
-/** Retour de /stats/me — voir StatsService.computeStats côté back. */
 interface Stats {
   user: ProfilJoueur;
   virtualBalance: number;
@@ -34,16 +29,10 @@ interface Stats {
   level: number;
 }
 
-/** Une ligne de /stats/leaderboard, déjà triée et numérotée par le back. */
 interface LigneClassement extends Stats {
   rank: number;
 }
 
-/**
- * Une manche jouée, telle que /stats/me/round-history la renvoie : une mise,
- * et la manche à laquelle elle se rattache avec les mises de tous les joueurs.
- * C'est de là que sortent les adversaires — le back ne les liste pas à part.
- */
 interface MancheJouee {
   id: string;
   stake: number;
@@ -59,8 +48,6 @@ interface MancheJouee {
   };
 }
 
-// Même valeur que LedgerService.SEUIL_RATTRAPAGE côté serveur, qui tranche
-// vraiment : ici on ne fait qu'éviter d'afficher un bouton voué au refus.
 const SEUIL_RATTRAPAGE = 50;
 
 export default function Profile() {
@@ -71,15 +58,11 @@ export default function Profile() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [podium, setPodium] = useState<LigneClassement[]>([]);
   const [historique, setHistorique] = useState<MancheJouee[]>([]);
-  // Édition du pseudo : fermée par défaut, pour que la page reste une fiche
-  // qu'on lit plutôt qu'un formulaire.
   const [edition, setEdition] = useState(false);
   const [nouveauPseudo, setNouveauPseudo] = useState('');
   const [messageProfil, setMessageProfil] = useState<string | null>(null);
   const [rattrapageEnCours, setRattrapageEnCours] = useState(false);
 
-  // On ne peut plus miser sous ce seuil : c'est la plus petite mise proposée
-  // dans le salon, et le back applique la même règle.
   async function rattraper() {
     setRattrapageEnCours(true);
     setMessageProfil(null);
@@ -95,17 +78,12 @@ export default function Profile() {
 
   useEffect(() => {
     if (!profilId) return;
-    // Pas de console.error dans les catch : une statistique indisponible n'est
-    // pas une erreur de l'application, et le sujet exige une console vierge.
     const cheminProfil = userId ? `/stats/users/${userId}` : '/stats/me';
     const cheminHistorique = userId ? `/stats/users/${userId}/round-history` : '/stats/me/round-history';
     api<Stats>(cheminProfil).then(setStats).catch(() => setStats(null));
     api<LigneClassement[]>('/stats/leaderboard')
-      // Le back renvoie tout le monde, classé. On n'affiche que le podium.
       .then((liste) => setPodium(liste.slice(0, 3)))
       .catch(() => setPodium([]));
-    // Le module « statistiques » du sujet demande l'historique des parties, pas
-    // seulement les totaux : dates, résultats et adversaires.
     api<MancheJouee[]>(cheminHistorique)
       .then(setHistorique)
       .catch(() => setHistorique([]));
@@ -173,8 +151,6 @@ export default function Profile() {
   const progressionExperience = Math.min(100, ((stats?.experience ?? 0) / experienceRequise) * 100);
   const succesDebloques = new Set((stats?.user.achievements ?? []).map((succes) => succes.achievementKey));
 
-  // Le back borne déjà le pseudo, on applique la même règle ici : la
-  // validation est double, formulaire et serveur.
   async function enregistrerPseudo(event: React.FormEvent) {
     event.preventDefault();
     setMessageProfil(null);
@@ -184,9 +160,6 @@ export default function Profile() {
       return;
     }
     try {
-      // Vérification préalable pour éviter une requête PATCH vouée à renvoyer
-      // 400 et donc affichée comme erreur par le navigateur. Le back conserve
-      // sa contrainte unique pour gérer les courses entre deux requêtes.
       const joueursCorrespondants = await chercherJoueurs(valeur);
       const pseudoDejaUtilise = joueursCorrespondants.some((joueur) =>
         joueur.displayName?.toLocaleLowerCase() === valeur.toLocaleLowerCase(),
@@ -196,9 +169,6 @@ export default function Profile() {
         return;
       }
       await modifierProfil({ displayName: valeur });
-      // La fiche utilise stats.user en priorité pour afficher le pseudo.
-      // Mettre aussi cette copie locale à jour évite d'attendre un rechargement
-      // de /stats/me pour voir le nouveau pseudo sur la page Profil.
       setStats((precedent) => precedent
         ? { ...precedent, user: { ...precedent.user, displayName: valeur } }
         : precedent);
@@ -243,14 +213,10 @@ export default function Profile() {
     } catch (e) {
       setMessageProfil(e instanceof Error ? e.message : 'Envoi impossible');
     } finally {
-      // On vide le champ, sinon resélectionner le même fichier ne déclenche
-      // aucun événement.
       event.target.value = '';
     }
   }
 
-  // Hauteur des marches : la première est la plus haute. On garde les
-  // positions de la maquette, seul le contenu change.
   const marches = [
     'col-start-1 col-end-1 row-start-2 row-span-4',
     'col-start-2 col-end-2 row-start-3 row-span-3',
@@ -259,15 +225,11 @@ export default function Profile() {
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-0 p-4 sm:p-8 bg-noir-krystal w-full min-h-full">
-      {/* min-w-0 sur les trois cartes : un item de grille a min-width:auto et
-          refuse de descendre sous la largeur intrinsèque de son contenu. Sans
-          ça la fiche débordait de la colonne sur un écran de 320 px. */}
       <div className="grid gap-4 p-4 sm:p-8 lg:grid-rows-3 lg:col-span-2 lg:col-start-1 bg-gris-krystal text-white rounded-xl">
         <div className="min-w-0 lg:row-start-1 bg-noir-krystal rounded-xl p-4 flex items-center gap-4">
           {stats?.user.avatarUrl ? (
             <img src={stats.user.avatarUrl} alt="" className="w-14 h-14 rounded-full object-cover shrink-0" />
           ) : (
-            // Pas d'avatar : une initiale plutôt qu'une image cassée.
             <span className="w-14 h-14 rounded-full bg-grisclair-krystal flex items-center justify-center text-xl font-semibold shrink-0">
               {pseudo.charAt(0).toUpperCase()}
             </span>
@@ -296,9 +258,6 @@ export default function Profile() {
                 </button>
               </form>
             ) : (
-              /* La troncature ne porte que sur le pseudo. Quand elle englobait
-                 aussi le bouton, un pseudo un peu long le rejetait au-delà de
-                 la coupure : invisible, et surtout impossible à cliquer. */
               <p className="font-semibold flex items-center gap-2 min-w-0">
                 <span className="truncate">{pseudo}</span>
                 {estMonProfil && (
@@ -324,8 +283,6 @@ export default function Profile() {
                 <div className="h-full rounded-full bg-amber-300 transition-all duration-500" style={{ width: `${progressionExperience}%` }} />
               </div>
             </div>
-            {/* Sous la mise minimale, le compte était enfermé : plus rien à
-                engager, donc plus aucun gain possible, et rien pour remonter. */}
             {estMonProfil && stats && stats.virtualBalance < SEUIL_RATTRAPAGE && (
               <button
                 type="button"
@@ -336,8 +293,6 @@ export default function Profile() {
                 {rattrapageEnCours ? '...' : 'Réclamer 250 crédits'}
               </button>
             )}
-            {/* L'envoi part dès la sélection du fichier : un bouton « envoyer »
-                séparé n'apporterait rien pour un seul champ. */}
             {estMonProfil && (
               <label className="text-xs text-white/30 hover:text-white cursor-pointer">
                 changer d'avatar (5 Mo max, PNG, JPEG/JPG, 2048 × 2048 max)
@@ -420,9 +375,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Historique des parties. Il occupe toute la largeur sous les trois
-          colonnes : une manche a trop d'informations (date, salon, adversaires)
-          pour tenir dans une colonne du haut. */}
       <div className="lg:col-span-5 mt-6">
         <div className="rounded-xl bg-gris-krystal p-4 sm:p-6">
           <h1 className="bg-grisclair-krystal text-[20px] px-6 py-2 w-full text-white font-semibold rounded-xl">
@@ -436,15 +388,10 @@ export default function Profile() {
           ) : (
             <ul className="flex flex-col gap-2">
               {historique.map((manche) => {
-                // Les adversaires sortent des mises de la manche : le back
-                // renvoie tout le monde, il faut juste s'en retirer.
                 const adversaires = manche.round.bets
                   .filter((b) => b.user?.id !== stats?.user.id)
                   .map((b) => nomDe(b.user));
                 const gagne = manche.result === 'WIN';
-                // Ce que la manche a rapporté ou coûté : le gain net, pas le
-                // versement brut, sinon une victoire à 100 crédits pour 100
-                // misés s'afficherait comme un gain.
                 const net = (manche.payout ?? 0) - manche.stake;
                 const date = new Date(manche.round.revealedAt ?? manche.round.createdAt);
                 return (

@@ -34,10 +34,6 @@ export class AuthService {
     });
 
     if (existingUser) {
-      // Une inscription répétée est un cas métier attendu. On renvoie une
-      // réponse normale avec un indicateur explicite afin que le navigateur
-      // n'affiche pas un 409 dans la console pour un message déjà géré par le
-      // formulaire.
       return { alreadyExists: true, message: 'Adresse e-mail déjà utilisée' };
     }
 
@@ -169,9 +165,6 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        // Les comptes créés par e-mail peuvent ne pas encore avoir de pseudo.
-        // On fournit alors un pseudo d’affichage borné à 30 caractères, sans
-        // modifier le pseudo personnalisé déjà enregistré.
         displayName: user.displayName || user.email.split('@')[0].slice(0, 30),
         avatarUrl: user.avatarUrl,
         status: user.status,

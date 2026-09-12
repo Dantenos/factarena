@@ -1,7 +1,3 @@
-// Page Salon. De mocks/gameData.ts on ne garde plus que les types.
-//
-// C'est le serveur qui tient l'index du clip courant : tout le monde regarde le
-// même extrait au même moment, et un vote sur un autre clip est refusé.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
@@ -13,7 +9,6 @@ import { useSocket } from '../hooks/useSocket';
 import { api, solde } from '../api/client';
 import type { ChatMessage, ClipResult, ClipVerdict, LeaderboardEntry } from '../mocks/gameData';
 
-/** Un clip de la manche, tel que le back le renvoie (verdict masqué avant révélation). */
 interface ClipEnJeu {
   claim: {
     id: string;
@@ -24,34 +19,12 @@ interface ClipEnJeu {
   };
 }
 
-// Longueur d'une manche. Assez long pour que le classement départage vraiment
-// les joueurs plutôt que de récompenser un coup de chance. La constante sert
-// aussi au libellé du bouton, qui annonçait un chiffre différent de celui
-// réellement demandé au serveur.
 const CLIPS_PAR_MANCHE = 5;
 
-// Trois paliers plutôt qu'un champ libre : rien à valider, et le joueur choisit
-// en un clic pendant que la fenêtre de vote tourne.
 const MISES = [50, 100, 250];
 
-/**
- * Une citation numérotée décide si l'on affiche les sources sous la réponse.
- *
- * La recherche rend toujours ses plus proches voisins, même quand aucun n'a de
- * rapport : sur « c'est quoi un orage ? » elle remonte des articles sur les
- * ovnis. On se fie donc à ce que le modèle a fait, pas à une distance.
- *
- * Seuls les crochets comptent. Reconnaître aussi « les passages fournis »
- * affichait cinq sources sous « les passages fournis ne mentionnent pas… »,
- * c'est-à-dire précisément quand le corpus ne couvre pas la question.
- */
 const RENVOI_AUX_PASSAGES = /\[\d+\]/;
 
-/**
- * Mot d'accueil de l'assistant, replacé en tête à chaque fois que la liste des
- * messages est reconstruite. Rien à l'écran ne disait qu'il existe, ni qu'il est
- * fiable contrairement aux trois faux joueurs qui, eux, mentent volontiers.
- */
 function accueilBot(): ChatMessage {
   return {
     id: 'accueil-bot',
@@ -78,13 +51,10 @@ export default function Room() {
   const [erreurManche, setErreurManche] = useState<string | null>(null);
   const [signales, setSignales] = useState<Record<string, true>>({});
   const [hoteParti, setHoteParti] = useState(false);
-  // Vote du joueur par claim : sert à griser les boutons déjà utilisés.
   const [mesVotes, setMesVotes] = useState<Record<string, boolean>>({});
   const [resultats, setResultats] = useState<ClipResult[] | null>(null);
   const [bonnesReponses, setBonnesReponses] = useState(0);
-  // Classement de la manche, calculé par le serveur et transmis avec les verdicts.
   const [classement, setClassement] = useState<LeaderboardEntry[]>([]);
-  // Sources du bot reçues avant sa réponse, en attente d'un message où s'accrocher.
   const sourcesEnAttente = useRef<Array<{ title?: string; url: string }>>([]);
 
   const round = etat?.round as { id?: string; status?: string; currentClipIndex?: number; roundClaims?: ClipEnJeu[] } | null;
@@ -104,17 +74,13 @@ export default function Room() {
     entree.userId === utilisateur?.id && entree.correctCount === meilleurScore,
   );
 
-  // Solde de crédits : il ne transite pas par le WebSocket, on le lit via l'API
-  // et on le rafraîchit à chaque révélation (les gains viennent d'être versés).
   const rafraichirSolde = useCallback(() => {
     solde()
       .then((r) => setBalance(r.virtualBalance))
-      .catch(() => { /* solde indisponible : on laisse la valeur précédente */ });
+      .catch(() => { });
   }, []);
   useEffect(rafraichirSolde, [rafraichirSolde]);
 
-  // L'état diffusé ne donne que le pot global. Pour savoir si CE joueur a
-  // déjà misé sur la manche en cours, on demande ses propres mises.
   const idManche = (etat?.round as { id?: string } | null)?.id;
   useEffect(() => {
     if (!idManche) { setMise(null); return; }
@@ -126,8 +92,6 @@ export default function Room() {
       .catch(() => setMise(null));
   }, [idManche]);
 
-  // Restaure uniquement les votes du joueur. L'index du clip est désormais
-  // porté par la manche et diffusé à tous les joueurs par le serveur.
   useEffect(() => {
     if (!idManche || !cleClips) return;
     let annule = false;
@@ -139,7 +103,7 @@ export default function Room() {
         const votesRestaures = Object.fromEntries(votesDuJoueur.map((vote) => [vote.claimId, vote.isFake]));
         setMesVotes(votesRestaures);
       })
-      .catch(() => { /* la manche reste jouable si la restauration échoue */ });
+      .catch(() => { });
     return () => { annule = true; };
   }, [cleClips, idManche, utilisateur?.id]);
 
@@ -156,12 +120,9 @@ export default function Room() {
     emettre('bet:place', { roomId, roundId: idManche, stake: montant });
   }
 
-  // Abonnements aux événements temps réel.
   useEffect(() => {
     if (!connecte) return;
     const arret = [
-      // L'historique n'est lisible qu'après room:join — le back exige d'être
-      // membre. Le charger au montage donnait un 403 en console.
       ecouter('room:joined', () => {
         api<Array<{ id: string; content: string; createdAt: string; user?: { displayName?: string | null } }>>(
           `/chat/room/${roomId}`,
@@ -178,11 +139,8 @@ export default function Room() {
               })),
             ]),
           )
-          .catch(() => { /* salon sans historique : on démarre vide */ });
+          .catch(() => { });
       }),
-      // ⚠️ Le back n'émet PAS le message à plat : il renvoie
-      // { action, moderation, message: { content, user } }. Lire m.content
-      // directement donnait des messages vides avec un auteur « joueur ».
       ecouter('chat:message', (d: {
         action?: string;
         message?: { id: string; content: string; createdAt: string; user?: { displayName?: string | null } };
@@ -197,14 +155,10 @@ export default function Room() {
             author: m.user?.displayName || 'joueur',
             content: m.content,
             timestamp: new Date(m.createdAt).getTime(),
-            // La modération a masqué le message : le composant Chat affiche
-            // alors un avertissement à la place du contenu.
             moderated: d.action === 'delete',
           },
         ]);
       }),
-      // Modération : seul l'auteur du message reçoit cet événement. On l'affiche
-      // comme une ligne système, sans reprendre le contenu bloqué.
       ecouter('chat:moderated', (d: { reason?: string }) => {
         setMessages((prec) => [
           ...prec,
@@ -220,13 +174,9 @@ export default function Room() {
       ecouter('room:host_left', () => {
         setHoteParti(true);
       }),
-      // Réponses du bot : on les affiche comme un message de type "bot" pour
-      // que le Chat les distingue visuellement des joueurs.
       ecouter('ai:token', (d: { text: string }) => {
         setMessages((prec) => {
           const dernier = prec[prec.length - 1];
-          // Le flux arrive mot par mot : on complète le dernier message du bot
-          // au lieu d'en créer un par jeton.
           if (dernier?.type === 'bot' && dernier.id === 'bot-en-cours') {
             return [...prec.slice(0, -1), { ...dernier, content: dernier.content + d.text }];
           }
@@ -236,16 +186,10 @@ export default function Room() {
           }];
         });
       }),
-      // Les sources arrivent avant la réponse. Les afficher tout de suite
-      // donnait une liste de liens orpheline quand la génération échouait
-      // ensuite : on les met de côté et le message n'apparaît qu'au premier
-      // jeton, qui les accroche.
       ecouter('ai:sources', (liste: Array<{ title?: string; url: string }>) => {
         sourcesEnAttente.current = Array.isArray(liste) ? liste.filter((s) => s?.url) : [];
       }),
       ecouter('ai:done', () => {
-        // Le message du bot est terminé : on lui donne un identifiant définitif
-        // pour que le prochain n'y soit pas concaténé.
         sourcesEnAttente.current = [];
         setMessages((prec) =>
           prec.map((m) =>
@@ -259,14 +203,10 @@ export default function Room() {
           ),
         );
       }),
-      // Le serveur émettait cette erreur dans le vide : on écrivait « @bot ... »
-      // et il ne se passait rien, sans rien pour dire pourquoi.
       ecouter('ai:error', (d: { message?: string }) => {
         const texte = d?.message?.trim() || "L'assistant n'a pas pu répondre.";
         sourcesEnAttente.current = [];
         setMessages((prec) => {
-          // On termine le message en cours au lieu d'en ajouter un second,
-          // sinon la réponse suivante viendrait s'y coller.
           const enCours = prec.some((m) => m.id === 'bot-en-cours');
           if (enCours) {
             return prec.map((m) =>
@@ -278,9 +218,6 @@ export default function Room() {
           return [...prec, { id: `bot-${Date.now()}`, type: 'bot', author: 'FactBot', content: texte, timestamp: Date.now() }];
         });
       }),
-      // Le serveur confirme la mise en diffusant bet:updated. On relit nos
-      // propres mises plutôt que de faire confiance à l'émission : elle peut
-      // être refusée, et l'événement concerne aussi les autres joueurs.
       ecouter('bet:updated', () => {
         if (!idManche) return;
         api<unknown[]>(`/bets/round/${idManche}`)
@@ -289,17 +226,12 @@ export default function Room() {
             setMise(typeof montant === 'number' ? montant : null);
             rafraichirSolde();
           })
-          .catch(() => { /* sans réponse, on laisse l'état inchangé */ });
+          .catch(() => { });
       }),
-      // Révélation : le back publie les verdicts, on peut enfin les afficher.
       ecouter('round:revealed', (d: { verdicts?: unknown[] }) => {
         void d;
         rafraichirSolde();
       }),
-      // Le back n'envoie pas un tableau nu mais une enveloppe
-      // { roundId, verdicts, classement } (voir publishRoundVerdicts dans la
-      // gateway). Attendre un tableau faisait échouer le .map, et rien ne
-      // s'affichait en fin de manche.
       ecouter('round:verdicts', (charge: {
         roundId?: string; verdicts?: unknown[]; classement?: LeaderboardEntry[];
       } | unknown[]) => {
@@ -309,14 +241,8 @@ export default function Room() {
         }>;
         if (!Array.isArray(charge)) setClassement(charge?.classement ?? []);
         const resultatsClips: ClipResult[] = liste.map((v) => {
-          // Le back renvoie un truthLabel binaire (TRUE/FALSE). Les verdicts
-          // nuancés (TROMPEUR, HORS_CONTEXTE) n'existent pas encore côté base :
-          // on retombe donc sur VRAI/FAUX. À faire évoluer si la colonne est
-          // ajoutée.
           const verdict: ClipVerdict = v.truthLabel === 'TRUE' ? 'VRAI' : 'FAUX';
 
-          // Le back accole le second avis au verdict après une ligne vide
-          // (ai.service.ts). On sépare, sinon le joueur confond les deux.
           const brut = v.verdictText ?? '';
           const [explication, apres] = brut.split(/\n\s*\n\s*Second avis de l'IA[^:]*:\s*/);
           let aiGuess: ClipResult['aiGuess'];
@@ -355,8 +281,6 @@ export default function Room() {
     return () => arret.forEach((stop) => stop());
   }, [connecte, ecouter, mesVotes, rafraichirSolde, idManche, roomId]);
 
-  // Le classement de fin de manche contient un nom figé au moment de la
-  // révélation. On le corrige aussi lorsqu'un joueur renomme son compte.
   useEffect(() => ecouter('profile:update', (profilMisAJour: {
     id?: string;
     displayName?: string | null;
@@ -391,17 +315,12 @@ export default function Room() {
     emettre('chat:send', { roomId, content: contenu });
   }
 
-  // Clips signalés par le joueur, pour changer le libellé du bouton. On ne
-  // vide pas cet état entre les manches : un clip déjà signalé le reste.
   function signalerClip() {
     if (!clipCourant || !roomId || signales[clipCourant.id]) return;
     emettre('clip:report', { roomId, roundId: round?.id, claimId: clipCourant.id });
-    // Retour immédiat sans attendre le serveur : le signalement n'est pas
-    // critique, et un bouton qui ne réagit pas donne l'impression d'un bug.
     setSignales((prec) => ({ ...prec, [clipCourant.id]: true }));
   }
 
-  // Les transitions de manche sont décidées par le serveur et diffusées à tous.
   async function lancerManche() {
     if (!roomId || !round?.id) return;
     setLancement(true);
@@ -440,11 +359,8 @@ export default function Room() {
   async function quitterPartie() {
     if (roomId) {
       try {
-        // Attendre l'accusé garantit que le serveur diffuse room:host_left
-        // avant que la navigation ne ferme la socket.
         await demander('room:leave', { roomId });
       } catch {
-        // La socket peut déjà être coupée : la navigation reste prioritaire.
       }
     }
     window.location.assign('/play');
@@ -479,8 +395,6 @@ export default function Room() {
         </p>
       )}
 
-      {/* État de la connexion : un joueur doit comprendre pourquoi rien ne
-          bouge si le réseau est coupé, plutôt que de voir une page figée. */}
       {!connecte && (
         <p className="text-amber-400 text-sm">Connexion au salon en cours...</p>
       )}
@@ -603,10 +517,6 @@ export default function Room() {
           )}
           {estHote && erreurManche && <p role="alert" className="text-red-l text-sm">{erreurManche}</p>}
 
-          {/* Signalement : le corpus est constitué automatiquement, et quelques
-              vidéos ne correspondent pas à leur affirmation. Le joueur est le
-              mieux placé pour le voir. Volontairement discret — ce n'est pas
-              une action de jeu, et il ne faut pas la confondre avec un vote. */}
           {partieLancee && clipCourant && (
             <button
               type="button"
@@ -630,10 +540,6 @@ export default function Room() {
         </div>
       </div>
 
-      {/* Résultats : affichés seulement après la révélation, plus en permanence. */}
-      {/* Le total vient des résultats reçus, pas des clips en mémoire : une
-          fois la manche finie le serveur ne renvoie plus de manche active,
-          clips retombe à zéro et le score s'affichait « 3/0 ». */}
       {resultats && (
         <ResultsReveal
           correctCount={bonnesReponses}

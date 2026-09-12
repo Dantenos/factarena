@@ -1,8 +1,3 @@
-// Lobby — liste des salons existants et création d'un salon.
-//
-// Avant, cette page affichait « room1, 2, 3... » en dur et le bouton pointait
-// vers /room sans identifiant, donc vers une page qui ne pouvait rien charger.
-// Elle interroge maintenant les vrais endpoints du back.
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, solde } from '../api/client';
@@ -72,8 +67,6 @@ export default function Play() {
         setErreur(MESSAGE_CREDITS_INSUFFISANTS);
         return;
       }
-      // Nom horodaté : deux salons créés à la suite restent distinguables sans
-      // demander une saisie à l'utilisateur.
       const salon = await api<Salon>('/rooms', {
         method: 'POST',
         body: { name: `Salon ${new Date().toLocaleTimeString('fr-FR')}` },
@@ -117,7 +110,6 @@ export default function Play() {
             </button>
           ))}
 
-          {/* role="alert" : l'erreur est annoncée aux lecteurs d'écran. */}
           {erreur && <p role="alert" className="text-red-l text-sm">{erreur}</p>}
         </div>
       </div>

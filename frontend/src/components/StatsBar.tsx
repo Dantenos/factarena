@@ -1,7 +1,3 @@
-// Bandeau de statistiques affiché en haut de la page Room : progression dans
-// la compilation, bonnes réponses du joueur, pot commun, solde de crédits.
-// Purement visuel — tout vient du parent, qui tient l'état réel de la manche
-// reçu par WebSocket.
 import { SessionStats } from "../mocks/gameData";
 
 interface StatsBarProps {
@@ -9,8 +5,6 @@ interface StatsBarProps {
 }
 
 export default function StatsBar({ stats }: StatsBarProps) {
-  // Tableau plutôt que 4 blocs JSX répétés : plus facile à maintenir si on
-  // doit ajouter/retirer une statistique plus tard.
   const items = [
     { label: "Clip", value: `${stats.clipIndex}/${stats.totalClips}` },
     { label: "Tes bonnes réponses", value: stats.correctAnswers },

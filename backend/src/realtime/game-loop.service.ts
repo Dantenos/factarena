@@ -5,20 +5,11 @@ import { RealtimeGateway } from './realtime.gateway';
 import { BotsService } from './bots.service';
 import { AiService } from '../ai/ai.service';
 
-/**
- * Server-authoritative round clock.
- *
- * It deliberately scans PostgreSQL instead of relying on a browser timer. This
- * keeps rounds progressing when no client is connected and makes the deadline
- * survive gateway reconnects or multiple browser tabs.
- */
 @Injectable()
 export class GameLoopService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(GameLoopService.name);
   private timer?: NodeJS.Timeout;
   private running = false;
-  // Dernière vérification « tout le monde a voté », par manche. Le tick est à
-  // 250 ms : sans ce frein, la question coûterait douze requêtes par seconde.
   private readonly dernierControle = new Map<string, number>();
   private static readonly CONTROLE_VOTES_MS = 2_000;
 
@@ -58,8 +49,6 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
           continue;
         }
 
-        // LOCKED rounds are resolved by the server, including rounds manually
-        // locked by the legacy REST/WebSocket endpoint.
         if (status !== 'LOCKED') continue;
         const revealed = await this.roundsService.revealAndSettle(candidate.id);
         await this.realtimeGateway.publishRoundState(candidate.roomId, 'round:revealed', candidate.id);
@@ -75,7 +64,6 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Applique le frein avant d'interroger la base. */
   private async verrouillerSiToutLeMondeAVote(roundId: string) {
     const maintenant = Date.now();
     const precedent = this.dernierControle.get(roundId) ?? 0;
@@ -91,9 +79,6 @@ export class GameLoopService implements OnModuleInit, OnModuleDestroy {
 
   private async publishVerdicts(roundId: string, roomId: string) {
     const verdicts = await this.aiService.generateRoundVerdicts(roundId);
-    // Le classement part avec les verdicts : c'est le même écran de fin de
-    // manche côté joueur, deux événements séparés obligeraient le front à les
-    // recoller et à gérer l'ordre d'arrivée.
     const classement = await this.roundsService.classement(roundId);
     if (verdicts.length > 0) {
       await this.realtimeGateway.publishRoundVerdicts(roomId, roundId, verdicts, classement);

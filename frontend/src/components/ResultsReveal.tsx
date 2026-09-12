@@ -1,7 +1,3 @@
-// Écran de révélation des résultats en fin de compilation : bannière de score
-// global, détail clip par clip avec verdict et explication sourcée, et
-// classement des joueurs (« course à la précision »). Tout est alimenté par le
-// résultat que le serveur envoie à la révélation.
 import { useState } from "react";
 import { ACHIEVEMENTS, ClipResult, ClipVerdict, LeaderboardEntry } from "../mocks/gameData";
 
@@ -13,9 +9,6 @@ interface ResultsRevealProps {
   isWinner: boolean;
 }
 
-// Associe à chaque verdict possible un label affiché et une couleur de badge.
-// Centralisé ici plutôt que dans un switch/if répété, pour n'avoir qu'un
-// seul endroit à modifier si un verdict change de libellé ou de couleur.
 const VERDICT_STYLES: Record<ClipVerdict, { label: string; className: string }> = {
   FAUX: { label: "FAKE", className: "text-red-400" },
   VRAI: { label: "FACT", className: "text-emerald-400" },
@@ -48,7 +41,6 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
 
   return (
     <div className="space-y-4">
-      {/* Bannière de score global : verte si bon score, rouge sinon */}
       <div
         className={`rounded-xl p-4 text-center font-semibold ${
           isWinner ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
@@ -57,7 +49,6 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
         Tu as {correctCount}/{totalClips} bonne(s) réponse(s).
       </div>
 
-      {/* Détail clip par clip, avec verdict IA et explication sourcée */}
       <div className="bg-gris-krystal rounded-xl p-4">
         <div className="text-center">
           <h3 className="text-white font-semibold">Clip par clip</h3>
@@ -65,9 +56,6 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
             Seul le verdict du fact-checker affiché devant le titre de la vidéo fait foi.
           </p>
         </div>
-        {/* Trois lignes se suivent et se ressemblaient : le verdict, l'IA qui
-            l'explique, l'IA qui devine. On dit une fois laquelle décide du
-            score, plutôt que de le répéter sur chaque clip. */}
         <ul className="space-y-3">
           {clipResults.map((clip) => {
             const verdict = VERDICT_STYLES[clip.verdict];
@@ -156,7 +144,6 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
         </div>
       )}
 
-      {/* Classement des joueurs de la session */}
       <div className="bg-gris-krystal rounded-xl p-4 border border-white/10">
         <h3 className="text-white font-semibold text-center mb-4">Classement des joueurs et gains :</h3>
         <ul className="space-y-2">

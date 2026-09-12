@@ -1,4 +1,3 @@
-# Ne JAMAIS embarquer ces éléments dans l'image (taille + sécurité).
 node_modules
 dist
 .env

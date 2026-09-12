@@ -31,9 +31,6 @@ export class AuthController {
     try {
       return await this.authService.login(dto);
     } catch (error) {
-      // Invalid credentials are an expected form outcome. Returning a normal
-      // response keeps the browser console clear; the client still displays
-      // the same authentication error to the user.
       if (error instanceof UnauthorizedException) {
         return { loginFailed: true, message: error.message };
       }
@@ -44,7 +41,6 @@ export class AuthController {
   @Get('42')
   @UseGuards(FortyTwoAuthGuard)
   authenticateWith42() {
-    // Redirects to 42 OAuth provider automatically.
   }
 
   @Get('42/callback')

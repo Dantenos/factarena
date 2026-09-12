@@ -14,8 +14,6 @@ export class BetsService {
 
   async create(data: { roundId: string; stake: number }, userId: string) {
     if (!Number.isSafeInteger(data.stake) || data.stake <= 0) throw new BadRequestException('La mise doit être un entier positif');
-    // Voir clip-votes.service.ts : isMember() réclame une connexion du pool, on
-    // ne l'appelle donc jamais depuis l'intérieur d'une transaction.
     const round = await this.prisma.round.findUnique({ where: { id: data.roundId } });
     if (!round) throw new NotFoundException(`La manche ${data.roundId} est introuvable`);
     if (!(await this.presence.isMember(userId, round.roomId))) throw new ForbiddenException('Rejoignez le salon avant de miser');

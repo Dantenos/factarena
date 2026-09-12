@@ -1,12 +1,3 @@
-// Page Privacy Policy — contenu RÉEL (contrainte éliminatoire du sujet : une
-// page vide ou générique fait rejeter le projet).
-//
-// Deux points méritent d'être signalés parce qu'ils sont souvent oubliés :
-// 1. on déclare explicitement l'envoi des messages de chat à Mistral (notre
-//    prestataire IA) — c'est un transfert de données à un tiers, le taire
-//    serait malhonnête et juridiquement fautif ;
-// 2. on annonce que les crédits sont virtuels, ce qui écarte d'emblée toute
-//    lecture « jeu d'argent » (voir aussi les CGU).
 export default function Privacy() {
   return (
     <section className="bg-noir-krystal w-full min-h-full text-white px-6 py-10">

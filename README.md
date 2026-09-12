@@ -77,11 +77,6 @@ docker compose down             # stop everything (keeps the database)
 docker compose down -v          # stop AND wipe the database volume
 ```
 
-Demo accounts are created automatically when `SEED_DEMO_DATA=true` in your `.env`
-(admin, host, player and viewer). Their passwords are the ones you set in `.env` — they
-are never committed. Use two different browsers, or a private window, to demonstrate
-several players in the same room.
-
 ## Team Information
 
 | Login | Role(s) | Responsibilities |

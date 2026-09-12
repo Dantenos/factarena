@@ -1,12 +1,5 @@
 import { Link } from 'react-router-dom';
 
-// Page Terms of Service — contenu RÉEL (contrainte éliminatoire du sujet).
-//
-// Le point le plus important est l'article 4 : il dit noir sur blanc que les
-// crédits sont fictifs, qu'ils ne s'achètent pas et ne se retirent pas. C'est
-// ce qui écarte toute assimilation à un jeu d'argent — un évaluateur peut
-// légitimement poser la question devant un jeu qui parle de « mises » et de
-// « pot commun », autant que la réponse soit écrite.
 export default function Terms() {
   return (
     <section className="bg-noir-krystal w-full min-h-full text-white px-6 py-10">
@@ -139,8 +132,6 @@ export default function Terms() {
           <h2 className="text-xl font-semibold text-bleu-l">9. Données personnelles</h2>
           <p>
             Le traitement de vos données est décrit dans notre{' '}
-            {/* Link (et non <a>) : dans une SPA, une balise <a> rechargerait
-                toute l'application au lieu de naviguer côté client. */}
             <Link to="/privacy" className="text-bleu-l underline">
               politique de confidentialité
             </Link>

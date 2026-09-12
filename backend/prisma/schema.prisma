@@ -1,16 +1,3 @@
-// ============================================================
-// FactArena — schéma de données (Prisma / PostgreSQL)
-// Possédé par le back-core (NestJS). POURQUOI ici : Prisma est l'ORM imposé ;
-// ce fichier est la source unique du modèle relationnel et des migrations.
-//
-// Schema relationnel complet du backend : utilisateurs, rooms, manches, claims,
-// predictions, ledger, presence, chat, amis et verdicts IA. Toute evolution du
-// schema doit etre materialisee par une migration Prisma versionnee.
-//
-// Rappel (docs/ARCHITECTURE.md §5.2) : la table des embeddings (pgvector) N'EST
-// PAS gérée par Prisma mais par le service back-ai (FastAPI), dans la même base.
-// ============================================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -20,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Statut de présence de l'utilisateur (affiché aux amis).
 enum UserStatus {
   ONLINE
   OFFLINE
@@ -65,13 +51,13 @@ enum FriendStatus {
 
 model User {
   id           String        @id @default(cuid())
-  email          String        @unique // identifiant de connexion (auth email + mot de passe)
-  displayName    String?       @unique // pseudo affiché dans l'application
+  email          String        @unique
+  displayName    String?       @unique
   role           String        @default("USER")
-  passwordHash   String?       // hash Argon2/bcrypt (le sel est intégré au hash) — jamais le mot de passe en clair
-  oauthProvider  String?       // fournisseur OAuth lié (ex. 42)
-  oauthProviderId String?      // identifiant du compte OAuth
-  avatarUrl      String?       // avatar optionnel (un défaut est fourni côté app)
+  passwordHash   String?
+  oauthProvider  String?
+  oauthProviderId String?
+  avatarUrl      String?
   status         UserStatus    @default(OFFLINE)
   virtualBalance Int           @default(1000)
   experience    Int           @default(0)
@@ -176,7 +162,7 @@ model Round {
 
 model Claim {
   id         String          @id @default(cuid())
-  sourceKey  String?         @unique // identifiant stable du dataset éditorial
+  sourceKey  String?         @unique
   createdBy  String?
   text       String
   mediaRef   String?
@@ -207,13 +193,6 @@ model RoundClaim {
   @@unique([roundId, orderIndex])
 }
 
-/// Signalement d'un clip par un joueur en cours de partie.
-///
-/// Le corpus est constitué automatiquement à partir d'articles de fact-check,
-/// et la vidéo rattachée ne correspond pas toujours à l'affirmation. Plutôt
-/// que de tout revérifier à la main, on laisse les joueurs remonter les cas
-/// douteux : c'est eux qui les voient en premier, et un clip signalé plusieurs
-/// fois est presque sûrement à écarter.
 model ClipReport {
   id        String   @id @default(cuid())
   claimId   String
@@ -225,8 +204,6 @@ model ClipReport {
   claim Claim @relation(fields: [claimId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
-  // Un joueur ne signale un clip qu'une fois : sans cette contrainte, un clic
-  // répété gonflerait le compteur et fausserait le tri.
   @@unique([userId, claimId])
   @@index([claimId])
 }
@@ -280,7 +257,7 @@ model Transaction {
   type         TransactionType
   amount       Int
   balanceAfter Int
-  referenceId  String?         @unique // clé d'idempotence pour payout/remboursement
+  referenceId  String?         @unique
   createdAt    DateTime        @default(now())
 
   user User @relation(fields: [userId], references: [id])

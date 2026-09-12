@@ -1,13 +1,3 @@
-// État d'authentification partagé par toute l'application.
-//
-// Remplace le localStorage['LoggedIn'] = 'true' qui simulait la connexion :
-// celui-ci ne prouvait rien (il suffisait de l'écrire à la main dans la console
-// pour se « connecter »), et surtout il ne fournissait aucun jeton — donc aucun
-// appel authentifié au back n'était possible.
-//
-// Ici on garde le JWT et l'utilisateur. Au chargement de la page, si un jeton
-// existe, on le VÉRIFIE auprès du back (/users/me) au lieu de le croire sur
-// parole : un jeton expiré ou révoqué doit déconnecter proprement.
 import {
   createContext,
   useCallback,
@@ -34,15 +24,10 @@ import { io } from 'socket.io-client';
 
 interface ContexteAuth {
   utilisateur: Utilisateur | null;
-  /** true tant qu'on vérifie le jeton au démarrage : évite d'afficher la page
-   *  de connexion pendant une fraction de seconde à un utilisateur déjà connecté. */
   chargement: boolean;
   seConnecter: (email: string, motDePasse: string) => Promise<void>;
   sInscrire: (email: string, motDePasse: string, pseudo: string) => Promise<void>;
   seDeconnecter: () => void;
-  /** Relit le profil depuis le back. Après une modification de pseudo ou
-   *  d'avatar, l'utilisateur en mémoire est périmé et l'en-tête afficherait
-   *  encore l'ancienne valeur. */
   rafraichir: () => Promise<void>;
   notificationsAmis: number;
 }
@@ -55,12 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [notificationsAmis, setNotificationsAmis] = useState(0);
   const demandesAmisVues = useRef(false);
 
-  // Vérification du jeton au premier rendu.
   useEffect(() => {
     const token = getToken();
-    // Un JWT expiré est détectable sans réseau. On le supprime avant l'appel
-    // à /users/me afin d'éviter un 401 attendu affiché par le navigateur lors
-    // de chaque ouverture du site après expiration de la session.
     if (!token || tokenExpire(token)) {
       if (token) clearToken();
       setChargement(false);
@@ -78,9 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => {
-        // Jeton invalide ou expiré : on nettoie sans bruit. Pas de console.error
-        // ici, ce serait une erreur console pour un cas parfaitement normal
-        // (le sujet exige une console vierge).
         clearToken();
       })
       .finally(() => {
@@ -91,8 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Socket globale : les autres pages et les autres navigateurs sont informés
-  // immédiatement lorsqu'un joueur change de pseudo ou d'avatar.
   useEffect(() => {
     if (!utilisateur) return;
     demandesAmisVues.current = false;
@@ -148,9 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('factarena:friends-viewed', voirAmis);
   }, []);
 
-  // Expiration en cours de session : le client HTTP nous prévient dès qu'un
-  // appel revient en 401. Sans cet abonnement, l'interface continuait
-  // d'afficher le joueur comme connecté alors que plus rien ne passait.
   useEffect(() => {
     const surExpiration = () => setUtilisateur(null);
     window.addEventListener(SESSION_EXPIREE, surExpiration);
@@ -179,9 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const seDeconnecter = useCallback(() => {
-    // Préviens la page de salon avant de fermer la session : une déconnexion
-    // volontaire doit libérer la place immédiatement, contrairement à un
-    // simple rechargement qui conserve la fenêtre de reconnexion.
     window.dispatchEvent(new Event('factarena:logout'));
     clearToken();
     setUtilisateur(null);
@@ -197,8 +167,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUtilisateur(null);
       }
     } catch {
-      // Profil indisponible : on garde l'utilisateur en mémoire plutôt que de
-      // déconnecter sur un incident réseau passager.
     }
   }, []);
 

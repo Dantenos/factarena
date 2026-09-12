@@ -151,7 +151,6 @@ export class RoomsService {
     });
   }
 
-  /** Returns the round only when it belongs to the requested room. */
   private async findRoundForRoom(roomId: string, roundId: string) {
     return this.prisma.round.findFirst({
       where: { id: roundId, roomId },

@@ -30,9 +30,6 @@ class AiResponseParseError extends Error {
 export type AiStreamEvent =
   | { type: 'sources'; data: AiCitation[] }
   | { type: 'token'; data: { text: string } }
-  // Échec survenu après le début du flux : le service IA ne peut plus changer
-  // le code HTTP, il le signale dans le flux. On transporte son message tel
-  // quel plutôt que de le remplacer par un générique.
   | { type: 'error'; data: { message: string } }
   | { type: 'done'; data: Record<string, never> };
 
@@ -61,10 +58,6 @@ export class AiService {
     question: string,
     limit = 4,
     rateKey = 'internal',
-    // Contexte de la manche en cours (vide par défaut = hors partie). Transmis
-    // au garde-fou anti-spoil du service IA : sans lui, le bot pourrait révéler
-    // si un clip en jeu est vrai ou faux (cf. ai-service/README.md). Les noms partent
-    // en snake_case car c'est le contrat FastAPI (live_topics / live_claims).
     live: { topics?: string[]; claims?: string[] } = {},
   ) {
     this.rateLimit.consume(`rag:${rateKey}`, 20, 60_000);
@@ -101,9 +94,6 @@ export class AiService {
   async chat(prompt: string, messages?: Array<{ role: string; content: string }>, rateKey = 'internal') {
     this.rateLimit.consume(`llm:${rateKey}`, 10, 60_000);
     try {
-      // The FastAPI contract deliberately accepts one `message` field. The
-      // optional Nest DTO history is not forwarded because the AI service's
-      // free LLM endpoint is intentionally retrieval-free.
       const response = await firstValueFrom(
         this.httpService.post(`${this.aiBaseUrl}/llm/chat`, { message: prompt }, {
           responseType: 'text',
@@ -132,9 +122,6 @@ export class AiService {
       };
     } catch (error) {
       this.logger.warn(`Moderation request failed: ${String(error)}`);
-      // Moderation is deliberately fail-open: a temporary AI outage must not
-      // turn the chat into a wordlist-based filter. The caller can expose this
-      // status and apply an operational policy without losing the message.
       return {
         success: true,
         data: {
@@ -146,12 +133,6 @@ export class AiService {
     }
   }
 
-  /**
-   * Demande au service IA ce qu'il aurait répondu sur une affirmation, sans lui
-   * communiquer la clé de réponse et en écartant l'article dont elle est issue.
-   * Sert uniquement à l'affichage à la révélation : ce résultat n'entre JAMAIS
-   * dans le calcul du score.
-   */
   async secondAvis(claim: string, exclureUrl?: string) {
     const response = await firstValueFrom(
       this.httpService.post(
@@ -175,21 +156,14 @@ export class AiService {
     const citations = Array.isArray(ragData.citations) ? ragData.citations : [];
     const confidence = 0.5;
 
-    // Ce que l'IA aurait répondu sans la clé, en excluant l'article dont la
-    // claim est issue — sinon elle y lit simplement le verdict. Affiché à côté
-    // du verdict officiel, jamais à la place : le score n'en dépend pas.
     try {
       const avis = await this.secondAvis(claim.text, claim.sourceUrl ?? undefined);
       if (avis?.avis) {
         verdictText += `\n\nSecond avis de l'IA (sans sa source) : ${avis.avis}. ${avis.pourquoi ?? ''}`;
       }
     } catch {
-      // Le second avis est un bonus : son échec ne doit pas priver le joueur
-      // de l'explication principale.
     }
 
-    // Une non-réponse ne va pas en base : elle serait resservie telle quelle à
-    // chaque manche, et le stock grossissait à chaque partie.
     if (AiService.REFUS_RAG.test(verdictText.split(/\n\s*\n/)[0])) {
       return { data: { claimId, verdictText, confidence, citations } };
     }
@@ -220,21 +194,11 @@ export class AiService {
     };
   }
 
-  /** Formules par lesquelles le RAG signale qu'aucun passage ne couvre le clip. */
   private static readonly REFUS_RAG =
     /ne mentionn|ne contiennent aucune|ne permettent pas|je ne peux (donc )?pas|aucun passage/i;
 
-  /**
-   * Repli quand le RAG n'a rien pour se prononcer. Il a raison de ne pas
-   * inventer, mais « je ne peux pas répondre » n'apprend rien au joueur à la
-   * révélation. On sert alors la clé éditoriale et la source qui l'a établie —
-   * les deux existent toujours.
-   */
   private repliEditorial(claim: { truthLabel: string; sourceUrl: string | null }) {
     const nature = claim.truthLabel === 'TRUE' ? 'authentique' : 'trompeuse';
-    // On ne nomme pas la source : selon les clips c'est un fact-checkeur, mais
-    // parfois seulement l'hébergeur de la vidéo, et écrire « vérifiée par
-    // commons.wikimedia.org » serait faux. L'URL est déjà affichée à côté.
     if (!claim.sourceUrl) return `Affirmation ${nature} selon la clé éditoriale.`;
     return `Affirmation ${nature}. Aucun passage du corpus ne couvre ce clip : `
       + `le verdict vient de la source ci-contre, pas du modèle.`;
@@ -247,9 +211,6 @@ export class AiService {
     });
     if (!round) throw new NotFoundException(`La manche ${roundId} est introuvable`);
 
-    // Tous les clips, pas seulement ceux qu'il reste à expliquer : filtrer sur
-    // `verdicts.length === 0` rendait un tableau vide quand les explications
-    // existaient déjà, et la manche se terminait sur un écran blanc.
     const verdicts = await Promise.all(round.roundClaims.map(async ({ claim }) => {
       const commun = {
         claimId: claim.id,
@@ -257,8 +218,6 @@ export class AiService {
         text: claim.text,
         sourceUrl: claim.sourceUrl ?? '',
       };
-      // Le second avis est accolé après une ligne vide : on ne teste que
-      // l'explication elle-même, pour ne pas perdre le bonus au passage.
       const servir = (texte: string) => {
         const coupe = texte.search(/\n\s*\n\s*Second avis de l'IA/);
         const explication = coupe === -1 ? texte : texte.slice(0, coupe);
@@ -273,8 +232,6 @@ export class AiService {
         };
       };
 
-      // Explication déjà en base : on la sert telle quelle, sans rappeler le
-      // service IA — c'est autant de latence en moins à la révélation.
       if (claim.verdicts.length > 0) {
         return servir(claim.verdicts[0].verdictText);
       }
@@ -293,14 +250,6 @@ export class AiService {
     return verdicts;
   }
 
-  /**
-   * Variante RAG de `streamChat`, vers /rag/ask : le bot passait par /llm/chat
-   * et répondait donc sans source. On garde le streaming et on récupère en plus
-   * l'événement `sources`.
-   *
-   * `live` porte le contexte de la manche jusqu'au garde-fou anti-spoil
-   * (ai-service/README.md), qui refuse de répondre sur un clip en jeu.
-   */
   async *streamRag(
     prompt: string,
     rateKey: string,
@@ -314,7 +263,6 @@ export class AiService {
           question: prompt,
           live_topics: live.topics ?? [],
           live_claims: live.claims ?? [],
-          // Articles des clips en jeu, écartés de la recherche.
           exclure_urls: live.exclureUrls ?? [],
         },
         { responseType: 'stream', timeout: 120_000 },

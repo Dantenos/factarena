@@ -55,17 +55,6 @@ export class UsersService {
     return user;
   }
 
-  /**
-   * Cherche des joueurs par e-mail ou pseudo, pour pouvoir les ajouter en ami.
-   *
-   * Sans ça le module amis est inutilisable : POST /friends attend un CUID, et
-   * personne ne connaît l'identifiant interne d'un autre joueur.
-   *
-   * On exclut le demandeur (on ne s'ajoute pas soi-même, le service le refuse
-   * de toute façon) et les faux joueurs du chat, qui ne sont pas de vraies
-   * personnes. La casse est ignorée et le résultat plafonné : c'est une aide à
-   * la saisie, pas un annuaire à parcourir.
-   */
   async rechercher(demandeurId: string, texte: string) {
     const requete = texte.trim();
     if (requete.length < 2) return [];
