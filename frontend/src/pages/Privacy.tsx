@@ -94,9 +94,15 @@ export default function Privacy() {
           <h2 className="text-xl font-semibold text-bleu-l">5. Conservation</h2>
           <p>
             Vos données sont conservées tant que votre compte existe. À sa
-            suppression, votre compte, votre profil et vos messages sont effacés.
-            Les résultats de parties peuvent être conservés sous forme anonyme
-            pour préserver la cohérence des classements.
+            suppression, votre compte, votre profil et vos messages devront être
+            effacés. FactArena ne propose pas encore de suppression automatique
+            depuis le profil : pour demander la suppression de vos données,
+            contactez l'équipe via le dépôt du projet. Les résultats de parties
+            peuvent être conservés sous forme anonyme pour préserver la cohérence
+            des classements. Dans l'installation de développement, les données
+            peuvent aussi être réinitialisées uniquement si l'opérateur supprime
+            explicitement le volume PostgreSQL ; un simple redémarrage ne supprime
+            pas les comptes.
           </p>
         </article>
 
@@ -105,9 +111,9 @@ export default function Privacy() {
           <p>
             Conformément au RGPD, vous pouvez accéder à vos données, les
             rectifier, les supprimer, ou demander leur portabilité. La page de
-            profil permet de modifier vos informations et de supprimer votre
-            compte. Pour toute autre demande, contactez l'équipe via le dépôt du
-            projet.
+            profil permet de modifier vos informations. La suppression doit être
+            demandée à l'équipe via le dépôt du projet, car aucun bouton de
+            suppression de compte n'est actuellement disponible.
           </p>
         </article>
 
