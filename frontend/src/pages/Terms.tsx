@@ -121,10 +121,12 @@ export default function Terms() {
         <article className="flex flex-col gap-3">
           <h2 className="text-xl font-semibold text-bleu-l">8. Suspension et clôture</h2>
           <p>
-            Vous pouvez supprimer votre compte à tout moment depuis votre profil.
-            Nous pouvons suspendre un compte en cas de manquement à ces
-            conditions, notamment en cas de tricherie, d'usage abusif du service
-            ou de comportement nuisible envers les autres joueurs.
+            FactArena ne propose pas encore de bouton de suppression de compte
+            depuis le profil. Toute demande de suppression doit être adressée à
+            l'équipe via le dépôt du projet. Nous pouvons suspendre un compte en
+            cas de manquement à ces conditions, notamment en cas de tricherie,
+            d'usage abusif du service ou de comportement nuisible envers les
+            autres joueurs.
           </p>
         </article>
 
