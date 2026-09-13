@@ -9,6 +9,8 @@ type UserSummary = {
   avatarUrl: string | null;
   status: string;
   createdAt: Date;
+  experience: number;
+  level: number;
 };
 
 type PredictionForStats = {
@@ -38,12 +40,13 @@ export class StatsService {
 
   async getLeaderboard() {
     const users = await this.prisma.user.findMany({
-      // Les faux joueurs du chat votent et misent : sans ce filtre ils
-      // apparaissaient sur le podium à côté des vrais joueurs.
       where: { role: { not: 'BOT' } },
       select: {
         ...this.userSelect(),
         virtualBalance: true,
+        experience: true,
+        level: true,
+        achievements: { select: { achievementKey: true, unlockedAt: true }, orderBy: { unlockedAt: 'asc' } },
         bets: {
           where: { result: { not: null } },
           select: {
@@ -64,6 +67,8 @@ export class StatsService {
           rank: 0,
           user: profile,
           virtualBalance,
+          experience: user.experience,
+          level: user.level,
           ...this.computeStats(bets),
           scoreReachedAt: this.scoreReachedAt(profile.createdAt, bets),
         };
@@ -82,6 +87,9 @@ export class StatsService {
       select: {
         ...this.userSelect(),
         virtualBalance: true,
+        experience: true,
+        level: true,
+        achievements: { select: { achievementKey: true, unlockedAt: true }, orderBy: { unlockedAt: 'asc' } },
         bets: {
           where: { result: { not: null } },
           select: { stake: true, payout: true, result: true },
@@ -95,6 +103,8 @@ export class StatsService {
     return {
       user: profile,
       virtualBalance,
+      experience: user.experience,
+      level: user.level,
       ...this.computeStats(bets),
     };
   }
@@ -167,6 +177,8 @@ export class StatsService {
       avatarUrl: true,
       status: true,
       createdAt: true,
+      experience: true,
+      level: true,
     };
   }
 

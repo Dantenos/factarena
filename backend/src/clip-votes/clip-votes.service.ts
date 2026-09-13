@@ -9,12 +9,7 @@ export class ClipVotesService {
 
   async create(data: { roundId: string; claimId: string; isFake: boolean }, userId: string) {
     if (typeof data.isFake !== 'boolean') throw new BadRequestException('Le champ isFake doit être booléen');
-    // Vérifications hors transaction. isMember() passe par une AUTRE instance
-    // Prisma : appelée à l'intérieur, elle réclamait une seconde connexion du
-    // pool alors que la transaction en tenait déjà une. Quand plusieurs joueurs
-    // votaient en même temps, toutes les connexions étaient prises par des
-    // transactions qui en attendaient une de plus, et les votes échouaient en
-    // « Unable to start a transaction in the given time ».
+
     const round = await this.prisma.round.findUnique({
       where: { id: data.roundId },
       include: { roundClaims: { where: { claimId: data.claimId }, select: { claimId: true, orderIndex: true } } },

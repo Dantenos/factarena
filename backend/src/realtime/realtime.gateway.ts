@@ -58,8 +58,6 @@ export class RealtimeGateway
   private readonly logger = new Logger(RealtimeGateway.name);
   private readonly socketsByUser = new Map<string, Set<string>>();
   private readonly reconnexions = new Map<string, { roomId: string; timer: ReturnType<typeof setTimeout> }>();
-  // Nettement sous le TTL de 45 s de la présence, pour qu'elle n'expire jamais
-  // tant que la socket vit.
   private static readonly BATTEMENT_MS = 20_000;
   private battement?: ReturnType<typeof setInterval>;
 
@@ -81,8 +79,7 @@ export class RealtimeGateway
     @Inject(forwardRef(() => LedgerService)) private readonly ledgerService: LedgerService,
   ) {}
 
-  /** Diffuse les changements de pseudo/avatar à toutes les sessions connectées. */
-  broadcastProfileUpdate(user: { id: string; displayName: string | null; avatarUrl: string | null }) {
+  broadcastProfileUpdate(user: { id: string; displayName: string | null; avatarUrl: string | null; experience?: number; level?: number; achievements?: unknown[] }) {
     this.server?.emit('profile:update', user);
   }
 
@@ -128,15 +125,9 @@ export class RealtimeGateway
 
       socket.emit('connection:ready', { userId: user.id, socketId: socket.id });
       this.broadcastPresence(user.id, 'ONLINE');
-      // Un nouveau joueur peut venir d’être inscrit : son arrivée doit
-      // actualiser le classement affiché sur les pages Profil déjà ouvertes.
       await this.broadcastLeaderboardUpdate();
       const roomId = socket.handshake.auth?.roomId;
       if (typeof roomId === 'string' && roomId.length > 0) {
-        // Un salon disparu ne doit pas emporter la connexion avec lui. Sans ce
-        // filet, l'exception remontait au catch ci-dessous, qui fermait le
-        // socket en annonçant un échec d'authentification : le client rouvrait,
-        // échouait de nouveau, et restait sur « connexion en cours » sans fin.
         try {
           await this.restoreRoom(socket, roomId);
         } catch (error) {
@@ -153,9 +144,6 @@ export class RealtimeGateway
     }
   }
 
-  // Sans ce battement, la présence d'un joueur qui regarde sans agir expirait
-  // au bout de 45 s : il restait connecté mais n'était plus membre, et ses
-  // messages comme ses votes étaient refusés sans que rien ne l'indique.
   onModuleInit() {
     this.battement = setInterval(() => { void this.rafraichirPresences(); }, RealtimeGateway.BATTEMENT_MS);
   }
@@ -177,8 +165,6 @@ export class RealtimeGateway
     }
   }
 
-  // Socket.IO ne surveille pas la promesse renvoyée : une erreur qui s'échappe
-  // d'ici devient un rejet non capturé et arrête le process.
   async handleDisconnect(rawSocket: Socket) {
     try {
       await this.nettoyerDeconnexion(rawSocket as AuthenticatedSocket);
@@ -194,21 +180,7 @@ export class RealtimeGateway
     this.removeSocket(userId, socket.id);
     const leftPresence = await this.roomPresence.leave(socket.id);
     if (leftPresence?.leftRoom) {
-      const room = await this.roomsService.findOne(leftPresence.roomId);
-      const hoteParti = room.createdBy === userId;
-      // Le sursis vaut aussi quand la partie n'a pas encore démarré : réservé à
-      // IN_PROGRESS, un simple rechargement de page pendant que les joueurs se
-      // rassemblent fermait le salon avant que l'hôte ne revienne, et sa propre
-      // reconnexion se voyait refuser « partie déjà en cours ou terminée ».
-      if (hoteParti) {
-        this.programmerFermetureApresDeconnexion(leftPresence.roomId, userId);
-      } else {
-        const ferme = await this.roomsService.closeIfHostLeaves(leftPresence.roomId, userId);
-        if (ferme) this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:host_left');
-      }
-      this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:member_left', { userId });
-      this.server.to(this.roomChannel(leftPresence.roomId)).emit('room:state', await this.roomsService.getState(leftPresence.roomId));
-      this.broadcastRoomListUpdate();
+      this.programmerReconnexion(leftPresence.roomId, userId);
     }
     if (!this.socketsByUser.has(userId)) {
       await this.prisma.user.updateMany({ where: { id: userId }, data: { status: 'OFFLINE' } });
@@ -220,13 +192,6 @@ export class RealtimeGateway
     this.logger.debug(`WebSocket disconnected: ${socket.id} (${userId})`);
   }
 
-  /**
-   * Ce qu'on dit au joueur quand un salon ne peut pas être rejoint.
-   *
-   * Seul un salon vraiment absent mérite « n'existe plus ». Les autres refus
-   * portent déjà leur raison — partie lancée, solde insuffisant — et l'écraser
-   * affichait « ce salon n'existe plus » devant un salon bien présent.
-   */
   private messageSalonInaccessible(error: unknown): string {
     if (error instanceof NotFoundException) {
       return 'Ce salon n’existe plus. Retourne au lobby pour en choisir un autre.';
@@ -257,8 +222,6 @@ export class RealtimeGateway
         await this.roomsService.assertCanPlay(socket.data.userId);
       }
     } catch (error) {
-      // Même raison qu'à la connexion : l'exception partait dans un événement
-      // « exception » que le client n'écoute pas.
       const message = this.messageSalonInaccessible(error);
       socket.emit('room:error', { message });
       return { rejected: true, message };
@@ -296,6 +259,11 @@ export class RealtimeGateway
     const roomId = body?.roomId || socket.data.roomId;
     if (!roomId) return { roomId: null };
     this.assertCuid(roomId, 'roomId');
+    const reconnexion = this.reconnexions.get(socket.data.userId);
+    if (reconnexion && reconnexion.roomId === roomId) {
+      clearTimeout(reconnexion.timer);
+      this.reconnexions.delete(socket.data.userId);
+    }
     await socket.leave(this.roomChannel(roomId));
     if (socket.data.roomId === roomId) delete socket.data.roomId;
     const leftPresence = await this.roomPresence.leave(socket.id);
@@ -332,8 +300,6 @@ export class RealtimeGateway
     await this.broadcastBalanceUpdate(socket.data.userId);
     const state = await this.roomsService.getState(body.roomId);
     this.server.to(this.roomChannel(body.roomId)).emit('bet:updated', { bet, ...this.liveStats(state) });
-    // Le front tient son état des événements room:state / round:* uniquement.
-    // Sans cette diffusion, le pot restait affiché à sa valeur d'avant la mise.
     this.server.to(this.roomChannel(body.roomId)).emit('room:state', state);
     return bet;
   }
@@ -345,9 +311,6 @@ export class RealtimeGateway
     await this.assertInRoom(socket, body.roomId); await this.roundsService.assertBelongsToRoom(body.roundId, body.roomId);
     const vote = await this.clipVotesService.create({ roundId: body.roundId, claimId: body.claimId, isFake: body.isFake }, socket.data.userId);
     this.server.to(this.roomChannel(body.roomId)).emit('clip-vote:updated', vote);
-    // Les faux joueurs rebondissent sur le vote qui vient d'être émis, plutôt
-    // que sur une horloge : c'est le seul moyen qu'ils commentent le clip que
-    // le joueur regarde vraiment, puisque chacun avance à son rythme.
     if (!(vote as { alreadyVoted?: boolean }).alreadyVoted) {
       void this.botsService.reagirAuVote(body.roomId, body.roundId, body.claimId, body.isFake, (m) =>
         this.diffuserMessageBot(body.roomId, m),
@@ -398,13 +361,6 @@ export class RealtimeGateway
     }
   }
 
-  /**
-   * Un joueur signale un clip dont la vidéo ne correspond pas à l'affirmation.
-   *
-   * Le corpus étant constitué automatiquement, quelques rattachements sont
-   * mauvais et les joueurs les repèrent avant nous. On enregistre sans rien
-   * diffuser : un signalement visible influencerait le vote des autres.
-   */
   @SubscribeMessage('clip:report')
   async reportClip(@ConnectedSocket() socket: AuthenticatedSocket, @MessageBody() body: RoomPayload & { claimId: string; roundId?: string; reason?: string }) {
     this.assertCuid(body?.roomId, 'roomId');
@@ -413,8 +369,6 @@ export class RealtimeGateway
       throw new BadRequestException('Motif invalide');
     }
     await this.assertInRoom(socket, body.roomId);
-    // upsert plutôt que create : recliquer ne doit ni gonfler le compteur ni
-    // renvoyer une erreur au joueur, qui n'y comprendrait rien.
     await this.prisma.clipReport.upsert({
       where: { userId_claimId: { userId: socket.data.userId, claimId: body.claimId } },
       update: { reason: body.reason ?? null },
@@ -450,9 +404,6 @@ export class RealtimeGateway
     try {
       const round = await this.roundsService.reveal(body.roundId, socket.data.userId);
       const state = await this.roomsService.getState(body.roomId);
-      // Tous les événements de transition transportent le même état complet.
-      // Une enveloppe { round, pot } ferait perdre room au frontend et ferait
-      // planter le rendu au moment où le verdict apparaît.
       this.server.to(this.roomChannel(body.roomId)).emit('round:revealed', state);
       const verdicts = await this.aiService.generateRoundVerdicts(body.roundId);
       const classement = await this.roundsService.classement(body.roundId);
@@ -473,14 +424,7 @@ export class RealtimeGateway
     const botPrompt = body.content.replace(/^\s*(?:@bot|\/ask)\s*/i, '').trim();
     const questionAuBot = botPrompt !== body.content.trim() && botPrompt.length > 0;
 
-    // Une question au bot part d'abord dans le salon comme n'importe quel
-    // message. Elle était jusqu'ici avalée : on voyait la réponse sans la
-    // question, et les autres joueurs ne voyaient qu'un monologue. Passer par
-    // le même chemin la soumet aussi à la modération.
     const message = await this.chatService.sendMessage(socket.data.userId, body.roomId, body.content);
-    // Message supprimé par la modération : rien ne part dans le salon, mais on
-    // prévient son auteur. Sans ça il tapait, envoyait, et il ne se passait
-    // rien — de quoi croire le chat cassé plutôt que d'y voir une sanction.
     if (message.action === 'delete') {
       socket.emit('chat:moderated', { reason: 'Message bloqué par la modération.' });
       return message;
@@ -497,9 +441,6 @@ export class RealtimeGateway
       }
     }
 
-    // Si le joueur a nommé un des faux joueurs, celui-ci répond. Diffusé après
-    // le message d'origine pour que l'ordre d'affichage reste cohérent. Une
-    // question adressée au bot ne les concerne pas.
     void this.botsService.interpeller(
       body.roomId,
       body.content,
@@ -516,11 +457,6 @@ export class RealtimeGateway
     }
     if (body.roomId) await this.assertInRoom(socket, body.roomId);
 
-    // On passait par streamChat (/llm/chat), qui répond SANS source : le bot
-    // n'a jamais démontré le module RAG. Et un refus global pendant la manche
-    // le rendait muet sur tout, y compris les questions de méthode — alors que
-    // guardrail.py sait précisément distinguer les deux. On lui donne donc les
-    // clips en jeu et on le laisse trancher.
     const activeRound = body.roomId ? (await this.roomsService.getState(body.roomId)).round : null;
     const enJeu = activeRound && ['COUNTDOWN', 'OPEN', 'LOCKED'].includes(String(activeRound.status));
     const enCours = enJeu
@@ -529,9 +465,6 @@ export class RealtimeGateway
         }).roundClaims ?? []).map((rc) => rc.claim)
       : [];
     const claims = enCours.map((c) => c?.text).filter((t): t is string => typeof t === 'string');
-    // Les articles qui ont établi le verdict des clips en jeu sont écartés de la
-    // recherche : sans ça, une question sur le sujet ramène le débunk et donne
-    // la réponse.
     const exclureUrls = enCours
       .map((c) => c?.sourceUrl)
       .filter((u): u is string => typeof u === 'string' && u.length > 0);
@@ -550,15 +483,6 @@ export class RealtimeGateway
     }
   }
 
-  /**
-   * Diffuse un message d'un faux joueur dans le chat d'un salon.
-   *
-   * Le format imite exactement celui d'un vrai message (enveloppe
-   * { action, message }) pour que le front n'ait aucun cas particulier à
-   * traiter. Mais rien n'est écrit en base et la modération n'est pas
-   * sollicitée : ces messages sont éphémères, ils animent la manche et
-   * disparaissent. Ils ne doivent pas polluer l'historique du salon.
-   */
   diffuserMessageBot(roomId: string, message: { author: string; content: string }): void {
     this.server.to(this.roomChannel(roomId)).emit('chat:message', {
       action: 'allow',
@@ -566,14 +490,11 @@ export class RealtimeGateway
         id: `bot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         content: message.content,
         createdAt: new Date().toISOString(),
-        // On expose un pseudo d'apparence ordinaire : côté joueur, rien ne
-        // distingue ces intervenants des autres participants (c'est le but).
         user: { email: `${message.author}@factarena.local` },
       },
     });
   }
 
-  /** Used by the server game loop to publish transitions that were not caused by a client event. */
   async publishRoundState(roomId: string, event: string, roundId?: string) {
     const state = await this.roomsService.getState(roomId, roundId);
     this.server.to(this.roomChannel(roomId)).emit(event, state);
@@ -586,6 +507,16 @@ export class RealtimeGateway
 
   async publishRoundVerdicts(roomId: string, roundId: string, verdicts: unknown[], classement: unknown[] = []) {
     this.server.to(this.roomChannel(roomId)).emit('round:verdicts', { roundId, verdicts, classement });
+    const userIds = Array.isArray(classement)
+      ? classement.map((entry) => (entry as { userId?: string }).userId).filter((id): id is string => typeof id === 'string')
+      : [];
+    if (userIds.length > 0) {
+      const profils = await this.prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, displayName: true, avatarUrl: true, experience: true, level: true, achievements: { select: { achievementKey: true, unlockedAt: true }, orderBy: { unlockedAt: 'asc' } } },
+      });
+      for (const profil of profils) this.broadcastProfileUpdate(profil);
+    }
     await this.broadcastLeaderboardUpdate();
     this.broadcastHistoryUpdate();
   }
@@ -619,8 +550,10 @@ export class RealtimeGateway
     await this.roomPresence.join(socket.id, socket.data.userId, room.id);
     await this.prisma.user.update({ where: { id: socket.data.userId }, data: { status: 'IN_GAME' } });
     this.broadcastPresence(socket.data.userId, 'IN_GAME', room.id);
+    this.server.to(this.roomChannel(room.id)).emit('room:member_joined', { userId: socket.data.userId });
     const state = await this.roomsService.getState(room.id);
     socket.emit('room:reconnected', state);
+    this.server.to(this.roomChannel(room.id)).emit('room:state', state);
     return state;
   }
 
@@ -634,7 +567,7 @@ export class RealtimeGateway
 
   private roomChannel(roomId: string) { return `room:${roomId}`; }
 
-  private programmerFermetureApresDeconnexion(roomId: string, userId: string) {
+  private programmerReconnexion(roomId: string, userId: string) {
     const ancien = this.reconnexions.get(userId);
     if (ancien) clearTimeout(ancien.timer);
     const timer = setTimeout(() => {
@@ -643,11 +576,12 @@ export class RealtimeGateway
         if (!reconnexion || reconnexion.roomId !== roomId) return;
         this.reconnexions.delete(userId);
         const ferme = await this.roomsService.closeIfHostLeaves(roomId, userId);
+        this.server.to(this.roomChannel(roomId)).emit('room:member_left', { userId });
         if (ferme) {
           this.server.to(this.roomChannel(roomId)).emit('room:host_left');
-          this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
-          this.broadcastRoomListUpdate();
         }
+        this.server.to(this.roomChannel(roomId)).emit('room:state', await this.roomsService.getState(roomId));
+        this.broadcastRoomListUpdate();
       })();
     }, 15_000);
     this.reconnexions.set(userId, { roomId, timer });

@@ -1,12 +1,3 @@
-// Page Amis — le troisième pilier du module « User interaction » du sujet,
-// avec le chat et le profil : ajouter, retirer, et voir sa liste d'amis.
-//
-// Le back exposait déjà tout (backend/src/friends), mais rien ne l'appelait :
-// sans écran, le module n'était pas démontrable.
-//
-// On interroge /friends/presence plutôt que /friends : même liste, plus le
-// statut en ligne et le salon en cours de chacun. C'est ce qui rend la page
-// vivante plutôt qu'un simple annuaire.
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -20,7 +11,6 @@ import {
   type Ami,
 } from '../api/client';
 
-/** Pastille de présence. Le back renvoie ONLINE, OFFLINE ou IN_GAME. */
 function Presence({ statut }: { statut: string }) {
   const couleur =
     statut === 'ONLINE' ? 'bg-emerald-400'
@@ -49,8 +39,6 @@ export default function Friends() {
   const [demandesEnvoyees, setDemandesEnvoyees] = useState<(Ami & { id: string })[]>([]);
 
   const rafraichir = useCallback(() => {
-    // Pas de console.error : une liste vide n'est pas une anomalie, et le
-    // sujet exige une console vierge.
     listeAmis().then(setAmis).catch(() => setAmis([]));
   }, []);
 
@@ -67,8 +55,6 @@ export default function Friends() {
     rafraichirDemandes();
     window.dispatchEvent(new Event('factarena:friends-viewed'));
     const mettreAJourDemandes = (event: Event) => {
-      // La demande est déjà visible sur cette page : elle ne doit pas laisser
-      // une notification « ! » apparaître après navigation vers une autre page.
       window.dispatchEvent(new Event('factarena:friends-viewed'));
       const detail = (event as CustomEvent<{ type?: string; requestId?: string }>).detail;
       if (detail?.requestId && (detail.type === 'request_accepted' || detail.type === 'request_declined')) {
@@ -108,9 +94,6 @@ export default function Friends() {
     return () => window.removeEventListener('factarena:presence-update', mettreAJourPresence);
   }, []);
 
-  // Le back refuse une recherche de moins de deux caractères. On applique la
-  // même règle ici pour ne pas provoquer un 400 à chaque frappe : la
-  // validation est double, côté formulaire et côté serveur.
   async function chercher(event: React.FormEvent) {
     event.preventDefault();
     setMessage(null);
@@ -144,8 +127,6 @@ export default function Friends() {
       setResultats((r) => r.filter((x) => x.id !== joueur.id));
       rafraichir();
     } catch (e) {
-      // Cas courant : « Already friends ». On l'affiche plutôt que de laisser
-      // le bouton sans effet apparent.
       setMessage(e instanceof Error ? e.message : 'Ajout impossible');
     }
   }
@@ -226,8 +207,6 @@ export default function Friends() {
                     </Link>
                     <Presence statut={ami.status} />
                   </div>
-                  {/* Un ami en partie est rejoignable d'un clic : c'est tout
-                      l'intérêt d'afficher la présence. */}
                   {ami.currentRoomId && (
                     <Link
                       to={`/room/${ami.currentRoomId}`}
@@ -278,8 +257,6 @@ export default function Friends() {
               placeholder="e-mail ou pseudo"
               minLength={2}
               maxLength={60}
-              // Voir Chat.tsx : sans min-w-0 le champ ne rétrécit pas et le
-              // bouton « chercher » sort de l'écran sur un petit téléphone.
               className="flex-1 min-w-0 bg-noir-krystal rounded-lg px-3 py-2 text-sm outline-none placeholder:text-white/25"
             />
             <button type="submit" className="button-blue-d px-4 py-2 text-sm">

@@ -13,10 +13,6 @@ export class AuthRateLimitGuard {
     const ip = request.ip || request.socket.remoteAddress || 'unknown';
 
     if (endpoint === 'register') {
-      // Le compteur unique par IP bloquait toutes les fenêtres Chrome d'une
-      // même machine dès qu'une personne testait plusieurs fois une adresse.
-      // On garde un plafond IP global anti-abus, mais on ajoute un compteur par
-      // e-mail pour que les utilisateurs légitimes ne se bloquent pas entre eux.
       this.rateLimit.consume(`auth:register:ip:${ip}`, 50, policy.windowMs);
       const email = typeof request.body?.email === 'string'
         ? request.body.email.trim().toLowerCase()

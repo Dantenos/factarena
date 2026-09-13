@@ -3,13 +3,6 @@ import Footer from './Footer';
 import { useAuth } from '../auth/AuthContext';
 import logo from '../../logo_tr.png';
 
-// Ossature commune : en-tête de navigation, contenu, footer.
-//
-// La navigation lisait auparavant localStorage['LoggedIn'] dans un useEffect,
-// ce qui posait deux problèmes : l'état n'était lu qu'au montage (se connecter
-// ne mettait donc pas le menu à jour sans rechargement), et surtout ce drapeau
-// ne prouvait rien. On s'appuie maintenant sur le contexte d'authentification,
-// qui reflète un vrai jeton vérifié auprès du back.
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +24,9 @@ export default function Layout() {
             <button
               type="button"
               className="text-base sm:text-lg button-red-d px-3 sm:px-5 py-1"
-              onClick={() => navigate('/play')}
+              onClick={() => window.dispatchEvent(new CustomEvent('factarena:leave-room', {
+                detail: { terminer: () => navigate('/play') },
+              }))}
             >
               Quitter la partie
             </button>
@@ -57,8 +52,6 @@ export default function Layout() {
                 </>
               )}
               <div className="ml-auto sm:ml-0 sm:absolute sm:right-8 flex min-w-0 max-w-[calc(100vw-2rem)] items-center gap-3">
-                {/* Le pseudo reste à gauche du bouton et se tronque s'il est
-                    trop long, sans jamais empiéter sur lui. */}
                 <span className="hidden lg:block min-w-0 max-w-[40vw] truncate text-sm text-gray-300" title={pseudo}>
                   {pseudo}
                 </span>

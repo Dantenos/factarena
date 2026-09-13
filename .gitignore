@@ -1,24 +1,19 @@
-# --- Secrets : ne JAMAIS commit (exigence du sujet) ---
 .env
 *.env
 !.env.example
 
-# --- Node ---
 node_modules/
 dist/
 build/
 *.log
 
-# --- Python ---
 __pycache__/
 *.pyc
 .venv/
 venv/
 
-# --- Docker / certs de dev ---
 nginx/certs/
 
-# --- IDE / OS ---
 .vscode/
 .idea/
 .DS_Store
@@ -27,8 +22,5 @@ nginx/certs/
 CLAUDE.md
 config-claude-code-ft-transcendence.md
 
-# Surcharges docker compose personnelles : chaque machine a ses contraintes
-# (RAM, ports occupés). Elles ne doivent jamais partir dans le dépôt, sinon
-# elles s'appliqueraient aussi chez les autres et à l'évaluation.
 docker-compose.override.yml
 nginx/nginx.local.conf

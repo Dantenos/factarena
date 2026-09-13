@@ -4,6 +4,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { RoomPresenceService } from '../rooms/room-presence.service';
 
+export const ACHIEVEMENT_LABELS = {
+  FIRST_WIN: 'Dans le petit bain',
+  CREDITS_100: 'Début de la richesse',
+  PERFECT_GAME: 'Pro de la fakenews',
+  BET_250_WIN: 'Même pas peur',
+  TEN_WINS: 'Imbattable',
+} as const;
+
 @Injectable()
 export class RoundsService {
   constructor(
@@ -12,14 +20,6 @@ export class RoundsService {
     @Optional() private readonly roomPresence?: RoomPresenceService,
   ) {}
 
-  /**
-   * Ensures that a round is addressed through its owning room.
-   *
-   * WebSocket payloads contain both identifiers, so this check must happen
-   * before any operation that broadcasts state to a room. Returning the same
-   * error for an unknown round and a round from another room avoids exposing
-   * cross-room information through the gateway.
-   */
   async assertBelongsToRoom(roundId: string, roomId: string): Promise<void> {
     const round = await this.prisma.round.findFirst({
       where: { id: roundId, roomId },
@@ -42,9 +42,6 @@ export class RoundsService {
     const existing = await this.prisma.round.findFirst({ where: { roomId, status: 'COUNTDOWN' }, orderBy: { createdAt: 'desc' } });
     if (existing) return this.findOne(existing.id);
     await this.prisma.$transaction(async (tx) => {
-      // Le chemin temps réel doit appliquer les mêmes critères que l’ancien
-      // tirage : une manche ne doit pas sélectionner une affirmation sans
-      // vidéo, sinon le frontend ne peut afficher que son titre.
       const claimIds = await this.tirerClaims(tx, roomId, claimCount);
       const round = await tx.round.create({
         data: {
@@ -102,17 +99,6 @@ export class RoundsService {
     if (missing.length > 0) throw new BadRequestException('Tous les joueurs n’ont pas encore voté.');
   }
 
-  /**
-   * Tire au sort les claims d'une manche, en respectant deux règles.
-   *
-   * ÉQUILIBRAGE (ai-service/app/rag/README.md) : on vise environ 60 % de fausses. Si le lot
-   * ne contenait que des fausses, répondre « fake » à tout suffirait à gagner et
-   * le jeu n'aurait plus d'intérêt.
-   *
-   * PAS DE RÉPÉTITION : on écarte les claims déjà jouées dans ce salon, sinon
-   * les habitués reverraient les mêmes extraits et connaîtraient les réponses.
-   * Si le stock est épuisé, on rouvre tout plutôt que de refuser la partie.
-   */
   private async tirerClaims(tx: Prisma.TransactionClient, roomId: string, nombre: number) {
     const dejaJouees = await tx.roundClaim.findMany({
       where: { round: { roomId } },
@@ -120,12 +106,6 @@ export class RoundsService {
     });
     const exclues = new Set(dejaJouees.map((rc: { claimId: string }) => rc.claimId));
 
-    // On privilégie les claims avec vidéo, sans les exiger : s'il n'y en a pas
-    // assez on complète, plutôt que de refuser la partie.
-    //
-    // Et seulement les trois formes que le lecteur sait afficher. Le reste
-    // (liens morts, Theora que Chrome ne décode plus) donnait un cadre noir
-    // sans erreur en console, donc indétectable.
     const lisibles = [
       { mediaRef: { contains: 'upload.wikimedia.org' } },
       { mediaRef: { contains: 'facebook.com/plugins/video.php' } },
@@ -155,8 +135,6 @@ export class RoundsService {
     const vivier = inedites.length >= nombre ? inedites : toutes;
 
     const melanger = <T>(liste: T[]): T[] => {
-      // Fisher-Yates : mélange uniforme, contrairement à un sort() aléatoire
-      // qui biaise la distribution.
       const copie = [...liste];
       for (let i = copie.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -168,10 +146,6 @@ export class RoundsService {
     const fausses = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'FALSE'));
     const vraies = melanger(vivier.filter((c: { truthLabel: string }) => c.truthLabel === 'TRUE'));
 
-    // Le plafond ne vise qu'un réflexe : « ce sujet est toujours faux ». Seul un
-    // thème dont tous les clips ont le même verdict peut l'enseigner. Appliqué
-    // partout il saturait la manche — cinq thèmes pour dix clips, donc deux de
-    // chacun imposés, et les quatre clips « hors contexte » revenaient sans cesse.
     const verdictsParTheme = new Map<string, Set<string>>();
     for (const claim of vivier) {
       const theme = claim.category ?? 'inconnu';
@@ -182,8 +156,6 @@ export class RoundsService {
       [...verdictsParTheme].filter(([, verdicts]) => verdicts.size === 1).map(([theme]) => theme),
     );
 
-    // Un thème mixte garde un plafond, mais large : sans lui il occupait jusqu'à
-    // neuf clips sur dix et la manche devenait un quiz de sciences.
     const plafondHomogene = Math.max(2, Math.ceil(nombre / 5));
     const plafondMixte = Math.ceil(nombre / 2);
     const comptes = new Map<string, number>();
@@ -205,9 +177,7 @@ export class RoundsService {
       ...prendre(fausses, cibleFausses),
       ...prendre(vraies, nombre - cibleFausses),
     ];
-    // Une catégorie à court : on complète avec l'autre, en respectant d'abord
-    // le plafond. On ne le dépasse qu'en dernier recours — sinon ce chemin, qui
-    // sert souvent, contournait le garde-fou posé plus haut.
+
     if (choisies.length < nombre) {
       const disponibles = melanger(vivier.filter((c: { id: string }) => !choisies.some((x) => x.id === c.id)));
       choisies.push(...prendre(disponibles, nombre - choisies.length));
@@ -216,9 +186,7 @@ export class RoundsService {
         choisies.push(...derniers.slice(0, nombre - choisies.length));
       }
     }
-    // Mélange, puis entrelacement des thèmes : le plafond empêche qu'un sujet
-    // domine, mais un tirage au hasard peut encore en aligner trois à la suite.
-    // On prend le premier clip dont le thème diffère du précédent.
+
     const restant = melanger(choisies);
     const ordonnees: typeof restant = [];
     let themePrecedent: string | null = null;
@@ -236,8 +204,6 @@ export class RoundsService {
     data: { roomId: string; claimIds?: string[]; claimCount?: number; durationSeconds: number },
     createdById: string,
   ) {
-    // Liste imposée : on la valide comme avant. Sinon on tirera au sort dans la
-    // transaction (il faut y être pour lire les claims déjà jouées du salon).
     const imposees = data.claimIds ? [...new Set(data.claimIds)] : null;
     if (imposees && imposees.length !== data.claimIds!.length) {
       throw new BadRequestException('Une affirmation ne peut apparaître qu’une seule fois dans une manche');
@@ -250,9 +216,6 @@ export class RoundsService {
       throw new BadRequestException('Il faut au moins 2 joueurs présents pour lancer une manche');
     }
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Verrouille la room pendant la création : deux hôtes ne doivent pas
-      // pouvoir observer simultanément « aucune manche active » et créer deux
-      // manches concurrentes.
       const roomLock = await tx.room.updateMany({
         where: { id: data.roomId },
         data: { updatedAt: new Date() },
@@ -264,8 +227,6 @@ export class RoundsService {
       if (room.status === 'FINISHED') throw new BadRequestException('Impossible d’ajouter une manche à un salon terminé');
       const activeRound = await tx.round.findFirst({ where: { roomId: data.roomId, status: { in: ['COUNTDOWN', 'OPEN', 'LOCKED'] as any } } });
       if (activeRound) return { alreadyActive: true as const };
-      // Soit la liste imposée, soit un tirage automatique (8 clips par défaut,
-      // ce qui donne une manche d'une durée raisonnable).
       const distinctClaimIds = imposees ?? (await this.tirerClaims(tx, data.roomId, data.claimCount ?? 8));
       const claims = await tx.claim.findMany({ where: { id: { in: distinctClaimIds } }, select: { id: true } });
       if (claims.length !== distinctClaimIds.length) throw new BadRequestException('Une ou plusieurs affirmations sont introuvables');
@@ -325,7 +286,6 @@ export class RoundsService {
     return this.revealAndSettle(id);
   }
 
-  /** Atomically transitions an expired OPEN round to LOCKED. */
   async openIfDue(id: string) {
     const claimed = await this.prisma.round.updateMany({
       where: { id, status: 'COUNTDOWN' as any, opensAt: { lte: new Date() }, room: { status: { not: 'FINISHED' } } },
@@ -334,20 +294,10 @@ export class RoundsService {
     return claimed.count === 1 ? this.findOne(id) : null;
   }
 
-  /** Atomically transitions an expired OPEN round to LOCKED. */
   async lockIfDue(id: string) {
     return this.lockIfDueOrOpen(id, true);
   }
 
-  /**
-   * Verrouille une manche ouverte dont tous les parieurs ont voté sur tous les
-   * clips, sans attendre l'heure. Sinon la manche courait jusqu'à locksAt même
-   * quand plus personne n'avait rien à faire : cinq minutes devant un écran figé.
-   *
-   * On se base sur ceux qui ont misé — eux seuls jouent pour le pot. Les faux
-   * joueurs ne misent pas, un bot lent ne peut donc pas retenir la manche, et le
-   * chronomètre reste le filet si quelqu'un ne vote jamais.
-   */
   async lockIfEveryoneVoted(id: string) {
     const [clips, parieurs] = await Promise.all([
       this.prisma.roundClaim.count({ where: { roundId: id } }),
@@ -380,7 +330,6 @@ export class RoundsService {
     return claimed.count === 1 ? this.findOne(id) : null;
   }
 
-  /** Resolves a locked round without requiring a connected host. */
   async revealAndSettle(id: string) {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const round = await tx.round.findUnique({ where: { id }, include: { room: true, roundClaims: { select: { id: true } }, bets: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }, clipVotes: { include: { claim: { select: { truthLabel: true } } } } } });
@@ -419,12 +368,47 @@ export class RoundsService {
         await tx.bet.update({ where: { id: bet.id }, data: { result: payouts.has(bet.id) ? 'WIN' : 'LOSS', payout } });
         if (payout > 0) await this.ledger.creditPayout(tx, bet.userId, payout, `payout:${bet.id}`);
       }
+
+      const gagnants = await tx.user.findMany({
+        where: { id: { in: winners.map((bet) => bet.userId) }, role: { not: 'BOT' } },
+        select: { id: true, experience: true, level: true },
+      });
+      for (const gagnant of gagnants) {
+        let experience = gagnant.experience + 25;
+        let level = gagnant.level;
+        while (experience >= level * 25) {
+          experience -= level * 25;
+          level += 1;
+        }
+        await tx.user.update({ where: { id: gagnant.id }, data: { experience, level } });
+      }
+      const votesParJoueur = new Map<string, number>();
+      for (const score of scores) votesParJoueur.set(score.bet.userId, score.correct);
+      const gainsParJoueur = new Map<string, number>();
+      for (const bet of bets) gainsParJoueur.set(bet.userId, (payouts.get(bet.id) ?? 0) - bet.stake);
+      const gagnantsHumains = gagnants.map((gagnant) => gagnant.id);
+      for (const userId of gagnantsHumains) {
+        const userBets = bets.filter((bet) => bet.userId === userId);
+        const totalVictoires = await tx.bet.count({ where: { userId, result: 'WIN' } });
+        const conditions = [
+          { key: 'FIRST_WIN', unlocked: true },
+          { key: 'CREDITS_100', unlocked: (gainsParJoueur.get(userId) ?? 0) >= 100 },
+          { key: 'PERFECT_GAME', unlocked: (votesParJoueur.get(userId) ?? 0) === 5 },
+          { key: 'BET_250_WIN', unlocked: userBets.some((bet) => bet.stake === 250) },
+          { key: 'TEN_WINS', unlocked: totalVictoires >= 10 },
+        ].filter((condition) => condition.unlocked);
+        for (const condition of conditions) {
+          await tx.achievementUnlock.createMany({
+            data: { userId, achievementKey: condition.key },
+            skipDuplicates: true,
+          });
+        }
+      }
       if (tx.room?.updateMany) await tx.room.updateMany({ where: { id: round.roomId, status: 'IN_PROGRESS' }, data: { status: 'FINISHED' } });
       return tx.round.findUniqueOrThrow({ where: { id }, include: { bets: true, clipVotes: true } });
     });
   }
 
-  /** Marks a revealed round as finished without reopening its room. */
   async finish(id: string) {
     const finished = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.round.updateMany({ where: { id, status: 'REVEALED' }, data: { status: 'FINISHED' as any } });
@@ -436,31 +420,25 @@ export class RoundsService {
     return finished;
   }
 
-  /**
-   * Classement d'une manche : qui a vu juste, et combien il gagne ou perd.
-   *
-   * Calculé à la lecture, pas stocké : votes et mises sont déjà en base, un
-   * score dupliqué finirait par diverger.
-   */
   async classement(roundId: string) {
     const round = await this.prisma.round.findUnique({
       where: { id: roundId },
       select: {
         clipVotes: { select: { userId: true, claimId: true, isFake: true } },
         bets: { select: { userId: true, stake: true, payout: true } },
+        revealedAt: true,
         roundClaims: { select: { claim: { select: { id: true, truthLabel: true } } } },
       },
     });
     if (!round) return [];
 
-    // Un vote est juste si « c'est un fake » coïncide avec un verdict FALSE.
     const estFausse = new Map(
       round.roundClaims.map(({ claim }) => [claim.id, claim.truthLabel === 'FALSE']),
     );
 
-    const parJoueur = new Map<string, { correctCount: number; creditsChange: number }>();
+    const parJoueur = new Map<string, { correctCount: number; creditsChange: number; experienceGained: number }>();
     const entree = (userId: string) => {
-      if (!parJoueur.has(userId)) parJoueur.set(userId, { correctCount: 0, creditsChange: 0 });
+      if (!parJoueur.has(userId)) parJoueur.set(userId, { correctCount: 0, creditsChange: 0, experienceGained: 0 });
       return parJoueur.get(userId)!;
     };
 
@@ -470,15 +448,19 @@ export class RoundsService {
       if (vote.isFake === attendu) entree(vote.userId).correctCount += 1;
     }
 
-    // payout est null tant que la manche n'est pas réglée : dans ce cas le
-    // joueur a engagé sa mise sans retour, donc la variation vaut -stake.
     for (const pari of round.bets) {
       entree(pari.userId).creditsChange += (pari.payout ?? 0) - pari.stake;
     }
 
+    const joueursAvecPari = new Set(round.bets.map((pari) => pari.userId));
+    const scores = [...parJoueur.entries()].filter(([userId]) => joueursAvecPari.has(userId));
+    const bestScore = scores.length > 0 ? Math.max(...scores.map(([, values]) => values.correctCount)) : -1;
+    for (const [, values] of scores) {
+      if (values.correctCount === bestScore) values.experienceGained = 25;
+    }
+
     if (parJoueur.size === 0) return [];
-    // Les faux joueurs du chat votent aussi. Ils n'ont rien à faire dans le
-    // classement d'une partie entre humains, et ils y noyaient les vrais.
+
     const utilisateurs = await this.prisma.user.findMany({
       where: { id: { in: [...parJoueur.keys()] }, role: { not: 'BOT' } },
       select: { id: true, displayName: true, email: true },
@@ -490,9 +472,24 @@ export class RoundsService {
       utilisateurs.map((u) => [u.id, u.displayName || u.email.split('@')[0]]),
     );
 
+    const utilisateursHumains = [...parJoueur.keys()].filter((id) => utilisateurs.some((u) => u.id === id));
+    const recompenses = await this.prisma.achievementUnlock.findMany({
+      where: {
+        userId: { in: utilisateursHumains },
+        unlockedAt: round.revealedAt ? { gte: round.revealedAt } : undefined,
+      },
+      select: { userId: true, achievementKey: true },
+      orderBy: { unlockedAt: 'asc' },
+    });
+    const recompensesParJoueur = new Map<string, string[]>();
+    for (const recompense of recompenses) {
+      const liste = recompensesParJoueur.get(recompense.userId) ?? [];
+      liste.push(recompense.achievementKey);
+      recompensesParJoueur.set(recompense.userId, liste);
+    }
+
     return [...parJoueur.entries()]
-      .map(([userId, valeurs]) => ({ userId, username: nom.get(userId) ?? 'joueur', ...valeurs }))
-      // Le plus précis d'abord : c'est le classement que le jeu met en avant.
+      .map(([userId, valeurs]) => ({ userId, username: nom.get(userId) ?? 'joueur', ...valeurs, achievementsUnlocked: recompensesParJoueur.get(userId) ?? [] }))
       .sort((a, b) => b.correctCount - a.correctCount || b.creditsChange - a.creditsChange);
   }
 }

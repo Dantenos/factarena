@@ -35,9 +35,6 @@ export class UsersController {
     try {
       return await this.usersService.findById(req.user.userId);
     } catch (error) {
-      // A validly signed JWT can outlive the account it identifies. Return a
-      // successful empty response so session cleanup does not create a browser
-      // console error for an expected stale-session case.
       if (error instanceof NotFoundException) {
         return null;
       }
@@ -71,9 +68,6 @@ export class UsersController {
     return this.usersService.setAvatarFromUpload(req.user.userId, file.path);
   }
 
-  // Avatars are intentionally public so browsers can load them through an
-  // <img src="..."> without sending a bearer token. Filenames are generated
-  // with randomUUID() on upload and validated in UsersService before reading.
   @Get('avatars/:filename')
   avatar(@Param('filename') filename: string): StreamableFile {
     return this.usersService.getAvatar(filename);
@@ -97,15 +91,6 @@ export class UsersController {
     return this.usersService.changePassword(req.user.userId, dto);
   }
 
-  /**
-   * Recherche de joueurs pour le module amis.
-   *
-   * Déclarée AVANT @Get(':id') : Nest teste les routes dans l'ordre, et
-   * « /users?recherche=... » serait sinon capté par la route paramétrée.
-   *
-   * La validation est double, comme partout : longueur minimale ici, et
-   * plafond de résultats côté service.
-   */
   @Get()
   @UseGuards(JwtAuthGuard)
   rechercher(

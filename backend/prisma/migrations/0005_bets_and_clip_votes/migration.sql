@@ -1,4 +1,3 @@
--- Replace aggregate round predictions with one round bet and one vote per clip.
 DROP TABLE "Prediction";
 ALTER TABLE "Round" DROP COLUMN "trueFakeCount";
 ALTER TABLE "Claim" ADD COLUMN "videoEndS" INTEGER;

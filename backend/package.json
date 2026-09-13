@@ -7,16 +7,12 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
-    "test": "jest --runInBand",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --runInBand --coverage",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "claims:import": "node prisma/import-claims.js",
-    "avatars:cleanup": "node prisma/cleanup-avatars.js",
-    "test:ledger:integration": "node prisma/ledger-integration.js"
+    "avatars:cleanup": "node prisma/cleanup-avatars.js"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
@@ -46,14 +42,10 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
-    "@nestjs/testing": "^11.2.1",
     "@types/bcryptjs": "^2.4.3",
     "@types/express": "^5.0.6",
-    "@types/jest": "^29.5.14",
     "@types/node": "^20.16.10",
-    "jest": "^29.7.0",
     "prisma": "^5.22.0",
-    "ts-jest": "^29.4.12",
     "typescript": "^5.6.2"
   }
 }

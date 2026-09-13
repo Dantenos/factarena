@@ -2,18 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
-// Page de connexion, branchée sur le VRAI back.
-//
-// Deux changements par rapport à la version d'origine :
-// - le champ demandait un « nom d'utilisateur », mais le back attend un EMAIL
-//   (cf. LoginDto) : le formulaire aurait été refusé côté serveur ;
-// - la connexion ne se contente plus d'écrire un drapeau dans le localStorage,
-//   elle récupère un vrai jeton JWT sans lequel aucune requête authentifiée
-//   ni aucune connexion WebSocket n'est possible.
-//
-// Le même formulaire sert à la connexion et à l'inscription : le back impose un
-// mot de passe d'au moins 8 caractères, on le signale AVANT l'envoi plutôt que
-// de laisser l'utilisateur découvrir l'erreur après coup.
 export default function Login() {
   const navigate = useNavigate();
   const { seConnecter, sInscrire } = useAuth();
@@ -65,14 +53,8 @@ export default function Login() {
     try {
       if (modeInscription) await sInscrire(email, motDePasse, pseudo);
       else await seConnecter(email, motDePasse);
-
-      // Après chaque connexion ou inscription, on revient toujours à l'accueil.
       navigate('/', { replace: true });
     } catch (e) {
-      // Message du back (identifiants invalides, email déjà pris, mot de passe
-      // trop court...). On l'affiche à l'utilisateur au lieu de le passer en
-      // console : une erreur console serait éliminatoire, et surtout invisible
-      // pour lui.
       setErreur(e instanceof Error ? e.message : 'Connexion impossible');
     } finally {
       setEnvoiEnCours(false);
@@ -133,7 +115,6 @@ export default function Login() {
               type="password"
               id="password"
               name="password"
-              // Validation côté FRONT en plus du back : le sujet exige les deux.
               minLength={8}
               maxLength={128}
               autoComplete={modeInscription ? 'new-password' : 'current-password'}
@@ -148,12 +129,6 @@ export default function Login() {
             )}
           </div>
 
-          {/* role="alert" : le message est annoncé aux lecteurs d'écran
-              (accessibilité demandée par le sujet). */}
-          {/* Connexion 42 (module OAuth du sujet). Un lien, pas un fetch : le
-              back redirige vers 42, qui redirige à son tour vers le callback.
-              Une requête XHR ne peut pas suivre ce parcours. On sort donc du
-              routeur React avec une navigation complète. */}
           <a
             href="/api/auth/42"
             className="mt-3 button-blue-l px-4 py-2 text-sm block text-center"

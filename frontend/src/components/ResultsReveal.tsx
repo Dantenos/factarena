@@ -1,9 +1,5 @@
-// Écran de révélation des résultats en fin de compilation : bannière de score
-// global, détail clip par clip avec verdict et explication sourcée, et
-// classement des joueurs (« course à la précision »). Tout est alimenté par le
-// résultat que le serveur envoie à la révélation.
 import { useState } from "react";
-import { ClipResult, ClipVerdict, LeaderboardEntry } from "../mocks/gameData";
+import { ACHIEVEMENTS, ClipResult, ClipVerdict, LeaderboardEntry } from "../mocks/gameData";
 
 interface ResultsRevealProps {
   correctCount: number;
@@ -13,9 +9,6 @@ interface ResultsRevealProps {
   isWinner: boolean;
 }
 
-// Associe à chaque verdict possible un label affiché et une couleur de badge.
-// Centralisé ici plutôt que dans un switch/if répété, pour n'avoir qu'un
-// seul endroit à modifier si un verdict change de libellé ou de couleur.
 const VERDICT_STYLES: Record<ClipVerdict, { label: string; className: string }> = {
   FAUX: { label: "FAKE", className: "text-red-400" },
   VRAI: { label: "FACT", className: "text-emerald-400" },
@@ -41,10 +34,13 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
     ? Math.max(...leaderboard.map((entry) => entry.correctCount))
     : -1;
   const [detailsOuverts, setDetailsOuverts] = useState<Record<string, boolean>>({});
+  const succesDebloques = leaderboard.flatMap((entry) => entry.achievementsUnlocked.map((key) => ({
+    username: entry.username,
+    name: ACHIEVEMENTS.find((succes) => succes.key === key)?.name ?? key,
+  })));
 
   return (
     <div className="space-y-4">
-      {/* Bannière de score global : verte si bon score, rouge sinon */}
       <div
         className={`rounded-xl p-4 text-center font-semibold ${
           isWinner ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
@@ -53,7 +49,6 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
         Tu as {correctCount}/{totalClips} bonne(s) réponse(s).
       </div>
 
-      {/* Détail clip par clip, avec verdict IA et explication sourcée */}
       <div className="bg-gris-krystal rounded-xl p-4">
         <div className="text-center">
           <h3 className="text-white font-semibold">Clip par clip</h3>
@@ -61,9 +56,6 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
             Seul le verdict du fact-checker affiché devant le titre de la vidéo fait foi.
           </p>
         </div>
-        {/* Trois lignes se suivent et se ressemblaient : le verdict, l'IA qui
-            l'explique, l'IA qui devine. On dit une fois laquelle décide du
-            score, plutôt que de le répéter sur chaque clip. */}
         <ul className="space-y-3">
           {clipResults.map((clip) => {
             const verdict = VERDICT_STYLES[clip.verdict];
@@ -139,7 +131,19 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
         </ul>
       </div>
 
-      {/* Classement des joueurs de la session */}
+      {succesDebloques.length > 0 && (
+        <div className="rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100">
+          <h3 className="font-semibold text-center">Succès débloqués</h3>
+          <ul className="mt-2 space-y-1 text-center text-sm">
+            {succesDebloques.map((succes, index) => (
+              <li key={`${succes.username}-${succes.name}-${index}`}>
+                {succes.username} a débloqué le succès : « {succes.name} »
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="bg-gris-krystal rounded-xl p-4 border border-white/10">
         <h3 className="text-white font-semibold text-center mb-4">Classement des joueurs et gains :</h3>
         <ul className="space-y-2">
@@ -157,9 +161,14 @@ export default function ResultsReveal({ correctCount, totalClips, clipResults, l
                 </span>
                 <span className="flex-1 min-w-0 truncate text-white/90">{entry?.username ?? '—'}</span>
                 {entry && (
-                  <span className={`shrink-0 font-semibold ${entry.creditsChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                    {entry.creditsChange >= 0 ? "+" : ""}{entry.creditsChange} crédits
-                  </span>
+                  <>
+                    <span className={`shrink-0 font-semibold ${entry.creditsChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {entry.creditsChange >= 0 ? "+" : ""}{entry.creditsChange} crédits
+                    </span>
+                    <span className="shrink-0 font-semibold text-amber-300">
+                      +{entry.experienceGained} XP
+                    </span>
+                  </>
                 )}
               </li>
             );

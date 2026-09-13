@@ -24,9 +24,6 @@ if (isFortyTwoEnabled()) {
   authProviders.push(FortyTwoStrategy);
 }
 
-// Module d'authentification : il expose les routes /api/auth/* et fournit les
-// services nécessaires pour stocker les utilisateurs, hasher les mots de passe
-// et signer des JWT.
 @Global()
 @Module({
   imports: [

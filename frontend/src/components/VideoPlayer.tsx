@@ -1,16 +1,3 @@
-// Lecteur vidéo du salon, avec contrôles custom (pas le "controls" natif du
-// navigateur) pour pouvoir styliser librement. S'adapte automatiquement au
-// format de la vidéo (large 16:9 ou vertical façon TikTok/Instagram 9:16) en
-// détectant le ratio réel au chargement des métadonnées, plutôt que de le
-// figer en dur.
-//
-// On ne synchronise pas la lecture image par image : le serveur impose quel clip
-// est à l'écran, chacun le lit ensuite depuis son propre navigateur.
-//
-// Props :
-// - src          : URL de la vidéo à lire
-// - onEnded      : callback déclenché à la fin de la vidéo
-// - onTimeUpdate : callback déclenché en continu pendant la lecture
 import { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
@@ -19,18 +6,9 @@ interface VideoPlayerProps {
   onTimeUpdate?: (currentTime: number) => void;
 }
 
-// URL à embarquer en iframe plutôt qu'à lire avec <video>. On n'héberge rien,
-// les extraits restent chez leur plateforme. L'iframe est pure : le bruit
-// console qu'elle produit est attribué à Google, pas à notre domaine.
-//
-// Ne pas étendre à X, Instagram ou TikTok : eux exigent leur script dans notre
-// page, et leurs erreurs deviendraient les nôtres.
 function estEmbarquable(url: string): boolean {
   return (
     /(?:youtube-nocookie\.com|youtube\.com)\/embed\//i.test(url) ||
-    // Facebook via plugins/video.php : iframe pure elle aussi, donc même
-    // garantie côté console. Beaucoup d'articles de l'AFP renvoient vers
-    // Facebook, d'où son intérêt pour la couverture des extraits.
     /facebook\.com\/plugins\/video\.php/i.test(url)
   );
 }
@@ -48,18 +26,9 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
-  // Vidéo illisible (lien mort, format refusé par le navigateur). On l'affiche
-  // dans le lecteur plutôt que dans la console : le sujet interdit tout
-  // message console, et un cadre noir muet ferait croire à un bug.
   const [enErreur, setEnErreur] = useState(false);
-  // Ratio largeur/hauteur réel de la vidéo, calculé au chargement des
-  // métadonnées. null tant que la vidéo n'a pas encore chargé (on utilise
-  // alors un ratio par défaut pour éviter un conteneur qui saute visuellement).
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
-  // Garde isFullscreen synchronisé même si l'utilisateur sort du plein écran
-  // avec Échap plutôt qu'avec notre bouton (le navigateur déclenche cet event
-  // dans tous les cas, quelle que soit la manière de sortir).
   useEffect(() => {
     function handleFullscreenChange() {
       setIsFullscreen(!!document.fullscreenElement);
@@ -68,22 +37,12 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Nettoie le timer d'auto-hide si le composant est démonté pendant qu'il
-  // est en cours, pour éviter un warning React sur un setState après démontage.
   useEffect(() => {
     return () => {
       if (hideControlsTimeout.current) clearTimeout(hideControlsTimeout.current);
     };
   }, []);
 
-  // Au changement de clip, React se contente de réécrire l'attribut src d'une
-  // balise <video> déjà montée : l'élément garde le média précédent en tampon
-  // et ne relit rien. Seule la première vidéo se lançait, les suivantes
-  // restaient noires sans erreur en console.
-  //
-  // load() relance le chargement sur la nouvelle URL. On repart aussi d'un
-  // état vierge, sinon la barre de progression affiche la durée du clip
-  // précédent tant que les métadonnées ne sont pas arrivées.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -97,17 +56,12 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     video.load();
   }, [src]);
 
-  // Récupère la durée ET le ratio réel de la vidéo dès que ses métadonnées
-  // sont disponibles. Le ratio sert à adapter dynamiquement le conteneur
-  // (format large ou vertical) sans avoir à le connaître à l'avance.
   function handleLoadedMetadata(e: React.SyntheticEvent<HTMLVideoElement>) {
     const video = e.currentTarget;
     setDuration(video.duration);
     setAspectRatio(video.videoWidth / video.videoHeight);
   }
 
-  // Lance ou met en pause la vidéo selon son état actuel.
-  // Appelée par le bouton play/pause, le clic sur la vidéo, et la touche Espace.
   function togglePlay() {
     if (!videoRef.current) return;
     if (isPlaying) {
@@ -117,9 +71,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     }
   }
 
-  // Bascule le lecteur en plein écran (sur le conteneur, pas juste la balise
-  // <video>, pour garder nos contrôles custom visibles en plein écran).
-  // Appelée par le bouton dédié, la touche F, et le double-clic sur la vidéo.
   function toggleFullscreen() {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -129,8 +80,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     }
   }
 
-  // Applique le volume choisi via le slider à l'élément vidéo, et démute
-  // automatiquement si l'utilisateur remonte le volume depuis 0.
   function handleVolumeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -138,9 +87,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     setIsMuted(newVolume === 0);
   }
 
-  // Coupe ou réactive le son. Si on démute alors que le volume était à 0
-  // (cas : l'utilisateur avait baissé le slider jusqu'au bout), on remonte
-  // à un volume par défaut pour éviter un démute "silencieux" et confus.
   function toggleMute() {
     if (!videoRef.current) return;
     const newMuted = !isMuted;
@@ -152,8 +98,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     }
   }
 
-  // Change de volume par pas fixe (utilisé par les raccourcis clavier
-  // flèche haut/bas). `delta` est positif ou négatif.
   function adjustVolume(delta: number) {
     if (!videoRef.current) return;
     const newVolume = Math.min(1, Math.max(0, volume + delta));
@@ -162,9 +106,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     setIsMuted(newVolume === 0);
   }
 
-  // Déplace la lecture au point cliqué sur la barre de progression.
-  // Calcule la position du clic en pourcentage de la largeur de la barre,
-  // puis convertit ce pourcentage en secondes selon la durée totale.
   function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
     if (!videoRef.current || duration === 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -173,19 +114,12 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     videoRef.current.currentTime = percentage * duration;
   }
 
-  // Avance ou recule la lecture d'un nombre de secondes fixe (utilisé par
-  // les raccourcis clavier flèche gauche/droite, et par la navigation
-  // clavier propre à la barre de progression). `delta` est positif ou négatif.
   function skipTime(delta: number) {
     if (!videoRef.current) return;
     const newTime = Math.min(duration, Math.max(0, currentTime + delta));
     videoRef.current.currentTime = newTime;
   }
 
-  // Affiche les contrôles et relance le timer d'auto-hide (2.5s). Appelée à
-  // chaque mouvement de souris ET à chaque raccourci clavier, pour que
-  // l'utilisateur voie toujours le résultat de son action même si les
-  // contrôles étaient cachés.
   function revealControls() {
     setShowControls(true);
     if (hideControlsTimeout.current) clearTimeout(hideControlsTimeout.current);
@@ -194,10 +128,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     }, 2500);
   }
 
-  // Raccourcis clavier, actifs uniquement quand le lecteur a le focus (pas
-  // globalement sur la page) pour ne pas interférer avec d'autres zones,
-  // comme le champ de saisie du chat.
-  // Espace : play/pause · ← / → : ±5s · ↑ / ↓ : volume · M : mute · F : plein écran
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     revealControls();
 
@@ -233,22 +163,15 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
     }
   }
 
-  // Relance l'affichage des contrôles à chaque mouvement de souris sur le lecteur.
   function handleMouseMove() {
     revealControls();
   }
 
-  // Cache immédiatement les contrôles quand la souris quitte le lecteur,
-  // sauf si la vidéo est en pause (l'utilisateur doit toujours pouvoir
-  // relancer la lecture facilement).
   function handleMouseLeave() {
     if (hideControlsTimeout.current) clearTimeout(hideControlsTimeout.current);
     if (isPlaying) setShowControls(false);
   }
 
-  // Convertit un nombre de secondes en format affichable "M:SS".
-  // Retourne "0:00" si la valeur n'est pas encore disponible (NaN/Infinity),
-  // ce qui évite un affichage cassé pendant le chargement de la vidéo.
   function formatTime(seconds: number): string {
     if (!Number.isFinite(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
@@ -257,38 +180,16 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
   }
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-  // Format vertical si le ratio est < 1 (plus haut que large). Sert à
-  // ajuster la largeur max du conteneur pour un rendu correct dans les deux cas.
   const isVertical = aspectRatio !== null && aspectRatio < 1;
 
-  // Lecteur de la plateforme : on délègue tout à l'iframe. Ce retour est placé
-  // APRÈS tous les hooks, sinon React interdirait l'appel conditionnel.
-  //
-  // Les contrôles custom ne s'appliquent pas ici : le lecteur YouTube a les
-  // siens, et une page tierce ne se pilote pas depuis la nôtre. Les callbacks
-  // onEnded/onTimeUpdate ne sont donc pas déclenchés dans ce mode — il faudrait
-  // l'API IFrame Player de YouTube, à ajouter seulement si la mécanique de jeu
-  // en a réellement besoin.
   if (estEmbarquable(src)) {
     return (
       <div className="relative w-full mx-auto rounded-lg overflow-hidden bg-black aspect-video">
         <iframe
           src={src}
-          // title est OBLIGATOIRE pour l'accessibilité : sans lui, un lecteur
-          // d'écran annonce une iframe anonyme (et le sujet demande une
-          // interface accessible).
           title="Extrait vidéo à vérifier"
           className="w-full h-full"
-          // On n'autorise QUE ce dont le lecteur a besoin. Pas d'autoplay :
-          // Chrome le bloque avec du son et cela génère un avertissement en
-          // console — que le sujet interdit.
-          // ⚠️ On déclare le plein écran UNIQUEMENT via `allow`. Cumuler avec
-          // l'attribut hérité `allowFullScreen` fait écrire à Chrome « Allow
-          // attribute will take precedence over allowfullscreen » — un
-          // avertissement attribué à NOTRE bundle, donc à notre domaine, ce que
-          // le sujet interdit.
           allow="encrypted-media; picture-in-picture; fullscreen"
-          // Empêche la page embarquée de connaître l'URL d'où elle est appelée.
           referrerPolicy="strict-origin-when-cross-origin"
         />
       </div>
@@ -302,9 +203,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
       onKeyDown={handleKeyDown}
       className="relative w-full mx-auto rounded-lg overflow-hidden bg-black outline-none"
       style={{
-        // Ratio par défaut (16:9) tant que les métadonnées ne sont pas
-        // chargées, pour éviter un conteneur à hauteur 0 ou un saut visuel
-        // une fois la vidéo prête.
         aspectRatio: aspectRatio ?? 16 / 9,
         maxWidth: isVertical ? "28rem" : "42rem",
       }}
@@ -337,14 +235,12 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
         </div>
       )}
 
-      {/* Spinner affiché pendant le buffering (chargement en cours de lecture) */}
       {isBuffering && !enErreur && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Barre de contrôles custom — cachée après inactivité si la vidéo joue */}
       <div
         className={`absolute bottom-0 left-0 right-0 bg-black/60 p-3 flex items-center gap-3 transition-opacity duration-300 ${
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -358,9 +254,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
           {isPlaying ? "⏸" : "▶"}
         </button>
 
-        {/* Barre de progression cliquable pour seek, navigable au clavier
-            (flèches gauche/droite) une fois focus dessus, avec attributs ARIA
-            pour les lecteurs d'écran. */}
         <div
           onClick={handleSeek}
           role="slider"
@@ -392,7 +285,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
 
-        {/* Volume */}
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={toggleMute}
@@ -415,7 +307,6 @@ export default function VideoPlayer({ src, onEnded, onTimeUpdate }: VideoPlayerP
           />
         </div>
 
-        {/* Plein écran */}
         <button
           onClick={toggleFullscreen}
           className="text-white text-lg shrink-0"

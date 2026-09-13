@@ -7,11 +7,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { isFortyTwoEnabled } from '../../common/env';
 
-/**
- * OAuth is optional in local installations. This guard turns a missing or
- * invalid OAuth configuration into an explicit 503 instead of Passport's
- * opaque "Unknown authentication strategy" error.
- */
 @Injectable()
 export class FortyTwoAuthGuard extends AuthGuard('42') {
   canActivate(context: ExecutionContext) {

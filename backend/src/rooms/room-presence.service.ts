@@ -11,11 +11,6 @@ type PresenceEntry = {
   lastSeenAt: Date;
 };
 
-/**
- * Presence is persisted so a second backend instance sees the same members.
- * Entries expire automatically; this also handles a process killed without a
- * WebSocket disconnect event.
- */
 @Injectable()
 export class RoomPresenceService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,8 +33,6 @@ export class RoomPresenceService {
       throw new ConflictException(`La room est pleine (${MAX_ROOM_PLAYERS} joueurs maximum).`);
     }
 
-    // Un joueur ne conserve qu'une présence par room : un nouvel onglet ou un
-    // autre navigateur remplace l'ancienne socket au lieu de créer un doublon.
     await this.prisma.roomPresence.deleteMany({
       where: { roomId, userId, socketId: { not: socketId } },
     });
@@ -62,10 +55,6 @@ export class RoomPresenceService {
     });
   }
 
-  /**
-   * Rafraîchit la présence des sockets encore connectées. En upsert et non en
-   * update : si la ligne a déjà été purgée, il faut la recréer.
-   */
   async rafraichir(entrees: Array<{ socketId: string; userId: string; roomId: string }>) {
     const maintenant = new Date();
     await Promise.all(entrees.map((e) => this.prisma.roomPresence.upsert({
@@ -79,8 +68,6 @@ export class RoomPresenceService {
     const current = await this.prisma.roomPresence.findUnique({ where: { socketId } });
     if (!current) return null;
 
-    // deleteMany, pas delete : prune() peut avoir effacé la ligne juste après
-    // le findUnique, et delete() lèverait alors P2025.
     await this.prisma.roomPresence.deleteMany({ where: { socketId } });
     const remaining = await this.prisma.roomPresence.count({
       where: { roomId: current.roomId, userId: current.userId, lastSeenAt: { gt: this.activeSince() } },
